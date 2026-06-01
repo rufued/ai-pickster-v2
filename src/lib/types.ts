@@ -23,6 +23,13 @@ export type AICompetitor = {
   id: string;
   name: string;
   initials: string;
+  reliabilityGrade: "A+" | "A" | "B+" | "B";
+  recent30DayRoi: number;
+  recent30DayAccuracy: number;
+  recent30DayWins: number;
+  recent30DayLosses: number;
+  recent10Results: CombinationStatus[];
+  recentRoiTrend: number[];
   analysisStyle: string;
   investmentPhilosophy: string;
   signatureTraits: string[];

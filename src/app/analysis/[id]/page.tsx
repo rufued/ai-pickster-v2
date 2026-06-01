@@ -72,7 +72,10 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
                   <p className="mt-3 text-sm text-slate-400">예상 결과</p>
                   <p className="mt-1 text-lg font-bold text-white">{analysis.prediction}</p>
                 </div>
-                <span className="rounded-lg bg-white/10 px-3 py-2 text-lg font-black text-white">{analysis.confidence}%</span>
+                <span className="rounded-lg bg-white/10 px-3 py-2 text-right">
+                  <span className="block text-xs font-semibold text-slate-500">신뢰도</span>
+                  <span className="block text-lg font-black text-white">{analysis.confidence}%</span>
+                </span>
               </div>
 
               <div className="mt-5 rounded-md border border-accent-green/20 bg-accent-green/10 p-3">
@@ -81,7 +84,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
               </div>
 
               <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-bold text-accent-green">선택 상태</p>
+                <p className="text-xs font-bold text-accent-green">선택 이유</p>
                 <p className="mt-2 text-lg font-black text-white">{analysis.decisionStatus}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">{analysis.decisionReason}</p>
               </div>
@@ -102,7 +105,7 @@ function DetailBlock({ label, items, tone }: { label: string; items: string[]; t
   return (
     <div className="rounded-md border border-white/10 bg-black/20 p-3">
       <p className={tone === "positive" ? "text-xs font-bold text-emerald-300" : "text-xs font-bold text-red-300"}>{label}</p>
-      <ul className="mt-2 space-y-1 text-sm text-slate-300">
+      <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-300">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}

@@ -21,7 +21,7 @@ import {
   getStrongConsensusMatch,
   getTodayCombinations,
 } from "@/lib/data";
-import type { AnalysisMatch, Combination } from "@/lib/types";
+import type { AICompetitor, AnalysisMatch, Combination } from "@/lib/types";
 
 export default function Home() {
   const rankedAis = getRankedAis();
@@ -56,10 +56,10 @@ export default function Home() {
                 오늘의 조합 보기 <ArrowRight size={18} />
               </Link>
               <Link
-                href="/analysis"
+                href="/battle"
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
               >
-                AI 의견 일치도 보기 <Trophy size={18} />
+                AI 배틀 보기 <Trophy size={18} />
               </Link>
             </div>
 
@@ -74,7 +74,22 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container-shell py-12">
+      <section className="container-shell py-10">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-accent-green">ROI Leaderboard</p>
+            <h2 className="mt-2 text-2xl font-black text-white">누가 가장 잘 맞추고 있나</h2>
+          </div>
+          <p className="text-sm text-slate-400">AI 이름보다 최근 30일 ROI와 적중 흐름을 먼저 비교합니다.</p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[...rankedAis].sort((a, b) => b.recent30DayRoi - a.recent30DayRoi).map((ai) => (
+            <RecentPerformanceCard key={ai.id} ai={ai} />
+          ))}
+        </div>
+      </section>
+
+      <section className="container-shell pb-12">
         <div className="mb-5">
           <p className="text-sm font-semibold text-accent-green">Today Combinations</p>
           <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 조합</h2>
@@ -278,5 +293,57 @@ function HeroStat({ label, value }: { label: string; value: string }) {
       <p className="text-xs text-slate-500">{label}</p>
       <p className="mt-1 truncate text-sm font-black text-white sm:text-base">{value}</p>
     </div>
+  );
+}
+
+function RecentPerformanceCard({ ai }: { ai: AICompetitor }) {
+  const latestTrend = ai.recentRoiTrend.at(-1) ?? ai.recent30DayRoi;
+  const previousTrend = ai.recentRoiTrend.at(-2) ?? latestTrend;
+  const trendDiff = latestTrend - previousTrend;
+
+  return (
+    <article className="panel p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold text-slate-500">{ai.name} · {ai.analysisStyle}</p>
+          <p className={ai.recent30DayRoi >= 0 ? "mt-2 text-4xl font-black text-emerald-300" : "mt-2 text-4xl font-black text-red-300"}>
+            {formatPercent(ai.recent30DayRoi)}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-slate-400">최근 30일 ROI</p>
+        </div>
+        <span className="rounded-md border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-black text-accent-green">
+          신뢰도 {ai.reliabilityGrade}
+        </span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <HeroStat label="적중률" value={`${ai.recent30DayAccuracy}%`} />
+        <HeroStat label="승 / 패" value={`${ai.recent30DayWins} / ${ai.recent30DayLosses}`} />
+      </div>
+
+      <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold text-slate-400">최근 10픽</p>
+          <p className={trendDiff >= 0 ? "text-xs font-black text-emerald-300" : "text-xs font-black text-red-300"}>
+            ROI {trendDiff >= 0 ? "+" : ""}
+            {trendDiff.toFixed(1)}%p
+          </p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {ai.recent10Results.map((result, index) => (
+            <span
+              key={`${ai.id}-home-recent-${index}`}
+              className={
+                result === "적중"
+                  ? "flex h-6 w-6 items-center justify-center rounded-md bg-emerald-400/15 text-[11px] font-black text-emerald-300"
+                  : "flex h-6 w-6 items-center justify-center rounded-md bg-red-400/15 text-[11px] font-black text-red-300"
+              }
+            >
+              {result === "적중" ? "O" : "X"}
+            </span>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }

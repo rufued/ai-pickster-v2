@@ -14,12 +14,14 @@ export function RankingTable({ ais }: RankingTableProps) {
             <tr>
               <th className="px-4 py-3">순위</th>
               <th className="px-4 py-3">AI</th>
+              <th className="px-4 py-3">신뢰도</th>
               <th className="px-4 py-3">분석 스타일</th>
               <th className="px-4 py-3">투자 철학</th>
               <th className="px-4 py-3">대표 특징</th>
               <th className="px-4 py-3">현재 자산</th>
               <th className="px-4 py-3">누적 수익</th>
               <th className="px-4 py-3">ROI</th>
+              <th className="px-4 py-3">최근 30일 ROI</th>
               <th className="px-4 py-3">최근 조합</th>
             </tr>
           </thead>
@@ -35,6 +37,11 @@ export function RankingTable({ ais }: RankingTableProps) {
                     <span className="font-semibold text-white">{ai.name}</span>
                   </div>
                 </td>
+                <td className="px-4 py-4">
+                  <span className="rounded-md border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-black text-accent-green">
+                    {ai.reliabilityGrade}
+                  </span>
+                </td>
                 <td className="px-4 py-4 font-semibold text-accent-green">{ai.analysisStyle}</td>
                 <td className="px-4 py-4 text-slate-200">{ai.investmentPhilosophy}</td>
                 <td className="px-4 py-4 text-slate-300">{ai.signatureTraits.slice(0, 2).join(" · ")}</td>
@@ -45,6 +52,7 @@ export function RankingTable({ ais }: RankingTableProps) {
                 <td className={ai.roi >= 0 ? "px-4 py-4 font-semibold text-emerald-300" : "px-4 py-4 font-semibold text-red-300"}>
                   {formatPercent(ai.roi)}
                 </td>
+                <td className="px-4 py-4 font-semibold text-emerald-300">{formatPercent(ai.recent30DayRoi)}</td>
                 <td className="px-4 py-4">
                   <div className="flex gap-1.5">
                     {ai.recentResults.map((result, resultIndex) => (

@@ -26,7 +26,7 @@ export function AiRankingCard({ ai, rank }: AiRankingCardProps) {
             rank === 1 ? "bg-accent-green text-black" : "bg-white/10 text-slate-300",
           )}
         >
-          {rank === 1 ? "LEADER" : "CHASE"}
+          {rank === 1 ? `LEADER · ${ai.reliabilityGrade}` : `신뢰도 ${ai.reliabilityGrade}`}
         </span>
       </div>
 
@@ -42,25 +42,34 @@ export function AiRankingCard({ ai, rank }: AiRankingCardProps) {
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-3">
-        <Stat label="판단 방식" value="3~5폴더 자율" />
+        <Stat label="최근 30일 ROI" value={formatPercent(ai.recent30DayRoi)} positive={ai.recent30DayRoi >= 0} />
+        <Stat label="신뢰도" value={ai.reliabilityGrade} positive={ai.reliabilityGrade === "A+" || ai.reliabilityGrade === "A"} />
         <Stat label="최고 적중" value={ai.bestHitCombination} />
-        <Stat label="최고 배당" value={ai.bestHitOdds.toFixed(2)} positive />
       </div>
 
       <div className="mt-5">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">최근 조합 결과</p>
-        <div className="flex items-center gap-2">
-          {ai.recentResults.map((result, index) => (
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">최근 10픽 흐름</p>
+          <p className="text-xs font-bold text-slate-400">
+            {ai.recentRoiTrend.at(-2) !== undefined && ai.recentRoiTrend.at(-1) !== undefined
+              ? `ROI ${ai.recentRoiTrend.at(-1)! - ai.recentRoiTrend.at(-2)! >= 0 ? "+" : ""}${(ai.recentRoiTrend.at(-1)! - ai.recentRoiTrend.at(-2)!).toFixed(1)}%p`
+              : "ROI -"}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {ai.recent10Results.map((result, index) => (
             <span
               key={`${ai.id}-${result}-${index}`}
               aria-label={result}
               className={clsx(
-                "h-3.5 w-3.5 rounded-full border",
+                "flex h-6 w-6 items-center justify-center rounded-md border text-[11px] font-black",
                 result === "적중"
-                  ? "border-emerald-300 bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]"
-                  : "border-red-300 bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.35)]",
+                  ? "border-emerald-300/40 bg-emerald-400/15 text-emerald-300"
+                  : "border-red-300/40 bg-red-400/15 text-red-300",
               )}
-            />
+            >
+              {result === "적중" ? "O" : "X"}
+            </span>
           ))}
         </div>
       </div>

@@ -27,6 +27,7 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
   const losers = match.actualResult
     ? match.analyses.filter((analysis) => analysis.prediction !== match.actualResult)
     : [];
+  const battleProfit = match.analyses.reduce((total, analysis) => total + (analysis.roiChange ?? 0), 0);
 
   return (
     <section className="container-shell py-12">
@@ -60,7 +61,7 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
                   <p className="mt-1 text-sm font-bold text-accent-green">{profile?.analysisStyle}</p>
                 </div>
                 <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-bold text-slate-300">
-                  {analysis.analysisAngle}
+                  신뢰도 {profile?.reliabilityGrade ?? "-"}
                 </span>
               </div>
 
@@ -82,7 +83,7 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
               </div>
               <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-bold text-emerald-300">강점</p>
-                <ul className="mt-2 space-y-1 text-sm text-slate-300">
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-300">
                   {analysis.strengths.map((strength) => (
                     <li key={strength}>{strength}</li>
                   ))}
@@ -90,7 +91,7 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
               </div>
               <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-bold text-red-300">리스크</p>
-                <ul className="mt-2 space-y-1 text-sm text-slate-300">
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-300">
                   {analysis.risks.map((risk) => (
                     <li key={risk}>{risk}</li>
                   ))}
@@ -102,15 +103,22 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
       </div>
 
       {match.actualResult ? (
-        <section className="panel mt-8 p-6">
-          <p className="text-sm font-semibold text-accent-green">Battle Result</p>
-          <h2 className="mt-2 text-2xl font-black text-white">배틀 결과</h2>
+        <section className="panel mt-8 p-6 ring-1 ring-accent-green/20">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-accent-green">Battle Result</p>
+              <h2 className="mt-2 text-2xl font-black text-white">배틀 결과와 수익 반영</h2>
+            </div>
+            <p className={battleProfit >= 0 ? "text-2xl font-black text-emerald-300" : "text-2xl font-black text-red-300"}>
+              총 {formatSignedCurrency(battleProfit)}
+            </p>
+          </div>
           <div className="mt-5 grid gap-4 lg:grid-cols-4">
             <ResultBlock label="실제 결과" value={match.actualResult} />
-            <ResultBlock label="승리 AI" value={winners.map((winner) => winner.aiName).join(", ") || "-"} positive />
+            <ResultBlock label="승리 AI" value={winners.map((winner) => winner.aiName).join(", ") || "-"} positive emphasis />
             <ResultBlock label="패배 AI" value={losers.map((loser) => loser.aiName).join(", ") || "-"} negative />
             <div className="rounded-lg border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-500">ROI 반영 결과</p>
+              <p className="text-xs text-slate-500">AI별 수익 금액</p>
               <div className="mt-3 grid gap-2 text-sm">
                 {match.analyses.map((analysis) => (
                   <div key={analysis.aiName} className="flex justify-between gap-3">
@@ -138,11 +146,23 @@ function BattleMetric({ label, value, highlight }: { label: string; value: strin
   );
 }
 
-function ResultBlock({ label, value, positive, negative }: { label: string; value: string; positive?: boolean; negative?: boolean }) {
+function ResultBlock({
+  label,
+  value,
+  positive,
+  negative,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  positive?: boolean;
+  negative?: boolean;
+  emphasis?: boolean;
+}) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+    <div className={emphasis ? "rounded-lg border border-accent-green/30 bg-accent-green/10 p-4" : "rounded-lg border border-white/10 bg-black/20 p-4"}>
       <p className="text-xs text-slate-500">{label}</p>
-      <p className={positive ? "mt-2 text-lg font-black text-emerald-300" : negative ? "mt-2 text-lg font-black text-red-300" : "mt-2 text-lg font-black text-white"}>
+      <p className={positive ? "mt-2 text-xl font-black text-emerald-300" : negative ? "mt-2 text-lg font-black text-red-300" : "mt-2 text-lg font-black text-white"}>
         {value}
       </p>
     </div>

@@ -21,6 +21,9 @@ export function BattleRanking({ ais }: BattleRankingProps) {
               <p className="text-2xl font-black text-white">{getBattleWinRate(ai)}%</p>
             </div>
             <p className="mt-2 text-xl font-black text-white">{ai.name}</p>
+            <p className="mt-1 text-xs font-bold text-accent-green">
+              {ai.analysisStyle} · 신뢰도 {ai.reliabilityGrade}
+            </p>
             <p className="mt-2 text-sm text-slate-400">
               {ai.battleWins}승 {ai.battleLosses}패
             </p>
