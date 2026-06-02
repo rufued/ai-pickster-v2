@@ -22,3 +22,8 @@ export const sportCategories: SportCategory[] = [
 export function getSportFromParam(value?: string): Sport | undefined {
   return sportCategories.find((category) => category.id === value)?.sport;
 }
+
+export function normalizeSportCategoryId(value?: string | string[] | null): string {
+  const sportId = Array.isArray(value) ? value[0] : value;
+  return typeof sportId === "string" && sportCategories.some((category) => category.id === sportId) ? sportId : "all";
+}

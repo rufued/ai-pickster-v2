@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { ArrowUpRight } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
@@ -10,7 +11,7 @@ import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
 import { formatPercent, formatTime } from "@/lib/format";
-import { getSportFromParam, sportCategories } from "@/lib/sports";
+import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
 import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch } from "@/lib/types";
 
 type HomeSportsViewProps = {
@@ -20,20 +21,32 @@ type HomeSportsViewProps = {
   matches: FeaturedMatch[];
   battleMatches: AnalysisMatch[];
   fallbackBattleMatch: AnalysisMatch;
+  initialSport?: string;
 };
 
-export function HomeSportsView({ ais, combinations, decisionProcesses, matches, battleMatches, fallbackBattleMatch }: HomeSportsViewProps) {
-  const [selectedSport, setSelectedSport] = useState("all");
+export function HomeSportsView({ ais, combinations, decisionProcesses, matches, battleMatches, fallbackBattleMatch, initialSport = "all" }: HomeSportsViewProps) {
+  const router = useRouter();
+  const [selectedSport, setSelectedSport] = useState(() => normalizeSportCategoryId(initialSport));
   const sport = getSportFromParam(selectedSport);
   const selectedCategory = sportCategories.find((category) => category.id === selectedSport);
   const filteredMatches = useMemo(() => (sport ? matches.filter((match) => match.sport === sport) : matches), [matches, sport]);
   const filteredBattleMatches = useMemo(() => (sport ? battleMatches.filter((match) => match.sport === sport) : battleMatches), [battleMatches, sport]);
   const selectedBattleMatch = filteredBattleMatches[0] ?? fallbackBattleMatch;
   const isAllSports = selectedSport === "all";
+  const homeFeaturedMatches = filteredMatches.slice(0, 6);
+  const handleSportSelect = (sportId: string) => {
+    const normalizedSportId = normalizeSportCategoryId(sportId);
+    setSelectedSport(normalizedSportId);
+    router.push(normalizedSportId === "all" ? "/" : `/?sport=${normalizedSportId}`, { scroll: false });
+  };
+
+  useEffect(() => {
+    setSelectedSport(normalizeSportCategoryId(initialSport));
+  }, [initialSport]);
 
   return (
     <div className="container-shell grid min-w-0 gap-4 overflow-hidden py-6 lg:grid-cols-[220px_1fr] lg:gap-6 lg:overflow-visible lg:py-12">
-      <HomeSportsTabs selectedSport={selectedSport} onSelect={setSelectedSport} />
+      <HomeSportsTabs selectedSport={selectedSport} onSelect={handleSportSelect} />
       <main className="min-w-0 space-y-8 lg:space-y-12">
         {!isAllSports ? (
           <UpcomingMatchList title={`${selectedCategory?.label ?? "Sports"} 예정 경기`} matches={filteredBattleMatches} />
@@ -41,8 +54,8 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
           <>
         <section>
           <div className="mb-4 lg:mb-5">
-            <p className="text-xs font-semibold text-accent-green sm:text-sm">Today Combinations</p>
-            <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">오늘의 AI 조합</h2>
+            <p className="text-xs font-semibold text-accent-green sm:text-sm">오늘의 AI 조합</p>
+            <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">AI별 조합 상세</h2>
             <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">All Sports에서는 AI 조합과 리그 흐름을 함께 확인합니다.</p>
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
@@ -55,8 +68,8 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
         <section>
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-accent-green">ROI Leaderboard</p>
-              <h2 className="mt-2 text-2xl font-black text-white">최근 30일 ROI 리더보드</h2>
+              <p className="text-sm font-semibold text-accent-green">최근 30일 ROI 순위</p>
+              <h2 className="mt-2 text-2xl font-black text-white">최근 30일 ROI 순위</h2>
             </div>
             <p className="text-sm text-slate-400">시즌 성적과 최근 흐름은 별도로 봅니다.</p>
           </div>
@@ -69,7 +82,7 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
 
         <section>
           <div className="mb-5">
-            <p className="text-sm font-semibold text-accent-green">AI Battle Arena</p>
+            <p className="text-sm font-semibold text-accent-green">오늘의 AI 배틀</p>
             <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 배틀</h2>
             <p className="mt-2 text-sm text-slate-400">선택한 종목의 대표 AI 의견 대결을 확인합니다.</p>
           </div>
@@ -78,8 +91,8 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
 
         <section>
           <div className="mb-5">
-            <p className="text-sm font-semibold text-accent-green">AI Decision Process</p>
-            <h2 className="mt-2 text-2xl font-black text-white">AI 의사결정 과정</h2>
+            <p className="text-sm font-semibold text-accent-green">AI 조합 선정 과정</p>
+            <h2 className="mt-2 text-2xl font-black text-white">AI 조합 선정 과정</h2>
             <p className="mt-2 text-sm text-slate-400">분석한 경기에서 후보를 좁히고 최종 조합만 선택합니다.</p>
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
@@ -89,8 +102,8 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
           </div>
         </section>
 
-        <FeaturedMatches matches={filteredMatches} contained={false} />
-        {filteredMatches.length === 0 ? <EmptySportState /> : null}
+        <FeaturedMatches matches={homeFeaturedMatches} contained={false} />
+        {homeFeaturedMatches.length === 0 ? <EmptySportState /> : null}
           </>
         )}
       </main>
@@ -144,7 +157,7 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
   return (
     <section>
       <div className="mb-4 lg:mb-5">
-        <p className="text-xs font-semibold text-accent-green sm:text-sm">Upcoming Matches</p>
+        <p className="text-xs font-semibold text-accent-green sm:text-sm">예정 경기 목록</p>
         <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">{title}</h2>
         <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">경기를 선택하면 GPT, Gemini, DeepSeek의 분석 비교 페이지로 이동합니다.</p>
       </div>

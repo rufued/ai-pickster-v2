@@ -681,51 +681,14 @@ const upcomingAnalysisMatches: AnalysisMatch[] = [
   }),
 ];
 
-const scorePresets: Record<AnalysisMatch["sport"], Array<{ score: string; total?: number }>> = {
-  축구: [
-    { score: "{home} 2 : 1 {away}", total: 3 },
-    { score: "{home} 3 : 1 {away}", total: 4 },
-    { score: "{home} 1 : 1 {away}", total: 2 },
-  ],
-  야구: [
-    { score: "{home} 6 : 4 {away}", total: 10 },
-    { score: "{home} 5 : 3 {away}", total: 8 },
-    { score: "{home} 4 : 6 {away}", total: 10 },
-  ],
-  농구: [
-    { score: "{home} 82 : 76 {away}", total: 158 },
-    { score: "{home} 84 : 79 {away}", total: 163 },
-    { score: "{home} 78 : 81 {away}", total: 159 },
-  ],
-  테니스: [
-    { score: "{home} 2 : 0 {away}", total: 2 },
-    { score: "{home} 2 : 1 {away}", total: 3 },
-    { score: "{home} 1 : 2 {away}", total: 3 },
-  ],
-  "Formula 1": [
-    { score: "1위 Verstappen / 2위 Leclerc / 3위 Norris" },
-    { score: "1위 Leclerc / 2위 Norris / 3위 Verstappen" },
-    { score: "1위 Norris / 2위 Verstappen / 3위 Hamilton" },
-  ],
-  아이스하키: [
-    { score: "{home} 4 : 2 {away}", total: 6 },
-    { score: "{home} 3 : 2 {away}", total: 5 },
-    { score: "{home} 2 : 4 {away}", total: 6 },
-  ],
-  e스포츠: [
-    { score: "{home} 2 : 1 {away}", total: 3 },
-    { score: "{home} 2 : 0 {away}", total: 2 },
-    { score: "{home} 1 : 2 {away}", total: 3 },
-  ],
-};
-
 function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
   const [home, away = "상대"] = match.match.split(/\s+vs\s+/i);
 
   return {
     ...match,
     analyses: match.analyses.map((analysis, index) => {
-      const preset = scorePresets[match.sport][index % scorePresets[match.sport].length];
+      const predictionSide = getPredictionSide(analysis.prediction, home, away);
+      const preset = createScorePreset(match.sport, predictionSide, index);
 
       return {
         ...analysis,
@@ -734,6 +697,82 @@ function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
       };
     }),
   };
+}
+
+function getPredictionSide(prediction: string, home: string, away: string) {
+  if (prediction.includes("무승부")) {
+    return "draw";
+  }
+
+  const normalizedPrediction = normalizeText(prediction);
+  const homeMatched = getTeamKeywords(home).some((keyword) => normalizedPrediction.includes(keyword));
+  const awayMatched = getTeamKeywords(away).some((keyword) => normalizedPrediction.includes(keyword));
+
+  if (awayMatched && !homeMatched) {
+    return "away";
+  }
+
+  return "home";
+}
+
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9가-힣]/g, "");
+}
+
+function getTeamKeywords(team: string) {
+  return team
+    .split(/\s+/)
+    .map(normalizeText)
+    .filter((keyword) => keyword.length >= 2);
+}
+
+function createScorePreset(sport: AnalysisMatch["sport"], side: "home" | "away" | "draw", index: number) {
+  if (sport === "Formula 1") {
+    const podiums = [
+      ["Verstappen", "Leclerc", "Norris"],
+      ["Leclerc", "Norris", "Verstappen"],
+      ["Norris", "Verstappen", "Hamilton"],
+    ];
+    const podium = podiums[index % podiums.length];
+
+    return { score: `1위 ${podium[0]} / 2위 ${podium[1]} / 3위 ${podium[2]}`, total: undefined };
+  }
+
+  const scores: Record<Exclude<AnalysisMatch["sport"], "Formula 1">, Record<"home" | "away" | "draw", Array<[number, number]>>> = {
+    축구: {
+      home: [[2, 1], [3, 1], [2, 0]],
+      away: [[1, 2], [0, 2], [1, 3]],
+      draw: [[1, 1], [2, 2], [0, 0]],
+    },
+    야구: {
+      home: [[6, 4], [5, 3], [7, 5]],
+      away: [[4, 6], [3, 5], [5, 7]],
+      draw: [[4, 4], [5, 5], [3, 3]],
+    },
+    농구: {
+      home: [[82, 76], [84, 79], [88, 81]],
+      away: [[78, 81], [79, 84], [83, 88]],
+      draw: [[80, 80], [82, 82], [78, 78]],
+    },
+    테니스: {
+      home: [[2, 0], [2, 1], [2, 0]],
+      away: [[0, 2], [1, 2], [0, 2]],
+      draw: [[1, 1], [1, 1], [1, 1]],
+    },
+    아이스하키: {
+      home: [[4, 2], [3, 2], [5, 3]],
+      away: [[2, 4], [2, 3], [3, 5]],
+      draw: [[2, 2], [3, 3], [1, 1]],
+    },
+    e스포츠: {
+      home: [[2, 1], [2, 0], [2, 1]],
+      away: [[1, 2], [0, 2], [1, 2]],
+      draw: [[1, 1], [1, 1], [1, 1]],
+    },
+  };
+  const [homeScore, awayScore] = scores[sport][side][index % scores[sport][side].length];
+
+  return { score: `{home} ${homeScore} : ${awayScore} {away}`, total: homeScore + awayScore };
 }
 
 export const analysisMatches: AnalysisMatch[] = [...baseAnalysisMatches, ...upcomingAnalysisMatches].map(addExpectedScores);

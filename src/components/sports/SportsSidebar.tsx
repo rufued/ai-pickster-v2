@@ -44,7 +44,7 @@ export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChan
 
             if (onSportChange) {
               return (
-                <button key={category.id} type="button" onClick={() => onSportChange(category.id)} className={className}>
+                <button key={category.id} type="button" aria-pressed={active} onClick={() => onSportChange(category.id)} className={className}>
                   {content}
                 </button>
               );

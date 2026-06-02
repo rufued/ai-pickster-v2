@@ -24,7 +24,7 @@ export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesPr
     <>
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-accent-blue">Match Day</p>
+          <p className="text-sm font-semibold text-accent-blue">오늘 주요 경기</p>
           <h2 className="mt-2 text-2xl font-black text-white">오늘 주요 경기</h2>
         </div>
         <Dumbbell className="hidden text-slate-600 sm:block" size={24} />

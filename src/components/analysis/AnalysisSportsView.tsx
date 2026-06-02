@@ -1,26 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUpRight, BarChart3 } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { SportsSidebar } from "@/components/sports/SportsSidebar";
 import { formatTime } from "@/lib/format";
-import { getSportFromParam } from "@/lib/sports";
+import { getSportFromParam, normalizeSportCategoryId } from "@/lib/sports";
 import type { AnalysisMatch } from "@/lib/types";
 
 type AnalysisSportsViewProps = {
   matches: AnalysisMatch[];
+  initialSport?: string;
 };
 
-export function AnalysisSportsView({ matches }: AnalysisSportsViewProps) {
-  const [selectedSport, setSelectedSport] = useState("all");
+export function AnalysisSportsView({ matches, initialSport = "all" }: AnalysisSportsViewProps) {
+  const router = useRouter();
+  const [selectedSport, setSelectedSport] = useState(() => normalizeSportCategoryId(initialSport));
   const sport = getSportFromParam(selectedSport);
   const filteredMatches = useMemo(() => (sport ? matches.filter((match) => match.sport === sport) : matches), [matches, sport]);
+  const handleSportChange = (sportId: string) => {
+    const normalizedSportId = normalizeSportCategoryId(sportId);
+    setSelectedSport(normalizedSportId);
+    router.push(normalizedSportId === "all" ? "/analysis" : `/analysis?sport=${normalizedSportId}`, { scroll: false });
+  };
+
+  useEffect(() => {
+    setSelectedSport(normalizeSportCategoryId(initialSport));
+  }, [initialSport]);
 
   return (
     <div className="grid min-w-0 gap-6 overflow-hidden lg:grid-cols-[220px_1fr] lg:overflow-visible">
-      <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
+      <SportsSidebar basePath="/analysis" activeSport={selectedSport} onSportChange={handleSportChange} />
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">
         {filteredMatches.map((match) => (
           <article key={match.id} className="panel p-5">

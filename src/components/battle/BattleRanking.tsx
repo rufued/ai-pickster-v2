@@ -12,7 +12,7 @@ export function BattleRanking({ ais }: BattleRankingProps) {
   return (
     <div className="panel p-5">
       <div className="mb-5">
-        <p className="text-sm font-semibold text-accent-green">Battle Ranking</p>
+        <p className="text-sm font-semibold text-accent-green">배틀 승률 순위</p>
         <h2 className="mt-1 text-2xl font-black text-white">배틀 승률 랭킹</h2>
       </div>
       <div className="grid gap-3 md:grid-cols-3">

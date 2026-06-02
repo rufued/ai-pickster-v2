@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Layers3, Trophy } from "lucide-react";
 import { HomeSportsView } from "@/components/home/HomeSportsView";
 import { formatCurrency } from "@/lib/format";
+import { normalizeSportCategoryId } from "@/lib/sports";
 import {
   analysisMatches,
   decisionProcesses,
@@ -12,10 +13,18 @@ import {
 } from "@/lib/data";
 import type { Combination } from "@/lib/types";
 
-export default function Home() {
+type HomePageProps = {
+  searchParams?: Promise<{
+    sport?: string | string[];
+  }>;
+};
+
+export default async function Home({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  const initialSport = normalizeSportCategoryId(params?.sport);
   const rankedAis = getRankedAis();
   const todayCombinations = getTodayCombinations();
-  const leader = rankedAis[0];
+  const recentRoiLeader = [...rankedAis].sort((a, b) => b.recent30DayRoi - a.recent30DayRoi)[0];
   const totalStake = todayCombinations.reduce((total, combination) => total + combination.stake, 0);
   const highestOdds = todayCombinations.length > 0 ? Math.max(...todayCombinations.map((combination) => combination.totalOdds)) : 0;
   const divisiveMatch = getMostDivisiveMatch();
@@ -53,7 +62,7 @@ export default function Home() {
             <div className="mt-5 grid max-w-xl grid-cols-3 gap-2 sm:mt-8 sm:gap-3">
               <HeroStat label="총 투자" value={formatCurrency(totalStake)} />
               <HeroStat label="최고 배당" value={highestOdds.toFixed(2)} />
-              <HeroStat label="리더" value={leader.name} />
+              <HeroStat label="30일 ROI 1위" value={recentRoiLeader.name} />
             </div>
           </div>
 
@@ -70,6 +79,7 @@ export default function Home() {
         matches={featuredMatches}
         battleMatches={analysisMatches}
         fallbackBattleMatch={divisiveMatch}
+        initialSport={initialSport}
       />
     </div>
   );
@@ -80,7 +90,7 @@ function HeroCombinationBoard({ combinations }: { combinations: Combination[] })
     <div className="panel p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-accent-green">오늘의 AI 조합</p>
+          <p className="text-sm font-semibold text-accent-green">오늘의 AI 조합 요약</p>
           <h2 className="mt-1 text-2xl font-black text-white">AI 판단 티켓</h2>
         </div>
         <span className="rounded-full border border-accent-green/30 bg-accent-green/10 px-3 py-1 text-xs font-bold text-accent-green">

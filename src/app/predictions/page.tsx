@@ -1,19 +1,28 @@
 import { PredictionsSportsView } from "@/components/predictions/PredictionsSportsView";
 import { getTodayCombinations } from "@/lib/data";
+import { normalizeSportCategoryId } from "@/lib/sports";
 
-export default function PredictionsPage() {
+type PredictionsPageProps = {
+  searchParams?: Promise<{
+    sport?: string | string[];
+  }>;
+};
+
+export default async function PredictionsPage({ searchParams }: PredictionsPageProps) {
+  const params = await searchParams;
+  const initialSport = normalizeSportCategoryId(params?.sport);
+
   return (
     <section className="container-shell py-12">
       <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-semibold text-accent-green">Today Combinations</p>
+        <p className="text-sm font-semibold text-accent-green">오늘의 AI 조합</p>
         <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">전체 AI 조합 목록</h1>
         <p className="mt-3 text-slate-400">
           AI가 오늘 스스로 구성한 3~5폴더 조합, 선택 경기 수, 조합 배당률, 투자금, 예상 수익을 비교합니다.
         </p>
       </div>
 
-      <PredictionsSportsView combinations={getTodayCombinations()} />
+      <PredictionsSportsView combinations={getTodayCombinations()} initialSport={initialSport} />
     </section>
   );
 }
-
