@@ -688,7 +688,7 @@ function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
     ...match,
     analyses: match.analyses.map((analysis, index) => {
       const predictionSide = getPredictionSide(analysis.prediction, home, away);
-      const preset = createScorePreset(match.sport, predictionSide, index);
+      const preset = createScorePreset(match.sport, predictionSide, index, analysis.prediction);
 
       return {
         ...analysis,
@@ -726,7 +726,7 @@ function getTeamKeywords(team: string) {
     .filter((keyword) => keyword.length >= 2);
 }
 
-function createScorePreset(sport: AnalysisMatch["sport"], side: "home" | "away" | "draw", index: number) {
+function createScorePreset(sport: AnalysisMatch["sport"], side: "home" | "away" | "draw", index: number, prediction: string) {
   if (sport === "Formula 1") {
     const podiums = [
       ["Verstappen", "Leclerc", "Norris"],
@@ -736,6 +736,40 @@ function createScorePreset(sport: AnalysisMatch["sport"], side: "home" | "away" 
     const podium = podiums[index % podiums.length];
 
     return { score: `1위 ${podium[0]} / 2위 ${podium[1]} / 3위 ${podium[2]}`, total: undefined };
+  }
+
+  const totalDirection = getTotalDirection(prediction);
+
+  if (totalDirection) {
+    const totalScores: Record<Exclude<AnalysisMatch["sport"], "Formula 1">, Record<"under" | "over", Record<"home" | "away" | "draw", Array<[number, number]>>>> = {
+      축구: {
+        under: { home: [[1, 0], [2, 0], [1, 0]], away: [[0, 1], [0, 2], [0, 1]], draw: [[0, 0], [1, 1], [0, 0]] },
+        over: { home: [[3, 1], [4, 2], [3, 2]], away: [[1, 3], [2, 4], [2, 3]], draw: [[2, 2], [3, 3], [2, 2]] },
+      },
+      야구: {
+        under: { home: [[4, 2], [5, 3], [3, 2]], away: [[2, 4], [3, 5], [2, 3]], draw: [[3, 3], [4, 4], [2, 2]] },
+        over: { home: [[7, 5], [8, 6], [9, 7]], away: [[5, 7], [6, 8], [7, 9]], draw: [[6, 6], [7, 7], [8, 8]] },
+      },
+      농구: {
+        under: { home: [[78, 74], [80, 76], [77, 73]], away: [[74, 78], [76, 80], [73, 77]], draw: [[76, 76], [78, 78], [80, 80]] },
+        over: { home: [[92, 88], [96, 91], [101, 94]], away: [[88, 92], [91, 96], [94, 101]], draw: [[88, 88], [92, 92], [96, 96]] },
+      },
+      테니스: {
+        under: { home: [[2, 0], [2, 0], [2, 0]], away: [[0, 2], [0, 2], [0, 2]], draw: [[1, 1], [1, 1], [1, 1]] },
+        over: { home: [[2, 1], [2, 1], [2, 1]], away: [[1, 2], [1, 2], [1, 2]], draw: [[1, 1], [1, 1], [1, 1]] },
+      },
+      아이스하키: {
+        under: { home: [[3, 2], [2, 1], [3, 1]], away: [[2, 3], [1, 2], [1, 3]], draw: [[2, 2], [1, 1], [2, 2]] },
+        over: { home: [[5, 3], [6, 3], [5, 4]], away: [[3, 5], [3, 6], [4, 5]], draw: [[4, 4], [5, 5], [3, 3]] },
+      },
+      e스포츠: {
+        under: { home: [[2, 0], [2, 0], [2, 0]], away: [[0, 2], [0, 2], [0, 2]], draw: [[1, 1], [1, 1], [1, 1]] },
+        over: { home: [[2, 1], [2, 1], [2, 1]], away: [[1, 2], [1, 2], [1, 2]], draw: [[1, 1], [1, 1], [1, 1]] },
+      },
+    };
+    const [homeScore, awayScore] = totalScores[sport][totalDirection][side][index % totalScores[sport][totalDirection][side].length];
+
+    return { score: `{home} ${homeScore} : ${awayScore} {away}`, total: homeScore + awayScore };
   }
 
   const scores: Record<Exclude<AnalysisMatch["sport"], "Formula 1">, Record<"home" | "away" | "draw", Array<[number, number]>>> = {
@@ -773,6 +807,18 @@ function createScorePreset(sport: AnalysisMatch["sport"], side: "home" | "away" 
   const [homeScore, awayScore] = scores[sport][side][index % scores[sport][side].length];
 
   return { score: `{home} ${homeScore} : ${awayScore} {away}`, total: homeScore + awayScore };
+}
+
+function getTotalDirection(prediction: string) {
+  if (prediction.includes("언더")) {
+    return "under";
+  }
+
+  if (prediction.includes("오버")) {
+    return "over";
+  }
+
+  return undefined;
 }
 
 export const analysisMatches: AnalysisMatch[] = [...baseAnalysisMatches, ...upcomingAnalysisMatches].map(addExpectedScores);
@@ -845,7 +891,7 @@ const historyCombinations: Combination[] = [
     profit: -100,
     selections: [
       ...combinations[0].selections,
-      { analysisId: "kt-ssg", match: "SSG Landers vs NC Dinos", league: "KBO", sport: "야구", prediction: "SSG 승", odds: 1.68 },
+      { analysisId: "kt-ssg", match: "KT Wiz vs SSG Landers", league: "KBO", sport: "야구", prediction: "SSG +1.5", odds: 1.68 },
     ],
   },
   {
@@ -870,7 +916,7 @@ const historyCombinations: Combination[] = [
     profit: -100,
     selections: [
       ...combinations[2].selections,
-      { analysisId: "mancity-liverpool", match: "맨시티 vs 리버풀", league: "EPL", sport: "축구", prediction: "리버풀 +1.0", odds: 1.36 },
+      { analysisId: "mancity-liverpool", match: "맨시티 vs 리버풀", league: "EPL", sport: "축구", prediction: "무승부", odds: 1.36 },
     ],
   },
   {
@@ -910,7 +956,7 @@ const historyCombinations: Combination[] = [
     profit: 534,
     selections: [
       ...combinations[2].selections,
-      { analysisId: "mancity-liverpool", match: "토트넘 vs 아스널", league: "EPL", sport: "축구", prediction: "무승부", odds: 3.2 },
+      { analysisId: "mancity-liverpool", match: "맨시티 vs 리버풀", league: "EPL", sport: "축구", prediction: "무승부", odds: 3.2 },
       { analysisId: "lg-kia", match: "LG Twins vs KIA Tigers", league: "KBO", sport: "야구", prediction: "LG 승", odds: 1.55 },
     ],
   },
