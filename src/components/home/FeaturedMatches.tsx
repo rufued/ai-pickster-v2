@@ -1,3 +1,5 @@
+"use client";
+
 import { Dumbbell, Gamepad2 } from "lucide-react";
 import type { FeaturedMatch, Sport } from "@/lib/types";
 import { formatTime } from "@/lib/format";
@@ -53,4 +55,3 @@ export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesPr
 
   return <section className="container-shell pb-12">{content}</section>;
 }
-

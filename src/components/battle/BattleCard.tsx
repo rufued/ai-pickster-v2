@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Swords } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";

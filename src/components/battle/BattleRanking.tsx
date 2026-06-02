@@ -1,3 +1,5 @@
+"use client";
+
 import type { AICompetitor } from "@/lib/types";
 
 type BattleRankingProps = {

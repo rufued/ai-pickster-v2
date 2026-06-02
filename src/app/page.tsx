@@ -23,41 +23,43 @@ export default function Home() {
   return (
     <div>
       <section className="border-b border-white/10">
-        <div className="container-shell grid min-h-[560px] items-center gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="container-shell grid items-center gap-8 py-8 sm:py-12 lg:min-h-[560px] lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 lg:py-16">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.26em] text-accent-green">AI Consensus League</p>
-            <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight text-white sm:text-6xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-green sm:text-sm sm:tracking-[0.26em]">AI Consensus League</p>
+            <h1 className="mt-3 max-w-3xl text-[2rem] font-black leading-[1.08] tracking-tight text-white sm:mt-5 sm:text-6xl sm:leading-tight">
               AI들은 오늘 어디에 베팅했을까?
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-7">
               AI 조합, AI 배틀, 의견 일치도, 수익률을 한 화면에서 확인하는 가상 머니 기반 AI 스포츠 예측 리그입니다.
             </p>
-            <p className="mt-3 max-w-2xl rounded-md border border-red-400/20 bg-red-400/10 px-3 py-2 text-sm font-semibold text-red-200">
+            <p className="mt-2 max-w-2xl rounded-md border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-xs font-semibold leading-5 text-red-200 sm:mt-3 sm:px-3 sm:py-2 sm:text-sm">
               실제 베팅 사이트가 아니며, 가상 머니 기반의 AI 예측 콘텐츠 플랫폼입니다.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-8 sm:flex sm:flex-row sm:gap-3">
               <Link
                 href="/predictions"
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-accent-green px-5 py-3 text-sm font-bold text-black transition hover:bg-emerald-300"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-accent-green px-3 py-2 text-xs font-bold text-black transition hover:bg-emerald-300 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm"
               >
-                오늘의 조합 보기 <ArrowRight size={18} />
+                오늘의 조합 보기 <ArrowRight className="hidden sm:block" size={18} />
               </Link>
               <Link
                 href="/battle"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm"
               >
-                AI 배틀 보기 <Trophy size={18} />
+                AI 배틀 보기 <Trophy className="hidden sm:block" size={18} />
               </Link>
             </div>
 
-            <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
-              <HeroStat label="오늘 총 투자" value={formatCurrency(totalStake)} />
-              <HeroStat label="최고 조합 배당" value={highestOdds.toFixed(2)} />
-              <HeroStat label="리그 리더" value={leader.name} />
+            <div className="mt-5 grid max-w-xl grid-cols-3 gap-2 sm:mt-8 sm:gap-3">
+              <HeroStat label="총 투자" value={formatCurrency(totalStake)} />
+              <HeroStat label="최고 배당" value={highestOdds.toFixed(2)} />
+              <HeroStat label="리더" value={leader.name} />
             </div>
           </div>
 
-          <HeroCombinationBoard combinations={todayCombinations} />
+          <div className="hidden lg:block">
+            <HeroCombinationBoard combinations={todayCombinations} />
+          </div>
         </div>
       </section>
 
@@ -125,9 +127,9 @@ function HeroCombinationBoard({ combinations }: { combinations: Combination[] })
 
 function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-sm font-black text-white sm:text-base">{value}</p>
+    <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-2 sm:rounded-lg sm:p-3">
+      <p className="truncate text-[10px] text-slate-500 sm:text-xs">{label}</p>
+      <p className="mt-0.5 truncate text-xs font-black text-white sm:mt-1 sm:text-base">{value}</p>
     </div>
   );
 }

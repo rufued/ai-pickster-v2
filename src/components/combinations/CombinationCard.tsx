@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUpRight, Layers3 } from "lucide-react";
 import type { Combination } from "@/lib/types";

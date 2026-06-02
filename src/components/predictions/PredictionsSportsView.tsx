@@ -19,10 +19,11 @@ export function PredictionsSportsView({ combinations }: PredictionsSportsViewPro
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+    <div className="grid min-w-0 gap-6 overflow-hidden lg:grid-cols-[220px_1fr] lg:overflow-visible">
       <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
-      <CombinationFilterList combinations={filteredCombinations} />
+      <div className="min-w-0">
+        <CombinationFilterList combinations={filteredCombinations} />
+      </div>
     </div>
   );
 }
-

@@ -31,14 +31,14 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
   const selectedBattleMatch = filteredBattleMatches[0] ?? fallbackBattleMatch;
 
   return (
-    <div className="container-shell grid gap-6 py-12 lg:grid-cols-[220px_1fr]">
+    <div className="container-shell grid min-w-0 gap-4 overflow-hidden py-6 lg:grid-cols-[220px_1fr] lg:gap-6 lg:overflow-visible lg:py-12">
       <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
-      <main className="space-y-12">
+      <main className="min-w-0 space-y-8 lg:space-y-12">
         <section>
-          <div className="mb-5">
-            <p className="text-sm font-semibold text-accent-green">Today Combinations</p>
-            <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 조합</h2>
-            <p className="mt-2 text-sm text-slate-400">선택한 종목이 포함된 AI 조합만 표시합니다.</p>
+          <div className="mb-4 lg:mb-5">
+            <p className="text-xs font-semibold text-accent-green sm:text-sm">Today Combinations</p>
+            <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">오늘의 AI 조합</h2>
+            <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">선택한 종목이 포함된 AI 조합만 표시합니다.</p>
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
             {filteredCombinations.map((combination) => (
@@ -162,4 +162,3 @@ function HeroStat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

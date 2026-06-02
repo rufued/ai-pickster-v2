@@ -12,20 +12,20 @@ type SportsSidebarProps = {
 
 export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChange }: SportsSidebarProps) {
   return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
-      <div className="panel border-accent-green/20 p-3">
+    <aside className="min-w-0 max-w-full lg:sticky lg:top-24 lg:self-start">
+      <div className="panel max-w-full overflow-hidden border-accent-green/20 p-3 lg:overflow-visible">
         <div className="mb-3 flex items-center justify-between px-1">
           <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">Sports</p>
           <span className="hidden rounded-full border border-accent-green/30 bg-accent-green/10 px-2 py-0.5 text-[10px] font-black text-accent-green lg:inline-flex">
             FILTER
           </span>
         </div>
-        <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+        <nav className="scrollbar-hide flex max-w-full gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
           {sportCategories.map((category) => {
             const active = activeSport === category.id || (!activeSport && category.id === "all");
             const href = category.id === "all" ? basePath : `${basePath}?sport=${category.id}`;
             const className = clsx(
-              "flex min-w-max items-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition lg:min-w-0 lg:justify-start",
+              "inline-flex h-10 flex-none items-center gap-2 whitespace-nowrap rounded-md border px-3 text-sm font-bold transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
               active
                 ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
                 : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",

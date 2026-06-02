@@ -19,9 +19,9 @@ export function BattleSportsView({ ais, matches }: BattleSportsViewProps) {
   const filteredMatches = useMemo(() => (sport ? matches.filter((match) => match.sport === sport) : matches), [matches, sport]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+    <div className="grid min-w-0 gap-6 overflow-hidden lg:grid-cols-[220px_1fr] lg:overflow-visible">
       <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
-      <div>
+      <div className="min-w-0">
         <div className="mb-8">
           <BattleRanking ais={ais} />
         </div>
@@ -50,4 +50,3 @@ export function BattleSportsView({ ais, matches }: BattleSportsViewProps) {
     </div>
   );
 }
-

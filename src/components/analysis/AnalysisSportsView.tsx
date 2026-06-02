@@ -19,9 +19,9 @@ export function AnalysisSportsView({ matches }: AnalysisSportsViewProps) {
   const filteredMatches = useMemo(() => (sport ? matches.filter((match) => match.sport === sport) : matches), [matches, sport]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+    <div className="grid min-w-0 gap-6 overflow-hidden lg:grid-cols-[220px_1fr] lg:overflow-visible">
       <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
         {filteredMatches.map((match) => (
           <article key={match.id} className="panel p-5">
             <div className="flex items-start justify-between gap-4">
@@ -73,4 +73,3 @@ export function AnalysisSportsView({ matches }: AnalysisSportsViewProps) {
     </div>
   );
 }
-
