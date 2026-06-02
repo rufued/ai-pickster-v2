@@ -44,6 +44,9 @@ export function CombinationFilterList({ combinations }: CombinationFilterListPro
           <CombinationCard key={combination.id} combination={combination} />
         ))}
       </div>
+      {filteredCombinations.length === 0 ? (
+        <div className="panel p-5 text-sm text-slate-400">현재 선택한 조건에 맞는 AI 조합이 없습니다.</div>
+      ) : null}
     </div>
   );
 }

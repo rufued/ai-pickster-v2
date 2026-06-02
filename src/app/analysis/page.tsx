@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { ArrowUpRight, BarChart3 } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
+import { SportsSidebar } from "@/components/sports/SportsSidebar";
 import { analysisMatches } from "@/lib/data";
 import { formatTime } from "@/lib/format";
+import { getSportFromParam } from "@/lib/sports";
 
-export default function AnalysisPage() {
+type AnalysisPageProps = {
+  searchParams: Promise<{ sport?: string }>;
+};
+
+export default async function AnalysisPage({ searchParams }: AnalysisPageProps) {
+  const { sport } = await searchParams;
+  const selectedSport = getSportFromParam(sport);
+  const filteredMatches = selectedSport ? analysisMatches.filter((match) => match.sport === selectedSport) : analysisMatches;
+
   return (
     <section className="container-shell py-12">
       <div className="mb-8 max-w-3xl">
@@ -15,9 +25,11 @@ export default function AnalysisPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {analysisMatches.map((match) => (
-          <article key={match.id} className="panel p-5">
+      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+        <SportsSidebar basePath="/analysis" activeSport={sport} />
+        <div className="grid gap-4 xl:grid-cols-2">
+          {filteredMatches.map((match) => (
+            <article key={match.id} className="panel p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
@@ -58,8 +70,12 @@ export default function AnalysisPage() {
                 상세 보기 <ArrowUpRight size={16} />
               </Link>
             </div>
-          </article>
-        ))}
+            </article>
+          ))}
+          {filteredMatches.length === 0 ? (
+            <div className="panel p-5 text-sm text-slate-400 xl:col-span-2">현재 더미데이터에는 해당 종목 분석이 없습니다.</div>
+          ) : null}
+        </div>
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { formatTime } from "@/lib/format";
 
 type FeaturedMatchesProps = {
   matches: FeaturedMatch[];
+  contained?: boolean;
 };
 
 const sportIcon: Record<Sport, string> = {
@@ -13,9 +14,9 @@ const sportIcon: Record<Sport, string> = {
   e스포츠: "🎮",
 };
 
-export function FeaturedMatches({ matches }: FeaturedMatchesProps) {
-  return (
-    <section className="container-shell pb-12">
+export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesProps) {
+  const content = (
+    <>
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-accent-blue">Match Day</p>
@@ -24,7 +25,7 @@ export function FeaturedMatches({ matches }: FeaturedMatchesProps) {
         <Dumbbell className="hidden text-slate-600 sm:block" size={24} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {matches.map((match) => (
           <article key={match.id} className="panel p-5">
             <div className="flex items-center justify-between gap-3">
@@ -43,6 +44,13 @@ export function FeaturedMatches({ matches }: FeaturedMatchesProps) {
           </article>
         ))}
       </div>
-    </section>
+    </>
   );
+
+  if (!contained) {
+    return <section>{content}</section>;
+  }
+
+  return <section className="container-shell pb-12">{content}</section>;
 }
+

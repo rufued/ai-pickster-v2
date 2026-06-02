@@ -1,37 +1,39 @@
 import Link from "next/link";
 import { ArrowRight, Layers3, Trophy } from "lucide-react";
-import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
-import { AiProfileCard } from "@/components/ai/AiProfileCard";
-import { AiRankingCard } from "@/components/ai/AiRankingCard";
 import { BattleCard } from "@/components/battle/BattleCard";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
-import { RecentCombinationResults } from "@/components/combinations/RecentCombinationResults";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
-import { MetricCard } from "@/components/ui/MetricCard";
+import { SportsSidebar } from "@/components/sports/SportsSidebar";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import {
-  aiCompetitors,
+  analysisMatches,
   decisionProcesses,
   featuredMatches,
-  getAverageRoi,
   getMostDivisiveMatch,
   getRankedAis,
-  getSettledCombinations,
-  getStrongConsensusMatch,
   getTodayCombinations,
 } from "@/lib/data";
-import type { AICompetitor, AnalysisMatch, Combination } from "@/lib/types";
+import { getSportFromParam } from "@/lib/sports";
+import type { AICompetitor, Combination } from "@/lib/types";
 
-export default function Home() {
+type HomeProps = {
+  searchParams: Promise<{ sport?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { sport } = await searchParams;
+  const selectedSport = getSportFromParam(sport);
   const rankedAis = getRankedAis();
-  const todayCombinations = getTodayCombinations();
-  const recentResults = getSettledCombinations().slice(0, 5);
+  const todayCombinations = selectedSport
+    ? getTodayCombinations().filter((combination) => combination.selections.some((selection) => selection.sport === selectedSport))
+    : getTodayCombinations();
+  const filteredMatches = selectedSport ? featuredMatches.filter((match) => match.sport === selectedSport) : featuredMatches;
+  const filteredBattleMatches = selectedSport ? analysisMatches.filter((match) => match.sport === selectedSport) : analysisMatches;
   const leader = rankedAis[0];
   const totalStake = todayCombinations.reduce((total, combination) => total + combination.stake, 0);
-  const highestOdds = Math.max(...todayCombinations.map((combination) => combination.totalOdds));
-  const divisiveMatch = getMostDivisiveMatch();
-  const strongConsensusMatch = getStrongConsensusMatch();
+  const highestOdds = todayCombinations.length > 0 ? Math.max(...todayCombinations.map((combination) => combination.totalOdds)) : 0;
+  const divisiveMatch = filteredBattleMatches[0] ?? getMostDivisiveMatch();
 
   return (
     <div>
@@ -74,164 +76,63 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container-shell py-10">
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-accent-green">ROI Leaderboard</p>
-            <h2 className="mt-2 text-2xl font-black text-white">누가 가장 잘 맞추고 있나</h2>
-          </div>
-          <p className="text-sm text-slate-400">AI 이름보다 최근 30일 ROI와 적중 흐름을 먼저 비교합니다.</p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {[...rankedAis].sort((a, b) => b.recent30DayRoi - a.recent30DayRoi).map((ai) => (
-            <RecentPerformanceCard key={ai.id} ai={ai} />
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-accent-green">Today Combinations</p>
-          <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 조합</h2>
-          <p className="mt-2 text-sm text-slate-400">AI별 선택 경기 수, 조합 배당률, 투자금, 예상 수익을 비교합니다.</p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {todayCombinations.map((combination) => (
-            <CombinationCard key={combination.id} combination={combination} compact />
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-accent-green">AI Decision Process</p>
-          <h2 className="mt-2 text-2xl font-black text-white">오늘 AI는 어떻게 조합을 만들었을까?</h2>
-          <p className="mt-2 text-sm text-slate-400">
-            AI는 오늘 경기 전체를 검토한 뒤 후보를 좁히고, 최종 선택만 조합으로 생성합니다.
-          </p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {decisionProcesses.map((process) => (
-            <DecisionProcessCard key={process.aiName} process={process} />
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-accent-green">AI Battle Arena</p>
-          <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 배틀</h2>
-          <p className="mt-2 text-sm text-slate-400">오늘 가장 뜨거운 의견 대결을 한 경기 기준으로 확인합니다.</p>
-        </div>
-        <BattleCard match={divisiveMatch} featured />
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ConsensusMatchPanel
-            eyebrow="Most Divisive Match"
-            title="오늘 가장 의견이 갈리는 경기"
-            description="AI들이 서로 다른 방향을 보는 경기입니다. 왜 판단이 갈렸는지 분석 비교에서 확인해보세요."
-            match={divisiveMatch}
-          />
-          <ConsensusMatchPanel
-            eyebrow="Strong Consensus"
-            title="오늘 AI들이 모두 동의한 경기"
-            description="GPT, Gemini, DeepSeek가 같은 방향을 보는 경기입니다. AI 전원이 같은 판단을 낸 이유를 비교해보세요."
-            match={strongConsensusMatch}
-          />
-        </div>
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-accent-green">AI Style Matchup</p>
-          <h2 className="mt-2 text-2xl font-black text-white">AI 스타일 비교</h2>
-          <p className="mt-2 text-sm text-slate-400">같은 경기도 AI마다 다른 논리로 해석합니다.</p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {aiCompetitors.map((ai) => (
-            <AiProfileCard key={ai.id} ai={ai} />
-          ))}
-        </div>
-      </section>
-
-      <FeaturedMatches matches={featuredMatches} />
-
-      <section className="container-shell pb-12">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="오늘 조합 수" value={`${todayCombinations.length}개`} detail="AI별 1개 조합 생성" />
-          <MetricCard label="오늘 총 폴더 수" value={`${todayCombinations.reduce((total, item) => total + item.selections.length, 0)}폴더`} tone="accent" />
-          <MetricCard label="현재 1위 AI" value={leader.name} detail={`${leader.strategy} · ${formatCurrency(leader.currentBalance)}`} />
-          <MetricCard label="전체 평균 ROI" value={formatPercent(getAverageRoi())} tone="positive" />
-        </div>
-      </section>
-
-      <section className="container-shell pb-12">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-accent-green">AI Asset League</p>
-            <h2 className="mt-2 text-2xl font-black text-white">AI 자산 랭킹</h2>
-          </div>
-          <Link href="/ranking" className="text-sm font-semibold text-slate-300 hover:text-white">
-            전체 보기
-          </Link>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {rankedAis.map((ai, index) => (
-            <AiRankingCard key={ai.id} ai={ai} rank={index + 1} />
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell pb-16">
-        <RecentCombinationResults combinations={recentResults} />
-      </section>
-    </div>
-  );
-}
-
-function ConsensusMatchPanel({
-  eyebrow,
-  title,
-  description,
-  match,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  match: AnalysisMatch;
-}) {
-  return (
-    <div className="panel p-6">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-accent-blue">{eyebrow}</p>
-          <h2 className="mt-2 text-2xl font-black text-white">{title}</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
-        </div>
-        <ConsensusBadge score={match.consensusScore} label={match.consensusLabel} size="lg" />
-      </div>
-
-      <div className="mt-5 rounded-lg border border-white/10 bg-black/20 p-5">
-        <p className="text-xs font-semibold text-slate-500">
-          {match.league} · {match.sport}
-        </p>
-        <h3 className="mt-2 text-xl font-black text-white">{match.match}</h3>
-        <div className="mt-5 grid gap-3">
-          {match.analyses.map((analysis) => (
-            <div key={analysis.aiName} className="flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2">
-              <span className="font-bold text-white">{analysis.aiName}</span>
-              <span className="text-sm font-semibold text-accent-green">{analysis.prediction}</span>
+      <div className="container-shell grid gap-6 py-12 lg:grid-cols-[220px_1fr]">
+        <SportsSidebar basePath="/" activeSport={sport} />
+        <main className="space-y-12">
+          <section>
+            <div className="mb-5">
+              <p className="text-sm font-semibold text-accent-green">Today Combinations</p>
+              <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 조합</h2>
+              <p className="mt-2 text-sm text-slate-400">오늘 각 AI가 실제로 선택한 조합과 투자금을 먼저 확인합니다.</p>
             </div>
-          ))}
-        </div>
-        <Link
-          href={`/analysis/${match.id}`}
-          className="mt-5 inline-flex items-center gap-2 rounded-md bg-accent-green px-4 py-2 text-sm font-bold text-black"
-        >
-          분석 비교 보기 <ArrowRight size={16} />
-        </Link>
+            <div className="grid gap-4 xl:grid-cols-3">
+              {todayCombinations.map((combination) => (
+                <CombinationCard key={combination.id} combination={combination} compact />
+              ))}
+            </div>
+            {todayCombinations.length === 0 ? <EmptySportState /> : null}
+          </section>
+
+          <section>
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-accent-green">ROI Leaderboard</p>
+                <h2 className="mt-2 text-2xl font-black text-white">최근 30일 ROI 리더보드</h2>
+              </div>
+              <p className="text-sm text-slate-400">시즌 성적과 최근 흐름은 별도로 봅니다.</p>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-3">
+              {[...rankedAis].sort((a, b) => b.recent30DayRoi - a.recent30DayRoi).map((ai) => (
+                <RecentPerformanceCard key={ai.id} ai={ai} />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="mb-5">
+              <p className="text-sm font-semibold text-accent-green">AI Battle Arena</p>
+              <h2 className="mt-2 text-2xl font-black text-white">오늘의 AI 배틀</h2>
+              <p className="mt-2 text-sm text-slate-400">선택한 종목의 대표 AI 의견 대결을 확인합니다.</p>
+            </div>
+            <BattleCard match={divisiveMatch} featured />
+          </section>
+
+          <section>
+            <div className="mb-5">
+              <p className="text-sm font-semibold text-accent-green">AI Decision Process</p>
+              <h2 className="mt-2 text-2xl font-black text-white">AI 의사결정 과정</h2>
+              <p className="mt-2 text-sm text-slate-400">분석한 경기에서 후보를 좁히고 최종 조합만 선택합니다.</p>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-3">
+              {decisionProcesses.map((process) => (
+                <DecisionProcessCard key={process.aiName} process={process} />
+              ))}
+            </div>
+          </section>
+
+          <FeaturedMatches matches={filteredMatches} contained={false} />
+          {filteredMatches.length === 0 ? <EmptySportState /> : null}
+        </main>
       </div>
     </div>
   );
@@ -292,6 +193,14 @@ function HeroStat({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-white/10 bg-black/20 p-3">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="mt-1 truncate text-sm font-black text-white sm:text-base">{value}</p>
+    </div>
+  );
+}
+
+function EmptySportState() {
+  return (
+    <div className="panel mt-4 p-5 text-sm text-slate-400">
+      현재 더미데이터에는 해당 종목 경기가 없습니다. 실제 API 연동 시 이 영역에 종목별 경기와 AI 분석이 표시됩니다.
     </div>
   );
 }

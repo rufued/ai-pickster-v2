@@ -1,17 +1,17 @@
 import type { AIDecisionProcess, AICompetitor, AnalysisMatch, Combination, CommunityPost, FeaturedMatch } from "./types";
 
-export const aiCompetitors: AICompetitor[] = [
+export const rankingStats: AICompetitor[] = [
   {
     id: "gpt",
     name: "GPT",
     initials: "GP",
-    reliabilityGrade: "A+",
-    recent30DayRoi: 28.6,
-    recent30DayAccuracy: 63,
-    recent30DayWins: 42,
-    recent30DayLosses: 25,
-    recent10Results: ["적중", "적중", "미적중", "적중", "적중", "적중", "미적중", "적중", "적중", "적중"],
-    recentRoiTrend: [18.4, 19.2, 17.1, 20.6, 22.8, 24.1, 21.9, 25.2, 27.4, 28.6],
+    reliabilityGrade: "A",
+    recent30DayRoi: 8.6,
+    recent30DayAccuracy: 68,
+    recent30DayWins: 34,
+    recent30DayLosses: 16,
+    recent10Results: ["적중", "적중", "미적중", "적중", "적중", "적중", "미적중", "적중", "미적중", "적중"],
+    recentRoiTrend: [4.2, 5.1, 3.8, 5.7, 6.4, 7.2, 5.9, 8.1, 7.4, 8.6],
     analysisStyle: "데이터 분석형",
     investmentPhilosophy: "높은 적중률을 우선하는 안정적인 전략",
     signatureTraits: ["최근 경기 데이터", "선발투수", "팀 전력", "평균 득점"],
@@ -20,26 +20,26 @@ export const aiCompetitors: AICompetitor[] = [
     bestHitCombination: "EPL + KBO + LCK 판단 조합",
     bestHitOdds: 7.18,
     startingBalance: 1000,
-    currentBalance: 1286,
-    totalProfit: 286,
-    roi: 28.6,
-    accuracy: 64.7,
+    currentBalance: 1086,
+    totalProfit: 86,
+    roi: 8.6,
+    accuracy: 70.6,
     totalPicks: 17,
     wins: 11,
     losses: 6,
     battleWins: 42,
     battleLosses: 28,
-    recentResults: ["적중", "적중", "미적중", "적중", "미적중"],
+    recentResults: ["적중", "미적중", "적중", "미적중", "적중"],
   },
   {
     id: "gemini",
     name: "Gemini",
     initials: "GE",
-    reliabilityGrade: "A",
+    reliabilityGrade: "B+",
     recent30DayRoi: 17.2,
     recent30DayAccuracy: 58,
-    recent30DayWins: 38,
-    recent30DayLosses: 28,
+    recent30DayWins: 29,
+    recent30DayLosses: 21,
     recent10Results: ["미적중", "적중", "적중", "미적중", "적중", "적중", "적중", "미적중", "적중", "미적중"],
     recentRoiTrend: [11.6, 9.8, 12.4, 10.2, 13.7, 15.1, 18.3, 16.5, 19.4, 17.2],
     analysisStyle: "균형 분석형",
@@ -50,28 +50,28 @@ export const aiCompetitors: AICompetitor[] = [
     bestHitCombination: "KBO + EPL + LCK 판단 조합",
     bestHitOdds: 10.64,
     startingBalance: 1000,
-    currentBalance: 1168,
-    totalProfit: 168,
-    roi: 16.8,
+    currentBalance: 958,
+    totalProfit: -42,
+    roi: -4.2,
     accuracy: 58.8,
     totalPicks: 17,
     wins: 10,
     losses: 7,
     battleWins: 38,
     battleLosses: 32,
-    recentResults: ["미적중", "적중", "적중", "적중", "미적중"],
+    recentResults: ["적중", "적중", "미적중", "적중", "미적중"],
   },
   {
     id: "deepseek",
     name: "DeepSeek",
     initials: "DS",
     reliabilityGrade: "B",
-    recent30DayRoi: 12.8,
-    recent30DayAccuracy: 55,
-    recent30DayWins: 35,
-    recent30DayLosses: 29,
-    recent10Results: ["미적중", "미적중", "적중", "미적중", "미적중", "적중", "적중", "미적중", "적중", "미적중"],
-    recentRoiTrend: [-18.5, -22.1, -8.4, -12.7, -20.0, -4.8, 7.2, 1.4, 15.6, 12.8],
+    recent30DayRoi: -12.4,
+    recent30DayAccuracy: 43,
+    recent30DayWins: 21,
+    recent30DayLosses: 28,
+    recent10Results: ["미적중", "미적중", "적중", "미적중", "미적중", "적중", "미적중", "미적중", "적중", "미적중"],
+    recentRoiTrend: [21.4, 18.2, 26.8, 14.1, 7.5, 15.8, 4.2, -3.1, -8.6, -12.4],
     analysisStyle: "가치 탐색형",
     investmentPhilosophy: "시장과 다른 기회를 찾는 전략",
     signatureTraits: ["배당 가치", "시장 과열", "숨은 변수", "업셋 가능성"],
@@ -80,9 +80,9 @@ export const aiCompetitors: AICompetitor[] = [
     bestHitCombination: "KBO + EPL + LCK 판단 조합",
     bestHitOdds: 15.34,
     startingBalance: 1000,
-    currentBalance: 800,
-    totalProfit: -200,
-    roi: -20.0,
+    currentBalance: 1434,
+    totalProfit: 434,
+    roi: 43.4,
     accuracy: 47.1,
     totalPicks: 17,
     wins: 8,
@@ -92,6 +92,8 @@ export const aiCompetitors: AICompetitor[] = [
     recentResults: ["미적중", "적중", "미적중", "미적중", "적중"],
   },
 ];
+
+export const aiCompetitors = rankingStats;
 
 export const decisionProcesses: AIDecisionProcess[] = [
   {
@@ -350,6 +352,51 @@ export const analysisMatches: AnalysisMatch[] = [
       },
     ],
   },
+  {
+    id: "seoul-kcc",
+    match: "서울 SK vs 부산 KCC",
+    sport: "농구",
+    league: "KBL",
+    startTime: "2026-06-01 19:00",
+    headline: "페이스와 외곽 성공률 변수가 큰 KBL 주요 경기",
+    consensusScore: 67,
+    consensusLabel: "Partial Consensus",
+    analyses: [
+      {
+        aiName: "GPT",
+        prediction: "서울 SK 승",
+        confidence: 57,
+        analysisAngle: "홈 득실 지표 분석",
+        decisionStatus: "후보만 선정",
+        decisionReason: "홈 득실 지표는 우세하지만 외곽 변동성이 있어 최종 조합에서는 제외했습니다.",
+        summary: "홈 경기 득점 효율과 리바운드 지표에서 서울 SK가 근소하게 앞섭니다.",
+        strengths: ["홈 득점 효율", "리바운드 우위"],
+        risks: ["외곽 성공률 변동", "벤치 득점 기복"],
+      },
+      {
+        aiName: "Gemini",
+        prediction: "서울 SK 승",
+        confidence: 59,
+        analysisAngle: "최근 경기 흐름 분석",
+        decisionStatus: "조합 포함",
+        decisionReason: "최근 공격 흐름과 홈 이점이 함께 확인되어 오늘 조합에 포함했습니다.",
+        summary: "최근 공격 템포가 안정적이고 홈에서 턴오버 관리가 개선된 점이 긍정적입니다.",
+        strengths: ["최근 공격 흐름", "홈 코트 이점"],
+        risks: ["파울 트러블", "4쿼터 집중력"],
+      },
+      {
+        aiName: "DeepSeek",
+        prediction: "부산 KCC +3.5",
+        confidence: 52,
+        analysisAngle: "핸디캡 가치 분석",
+        decisionStatus: "최종 제외",
+        decisionReason: "핸디캡 가치는 있지만 최근 부진 흐름을 고려해 최종 선택에서는 제외했습니다.",
+        summary: "시장 기대보다 접전 가능성이 남아 있지만 변동성이 큰 경기입니다.",
+        strengths: ["핸디캡 가치", "접전 가능성"],
+        risks: ["최근 야투 난조", "원정 경기 부담"],
+      },
+    ],
+  },
 ];
 
 export const combinations: Combination[] = [
@@ -385,7 +432,7 @@ export const combinations: Combination[] = [
       { analysisId: "lg-kia", match: "LG Twins vs KIA Tigers", league: "KBO", sport: "야구", prediction: "KIA 승", odds: 2.05 },
       { analysisId: "mancity-liverpool", match: "맨시티 vs 리버풀", league: "EPL", sport: "축구", prediction: "맨시티 승", odds: 1.72 },
       { analysisId: "t1-gen", match: "T1 vs GEN", league: "LCK", sport: "e스포츠", prediction: "GEN 승", odds: 2.05 },
-      { analysisId: "kt-ssg", match: "KT Wiz vs SSG Landers", league: "KBO", sport: "야구", prediction: "SSG +1.5", odds: 1.22 },
+      { analysisId: "seoul-kcc", match: "서울 SK vs 부산 KCC", league: "KBL", sport: "농구", prediction: "서울 SK 승", odds: 1.57 },
       { analysisId: "hanwha-lotte", match: "한화 Eagles vs 롯데 Giants", league: "KBO", sport: "야구", prediction: "언더 8.5", odds: 1.88 },
     ],
   },
@@ -413,11 +460,11 @@ const historyCombinations: Combination[] = [
     ...combinations[0],
     id: "combo-004",
     date: "2026-05-31",
-    status: "적중",
-    result: "4/4 적중",
+    status: "미적중",
+    result: "3/4 적중",
     totalOdds: 2.86,
     potentialReturn: 286,
-    profit: 186,
+    profit: -100,
     selections: [
       ...combinations[0].selections,
       { analysisId: "kt-ssg", match: "SSG Landers vs NC Dinos", league: "KBO", sport: "야구", prediction: "SSG 승", odds: 1.68 },
@@ -454,9 +501,9 @@ const historyCombinations: Combination[] = [
     date: "2026-05-30",
     status: "적중",
     result: "5/5 적중",
-    totalOdds: 2,
-    potentialReturn: 200,
-    profit: 100,
+    totalOdds: 2.86,
+    potentialReturn: 286,
+    profit: 186,
     selections: [
       ...combinations[0].selections,
       { analysisId: "hanwha-lotte", match: "한화 Eagles vs 롯데 Giants", league: "KBO", sport: "야구", prediction: "언더 8.5", odds: 1.44 },
@@ -469,20 +516,20 @@ const historyCombinations: Combination[] = [
     date: "2026-05-30",
     status: "적중",
     result: "4/4 적중",
-    totalOdds: 3.68,
-    potentialReturn: 368,
-    profit: 268,
+    totalOdds: 1.58,
+    potentialReturn: 158,
+    profit: 58,
     selections: combinations[1].selections.slice(0, 4),
   },
   {
     ...combinations[2],
     id: "combo-009",
     date: "2026-05-30",
-    status: "미적중",
-    result: "4/5 적중",
-    totalOdds: 15.34,
-    potentialReturn: 1534,
-    profit: -100,
+    status: "적중",
+    result: "5/5 적중",
+    totalOdds: 6.34,
+    potentialReturn: 634,
+    profit: 534,
     selections: [
       ...combinations[2].selections,
       { analysisId: "mancity-liverpool", match: "토트넘 vs 아스널", league: "EPL", sport: "축구", prediction: "무승부", odds: 3.2 },
@@ -492,6 +539,7 @@ const historyCombinations: Combination[] = [
 ];
 
 export const allCombinations: Combination[] = [...combinations, ...historyCombinations];
+export const historyRecords = historyCombinations;
 
 export const featuredMatches: FeaturedMatch[] = analysisMatches.map((match) => ({
   id: match.id,
@@ -500,6 +548,27 @@ export const featuredMatches: FeaturedMatch[] = analysisMatches.map((match) => (
   match: match.match,
   startTime: match.startTime,
 }));
+
+export const aiProfiles = rankingStats.map(({ id, name, initials, analysisStyle, investmentPhilosophy, signatureTraits, strategy, strategyDescription }) => ({
+  id,
+  name,
+  initials,
+  analysisStyle,
+  investmentPhilosophy,
+  signatureTraits,
+  strategy,
+  strategyDescription,
+}));
+export const matches = featuredMatches;
+export const matchAnalyses = analysisMatches;
+export const battleResults = analysisMatches
+  .filter((match) => match.actualResult)
+  .map((match) => ({
+    matchId: match.id,
+    actualResult: match.actualResult,
+    winners: match.analyses.filter((analysis) => analysis.prediction === match.actualResult).map((analysis) => analysis.aiName),
+    losers: match.analyses.filter((analysis) => analysis.prediction !== match.actualResult).map((analysis) => analysis.aiName),
+  }));
 
 export const communityPosts: CommunityPost[] = [
   {
