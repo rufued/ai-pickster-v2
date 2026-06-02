@@ -1,4 +1,4 @@
-import type { AIDecisionProcess, AICompetitor, AnalysisMatch, Combination, CommunityPost, FeaturedMatch } from "./types";
+import type { AIDecisionProcess, AICompetitor, AnalysisMatch, ApiCombination, Combination, CommunityPost, FeaturedMatch, Match, Prediction } from "./types";
 
 export const rankingStats: AICompetitor[] = [
   {
@@ -682,7 +682,7 @@ const upcomingAnalysisMatches: AnalysisMatch[] = [
 ];
 
 function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
-  const [home, away = "상대"] = match.match.split(/\s+vs\s+/i);
+  const [home, away = "상대"] = splitMatchTeams(match.match);
 
   return {
     ...match,
@@ -697,6 +697,96 @@ function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
       };
     }),
   };
+}
+
+function splitMatchTeams(match: string) {
+  return match.split(/\s+vs\s+/i);
+}
+
+function getSettledScore(match: AnalysisMatch) {
+  if (!match.actualResult || match.sport === "Formula 1") {
+    return undefined;
+  }
+
+  const [homeTeam, awayTeam = "상대"] = splitMatchTeams(match.match);
+  const side = getPredictionSide(match.actualResult, homeTeam, awayTeam);
+  const preset = createScorePreset(match.sport, side, 0, match.actualResult);
+  const score = preset.score.replaceAll("{home}", homeTeam).replaceAll("{away}", awayTeam);
+  const parsedScore = score.match(/\s(\d+)\s*:\s*(\d+)\s/);
+
+  if (!parsedScore) {
+    return undefined;
+  }
+
+  return {
+    homeScore: Number(parsedScore[1]),
+    awayScore: Number(parsedScore[2]),
+  };
+}
+
+function buildAnalysisMatches(matchModels: Match[], predictionModels: Prediction[], sourceMatches: AnalysisMatch[]): AnalysisMatch[] {
+  const predictionsByMatchId = predictionModels.reduce<Record<string, Prediction[]>>((acc, prediction) => {
+    acc[prediction.matchId] = [...(acc[prediction.matchId] ?? []), prediction];
+    return acc;
+  }, {});
+  const sourceById = new Map(sourceMatches.map((match) => [match.id, match]));
+
+  return matchModels.map((match) => {
+    const source = sourceById.get(match.id);
+    const matchPredictions = predictionsByMatchId[match.id] ?? [];
+
+    return {
+      id: match.id,
+      match: `${match.homeTeam} vs ${match.awayTeam}`,
+      sport: match.sport,
+      league: match.league,
+      startTime: match.startTime,
+      headline: match.headline ?? source?.headline ?? "",
+      consensusScore: source?.consensusScore ?? getConsensusScore(matchPredictions),
+      consensusLabel: source?.consensusLabel ?? getConsensusLabel(getConsensusScore(matchPredictions)),
+      actualResult: source?.actualResult,
+      analyses: matchPredictions.map((prediction) => ({
+        aiName: prediction.aiName,
+        prediction: prediction.pick,
+        expectedScore: prediction.predictedScore,
+        predictedTotal: prediction.predictedTotal,
+        confidence: prediction.confidence,
+        roiChange: prediction.analysis.roiChange,
+        analysisAngle: prediction.analysis.angle,
+        decisionStatus: prediction.analysis.decisionStatus,
+        decisionReason: prediction.analysis.decisionReason,
+        summary: prediction.analysis.summary,
+        strengths: prediction.analysis.strengths,
+        risks: prediction.analysis.risks,
+      })),
+    };
+  });
+}
+
+function getConsensusScore(matchPredictions: Prediction[]) {
+  if (matchPredictions.length === 0) {
+    return 0;
+  }
+
+  const counts = matchPredictions.reduce<Record<string, number>>((acc, prediction) => {
+    acc[prediction.pick] = (acc[prediction.pick] ?? 0) + 1;
+    return acc;
+  }, {});
+  const highestCount = Math.max(...Object.values(counts));
+
+  return Math.round((highestCount / matchPredictions.length) * 100);
+}
+
+function getConsensusLabel(score: number) {
+  if (score === 100) {
+    return "Strong Consensus";
+  }
+
+  if (score >= 67) {
+    return "Partial Consensus";
+  }
+
+  return "Split Opinion";
 }
 
 function getPredictionSide(prediction: string, home: string, away: string) {
@@ -821,7 +911,47 @@ function getTotalDirection(prediction: string) {
   return undefined;
 }
 
-export const analysisMatches: AnalysisMatch[] = [...baseAnalysisMatches, ...upcomingAnalysisMatches].map(addExpectedScores);
+const analysisSourceMatches: AnalysisMatch[] = [...baseAnalysisMatches, ...upcomingAnalysisMatches].map(addExpectedScores);
+
+export const matches: Match[] = analysisSourceMatches.map((match) => {
+  const [homeTeam, awayTeam = "상대"] = splitMatchTeams(match.match);
+  const settledScore = getSettledScore(match);
+
+  return {
+    id: match.id,
+    sport: match.sport,
+    league: match.league,
+    homeTeam,
+    awayTeam,
+    startTime: match.startTime,
+    status: match.actualResult ? "final" : "scheduled",
+    homeScore: settledScore?.homeScore,
+    awayScore: settledScore?.awayScore,
+    headline: match.headline,
+  };
+});
+
+export const predictions: Prediction[] = analysisSourceMatches.flatMap((match) =>
+  match.analyses.map((analysis) => ({
+    aiName: analysis.aiName,
+    matchId: match.id,
+    pick: analysis.prediction,
+    confidence: analysis.confidence,
+    predictedScore: analysis.expectedScore,
+    predictedTotal: analysis.predictedTotal,
+    analysis: {
+      angle: analysis.analysisAngle,
+      decisionStatus: analysis.decisionStatus,
+      decisionReason: analysis.decisionReason,
+      summary: analysis.summary,
+      strengths: analysis.strengths,
+      risks: analysis.risks,
+      roiChange: analysis.roiChange,
+    },
+  })),
+);
+
+export const analysisMatches: AnalysisMatch[] = buildAnalysisMatches(matches, predictions, analysisSourceMatches);
 
 export const combinations: Combination[] = [
   {
@@ -964,6 +1094,24 @@ const historyCombinations: Combination[] = [
 
 export const allCombinations: Combination[] = [...combinations, ...historyCombinations];
 export const historyRecords = historyCombinations;
+export const apiCombinations: ApiCombination[] = allCombinations.map((combination) => ({
+  aiName: combination.aiName,
+  combinationId: combination.id,
+  date: combination.date,
+  style: combination.style,
+  legs: combination.selections.map((selection) => ({
+    matchId: selection.analysisId,
+    pick: selection.prediction,
+    odds: selection.odds,
+  })),
+  odds: combination.totalOdds,
+  stake: combination.stake,
+  potentialProfit: combination.potentialReturn - combination.stake,
+  potentialReturn: combination.potentialReturn,
+  status: combination.status,
+  result: combination.result,
+  profit: combination.profit,
+}));
 
 export const featuredMatches: FeaturedMatch[] = analysisMatches.map((match) => ({
   id: match.id,
@@ -983,7 +1131,6 @@ export const aiProfiles = rankingStats.map(({ id, name, initials, analysisStyle,
   strategy,
   strategyDescription,
 }));
-export const matches = featuredMatches;
 export const matchAnalyses = analysisMatches;
 export const battleResults = analysisMatches
   .filter((match) => match.actualResult)

@@ -10,6 +10,60 @@ export type ConsensusLabel = "Strong Consensus" | "Partial Consensus" | "Split O
 
 export type DecisionStatus = "조합 포함" | "후보만 선정" | "최종 제외";
 
+export type MatchStatus = "scheduled" | "live" | "final";
+
+export type Match = {
+  id: string;
+  sport: Sport;
+  league: string;
+  homeTeam: string;
+  awayTeam: string;
+  startTime: string;
+  status: MatchStatus;
+  homeScore?: number;
+  awayScore?: number;
+  headline?: string;
+};
+
+export type Prediction = {
+  aiName: string;
+  matchId: string;
+  pick: string;
+  confidence: number;
+  predictedScore?: string;
+  predictedTotal?: number;
+  analysis: {
+    angle: string;
+    decisionStatus: DecisionStatus;
+    decisionReason: string;
+    summary: string;
+    strengths: string[];
+    risks: string[];
+    roiChange?: number;
+  };
+};
+
+export type CombinationLeg = {
+  matchId: string;
+  pick: string;
+  odds: number;
+};
+
+export type ApiCombination = {
+  aiName: string;
+  combinationId: string;
+  date: string;
+  style: AIStyle;
+  legs: CombinationLeg[];
+  odds: number;
+  stake: number;
+  potentialProfit: number;
+  potentialReturn: number;
+  status: CombinationStatus;
+  result: string;
+  profit: number;
+};
+
 export type AIDecisionProcess = {
   aiName: string;
   reviewedMatches: number;
