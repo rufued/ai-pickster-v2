@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { aiCompetitors, analysisMatches, getAnalysisMatch } from "@/lib/data";
-import { formatSignedCurrency, formatTime } from "@/lib/format";
+import { formatDateTime, formatSignedCurrency } from "@/lib/format";
 
 type BattleDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -39,7 +39,8 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="text-sm font-semibold text-accent-green">
-              {match.league} · {match.sport} · {formatTime(match.startTime)}
+              {match.league} · {match.sport} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
             </p>
             <h1 className="mt-2 flex items-center gap-3 text-3xl font-black text-white sm:text-4xl">
               <Swords className="text-accent-green" size={30} /> {match.match}

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
+import { createTemporaryMlbAnalysis } from "@/lib/analysis/liveMatchAnalysis";
+import { fetchUpcomingOdds } from "@/lib/api/theOddsApi";
 import { aiCompetitors, analysisMatches, getAnalysisMatch } from "@/lib/data";
-import { formatPredictedTotal, formatTime } from "@/lib/format";
+import { formatDateTime, formatPredictedTotal } from "@/lib/format";
 
 type AnalysisDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -15,7 +17,7 @@ export function generateStaticParams() {
 
 export default async function AnalysisDetailPage({ params }: AnalysisDetailPageProps) {
   const { id } = await params;
-  const match = getAnalysisMatch(id);
+  const match = getAnalysisMatch(id) ?? (await getLiveMlbAnalysisMatch(id));
 
   if (!match) {
     notFound();
@@ -31,7 +33,8 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="text-sm font-semibold text-accent-green">
-              {match.sport} · {match.league} · {formatTime(match.startTime)}
+              {match.sport} · {match.league} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
             </p>
             <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">{match.match}</h1>
             <p className="mt-3 text-slate-400">{match.headline}</p>
@@ -112,6 +115,17 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
       </div>
     </section>
   );
+}
+
+async function getLiveMlbAnalysisMatch(id: string) {
+  if (!id.startsWith("mlb-")) {
+    return undefined;
+  }
+
+  const matches = await fetchUpcomingOdds("baseball_mlb", { fallback: [] });
+  const match = matches.find((item) => item.id === id);
+
+  return match ? createTemporaryMlbAnalysis(match) : undefined;
 }
 
 function DetailBlock({ label, items, tone }: { label: string; items: string[]; tone: "positive" | "negative" }) {

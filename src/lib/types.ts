@@ -23,6 +23,11 @@ export type Match = {
   homeScore?: number;
   awayScore?: number;
   headline?: string;
+  odds?: {
+    home?: number;
+    away?: number;
+    draw?: number;
+  };
 };
 
 export type Prediction = {

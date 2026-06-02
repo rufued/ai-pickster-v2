@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Layers3, Trophy } from "lucide-react";
 import { HomeSportsView } from "@/components/home/HomeSportsView";
+import { fetchUpcomingOdds } from "@/lib/api/theOddsApi";
 import { formatCurrency } from "@/lib/format";
 import { normalizeSportCategoryId } from "@/lib/sports";
 import {
@@ -10,6 +11,7 @@ import {
   getMostDivisiveMatch,
   getRankedAis,
   getTodayCombinations,
+  matches,
 } from "@/lib/data";
 import type { Combination } from "@/lib/types";
 
@@ -28,6 +30,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   const totalStake = todayCombinations.reduce((total, combination) => total + combination.stake, 0);
   const highestOdds = todayCombinations.length > 0 ? Math.max(...todayCombinations.map((combination) => combination.totalOdds)) : 0;
   const divisiveMatch = getMostDivisiveMatch();
+  const baseballFallbackMatches = matches.filter((match) => match.sport === "야구");
+  const baseballApiMatches = initialSport === "baseball" ? await fetchUpcomingOdds("baseball_mlb", { fallback: baseballFallbackMatches }) : undefined;
 
   return (
     <div>
@@ -80,6 +84,7 @@ export default async function Home({ searchParams }: HomePageProps) {
         battleMatches={analysisMatches}
         fallbackBattleMatch={divisiveMatch}
         initialSport={initialSport}
+        baseballApiMatches={baseballApiMatches}
       />
     </div>
   );

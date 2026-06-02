@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Swords } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import type { AnalysisMatch } from "@/lib/types";
-import { formatTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { aiCompetitors } from "@/lib/data";
 
 type BattleCardProps = {
@@ -18,7 +18,8 @@ export function BattleCard({ match, featured = false }: BattleCardProps) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold text-slate-500">
-            {match.league} · {match.sport} · {formatTime(match.startTime)}
+            {match.league} · {match.sport} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+            <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
           </p>
           <h3 className="mt-2 text-2xl font-black text-white">{match.match}</h3>
         </div>

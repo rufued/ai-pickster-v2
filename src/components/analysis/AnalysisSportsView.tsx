@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, BarChart3 } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { SportsSidebar } from "@/components/sports/SportsSidebar";
-import { formatTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { getSportFromParam, normalizeSportCategoryId } from "@/lib/sports";
 import type { AnalysisMatch } from "@/lib/types";
 
@@ -43,7 +43,8 @@ export function AnalysisSportsView({ matches, initialSport = "all" }: AnalysisSp
                   <span className="h-1 w-1 rounded-full bg-slate-600" />
                   <span>{match.league}</span>
                   <span className="h-1 w-1 rounded-full bg-slate-600" />
-                  <span>{formatTime(match.startTime)}</span>
+                  <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+                  <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
                 </div>
                 <h2 className="mt-2 text-xl font-black text-white">{match.match}</h2>
                 <p className="mt-2 text-sm text-slate-400">{match.headline}</p>

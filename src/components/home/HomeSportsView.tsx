@@ -10,9 +10,9 @@ import { BattleCard } from "@/components/battle/BattleCard";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
-import { formatPercent, formatTime } from "@/lib/format";
+import { formatDateTime, formatPercent } from "@/lib/format";
 import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
-import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch } from "@/lib/types";
+import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch, Match } from "@/lib/types";
 
 type HomeSportsViewProps = {
   ais: AICompetitor[];
@@ -22,9 +22,10 @@ type HomeSportsViewProps = {
   battleMatches: AnalysisMatch[];
   fallbackBattleMatch: AnalysisMatch;
   initialSport?: string;
+  baseballApiMatches?: Match[];
 };
 
-export function HomeSportsView({ ais, combinations, decisionProcesses, matches, battleMatches, fallbackBattleMatch, initialSport = "all" }: HomeSportsViewProps) {
+export function HomeSportsView({ ais, combinations, decisionProcesses, matches, battleMatches, fallbackBattleMatch, initialSport = "all", baseballApiMatches }: HomeSportsViewProps) {
   const router = useRouter();
   const [selectedSport, setSelectedSport] = useState(() => normalizeSportCategoryId(initialSport));
   const sport = getSportFromParam(selectedSport);
@@ -33,6 +34,7 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
   const filteredBattleMatches = useMemo(() => (sport ? battleMatches.filter((match) => match.sport === sport) : battleMatches), [battleMatches, sport]);
   const selectedBattleMatch = filteredBattleMatches[0] ?? fallbackBattleMatch;
   const isAllSports = selectedSport === "all";
+  const shouldShowBaseballApiMatches = selectedSport === "baseball" && baseballApiMatches && baseballApiMatches.length > 0;
   const homeFeaturedMatches = filteredMatches.slice(0, 6);
   const handleSportSelect = (sportId: string) => {
     const normalizedSportId = normalizeSportCategoryId(sportId);
@@ -48,7 +50,9 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
     <div className="container-shell grid min-w-0 gap-4 overflow-hidden py-6 lg:grid-cols-[220px_1fr] lg:gap-6 lg:overflow-visible lg:py-12">
       <HomeSportsTabs selectedSport={selectedSport} onSelect={handleSportSelect} />
       <main className="min-w-0 space-y-8 lg:space-y-12">
-        {!isAllSports ? (
+        {shouldShowBaseballApiMatches ? (
+          <ApiUpcomingMatchList title="Baseball 예정 경기" matches={baseballApiMatches} />
+        ) : !isAllSports ? (
           <UpcomingMatchList title={`${selectedCategory?.label ?? "Sports"} 예정 경기`} matches={filteredBattleMatches} />
         ) : (
           <>
@@ -107,6 +111,59 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Match[] }) {
+  return (
+    <section>
+      <div className="mb-4 lg:mb-5">
+        <p className="text-xs font-semibold text-accent-green sm:text-sm">The Odds API 테스트</p>
+        <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">{title}</h2>
+        <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">Baseball 카테고리에서만 실제 upcoming odds 데이터를 우선 표시합니다.</p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {matches.map((match) => (
+          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
+              <span>{match.sport}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-600" />
+              <span>{match.league}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-600" />
+              <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-slate-500">홈팀</p>
+                <h3 className="mt-1 truncate text-lg font-black text-white">{match.homeTeam}</h3>
+              </div>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-400">VS</span>
+              <div className="min-w-0 text-right">
+                <p className="text-xs font-semibold text-slate-500">원정팀</p>
+                <h3 className="mt-1 truncate text-lg font-black text-white">{match.awayTeam}</h3>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <OddsStat label="홈 배당" value={match.odds?.home} />
+              <OddsStat label="원정 배당" value={match.odds?.away} />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function OddsStat({ label, value }: { label: string; value?: number }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-black/20 p-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-black text-accent-green">{value ? value.toFixed(2) : "정보 없음"}</p>
     </div>
   );
 }
@@ -172,7 +229,8 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
                   <span className="h-1 w-1 rounded-full bg-slate-600" />
                   <span>{match.league}</span>
                   <span className="h-1 w-1 rounded-full bg-slate-600" />
-                  <span>{formatTime(match.startTime)}</span>
+                  <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+                  <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
                 </div>
                 <h3 className="mt-2 text-xl font-black text-white">{match.match}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{match.headline}</p>

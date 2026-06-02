@@ -18,12 +18,46 @@ export const formatDate = (value: string) =>
     timeZone: "Asia/Seoul",
   }).format(new Date(value.replace(" ", "T")));
 
-export const formatTime = (value: string) => {
-  const timePart = value.trim().split(" ")[1] ?? value.trim().split("T")[1] ?? "";
-  const [hour = "00", minute = "00"] = timePart.split(":");
+export const formatDateTime = (value: string, mode: "desktop" | "mobile" = "desktop") => {
+  const { year, month, day, hour, minute } = getDateTimeParts(value);
 
-  return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+  if (mode === "mobile") {
+    return `${month}.${day} ${hour}:${minute}`;
+  }
+
+  return `${year}.${month}.${day} ${hour}:${minute}`;
 };
+
+export const formatTime = (value: string) => {
+  const { hour, minute } = getDateTimeParts(value);
+
+  return `${hour}:${minute}`;
+};
+
+function getDateTimeParts(value: string) {
+  const trimmedValue = value.trim();
+  const isoMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  const spacedMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+  const match = isoMatch ?? spacedMatch;
+
+  if (match) {
+    return {
+      year: match[1],
+      month: match[2],
+      day: match[3],
+      hour: match[4],
+      minute: match[5],
+    };
+  }
+
+  return {
+    year: "0000",
+    month: "00",
+    day: "00",
+    hour: "00",
+    minute: "00",
+  };
+}
 
 export const formatPredictedTotal = (sport: string, total?: number) => {
   if (total === undefined) {
