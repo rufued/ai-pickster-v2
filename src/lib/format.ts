@@ -15,10 +15,28 @@ export const formatDate = (value: string) =>
     month: "long",
     day: "numeric",
     weekday: "short",
+    timeZone: "Asia/Seoul",
   }).format(new Date(value.replace(" ", "T")));
 
-export const formatTime = (value: string) =>
-  new Intl.DateTimeFormat("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value.replace(" ", "T")));
+export const formatTime = (value: string) => {
+  const timePart = value.trim().split(" ")[1] ?? value.trim().split("T")[1] ?? "";
+  const [hour = "00", minute = "00"] = timePart.split(":");
+
+  return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+};
+
+export const formatPredictedTotal = (sport: string, total?: number) => {
+  if (total === undefined) {
+    return null;
+  }
+
+  if (sport === "축구") {
+    return `${total}골`;
+  }
+
+  if (sport === "테니스" || sport === "e스포츠") {
+    return `${total}세트`;
+  }
+
+  return `${total}점`;
+};

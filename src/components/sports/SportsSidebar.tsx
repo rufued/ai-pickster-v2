@@ -25,7 +25,7 @@ export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChan
             const active = activeSport === category.id || (!activeSport && category.id === "all");
             const href = category.id === "all" ? basePath : `${basePath}?sport=${category.id}`;
             const className = clsx(
-              "inline-flex h-10 flex-none items-center gap-2 whitespace-nowrap rounded-md border px-3 text-sm font-bold transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
+              "inline-flex h-10 flex-none cursor-pointer touch-manipulation items-center gap-2 whitespace-nowrap rounded-md border px-3 text-sm font-bold transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
               active
                 ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
                 : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",

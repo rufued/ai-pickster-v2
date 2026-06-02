@@ -122,7 +122,7 @@ export const decisionProcesses: AIDecisionProcess[] = [
   },
 ];
 
-export const analysisMatches: AnalysisMatch[] = [
+const baseAnalysisMatches: AnalysisMatch[] = [
   {
     id: "lg-kia",
     match: "LG Twins vs KIA Tigers",
@@ -398,6 +398,345 @@ export const analysisMatches: AnalysisMatch[] = [
     ],
   },
 ];
+
+function createUpcomingMatch({
+  id,
+  match,
+  sport,
+  league,
+  startTime,
+  headline,
+  gpt,
+  gemini,
+  deepseek,
+  consensusScore = 67,
+  consensusLabel = "Partial Consensus",
+}: {
+  id: string;
+  match: string;
+  sport: AnalysisMatch["sport"];
+  league: string;
+  startTime: string;
+  headline: string;
+  gpt: string;
+  gemini: string;
+  deepseek: string;
+  consensusScore?: AnalysisMatch["consensusScore"];
+  consensusLabel?: AnalysisMatch["consensusLabel"];
+}): AnalysisMatch {
+  return {
+    id,
+    match,
+    sport,
+    league,
+    startTime,
+    headline,
+    consensusScore,
+    consensusLabel,
+    analyses: [
+      {
+        aiName: "GPT",
+        prediction: gpt,
+        confidence: 58,
+        analysisAngle: "데이터 기반 사전 분석",
+        decisionStatus: "후보만 선정",
+        decisionReason: "기본 지표는 긍정적이지만 조합 우선순위에서는 후보로 분류했습니다.",
+        summary: "최근 경기 지표와 전력 안정성을 기준으로 가장 가능성이 높은 방향을 선택했습니다.",
+        strengths: ["최근 지표 안정성", "기본 전력 우세"],
+        risks: ["라인업 변수", "초반 흐름 변동"],
+      },
+      {
+        aiName: "Gemini",
+        prediction: gemini,
+        confidence: 56,
+        analysisAngle: "최근 흐름 기반 분석",
+        decisionStatus: "후보만 선정",
+        decisionReason: "최근 경기 흐름은 좋지만 변수가 남아 최종 조합에는 포함하지 않았습니다.",
+        summary: "최근 컨디션과 홈/원정 흐름을 함께 고려하면 접전 가능성이 있습니다.",
+        strengths: ["최근 경기 흐름", "컨디션 상승"],
+        risks: ["후반 집중력", "상대 맞춤 전략"],
+      },
+      {
+        aiName: "DeepSeek",
+        prediction: deepseek,
+        confidence: 52,
+        analysisAngle: "배당 가치 기반 분석",
+        decisionStatus: "최종 제외",
+        decisionReason: "배당 가치는 있지만 변동성이 커 최종 선택에서는 제외했습니다.",
+        summary: "시장 기대와 다른 결과 가능성을 검토했지만 리스크가 높은 경기입니다.",
+        strengths: ["배당 가치", "업셋 가능성"],
+        risks: ["변수 과다", "예측 신뢰도 부족"],
+      },
+    ],
+  };
+}
+
+const upcomingAnalysisMatches: AnalysisMatch[] = [
+  createUpcomingMatch({
+    id: "arsenal-chelsea",
+    match: "아스널 vs 첼시",
+    sport: "축구",
+    league: "EPL",
+    startTime: "2026-06-01 23:30",
+    headline: "런던 더비 흐름과 압박 강도가 변수인 EPL 경기",
+    gpt: "아스널 승",
+    gemini: "아스널 승",
+    deepseek: "무승부",
+  }),
+  createUpcomingMatch({
+    id: "psg-dortmund",
+    match: "PSG vs 도르트문트",
+    sport: "축구",
+    league: "UEFA",
+    startTime: "2026-06-02 04:00",
+    headline: "전환 속도와 원정 수비 집중력이 중요한 UEFA 매치",
+    gpt: "PSG 승",
+    gemini: "오버 2.5",
+    deepseek: "도르트문트 +1.0",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "la-ny",
+    match: "LA Lakers vs New York Knicks",
+    sport: "농구",
+    league: "NBA",
+    startTime: "2026-06-02 10:30",
+    headline: "페인트존 득점과 외곽 수비 매치업이 갈리는 NBA 경기",
+    gpt: "LA Lakers 승",
+    gemini: "LA Lakers 승",
+    deepseek: "New York +4.5",
+  }),
+  createUpcomingMatch({
+    id: "db-mobis",
+    match: "원주 DB vs 울산 현대모비스",
+    sport: "농구",
+    league: "KBL",
+    startTime: "2026-06-01 19:30",
+    headline: "리바운드 우위와 턴오버 관리가 중요한 KBL 경기",
+    gpt: "원주 DB 승",
+    gemini: "언더 162.5",
+    deepseek: "울산 현대모비스 +3.5",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "dodgers-padres",
+    match: "LA Dodgers vs San Diego Padres",
+    sport: "야구",
+    league: "MLB",
+    startTime: "2026-06-02 11:10",
+    headline: "선발 매치업과 장타 억제력이 핵심인 MLB 경기",
+    gpt: "Dodgers 승",
+    gemini: "Dodgers 승",
+    deepseek: "Padres +1.5",
+  }),
+  createUpcomingMatch({
+    id: "sinner-alcaraz",
+    match: "Sinner vs Alcaraz",
+    sport: "테니스",
+    league: "ATP",
+    startTime: "2026-06-01 21:00",
+    headline: "서브 게임 유지력과 랠리 주도권이 갈리는 ATP 빅매치",
+    gpt: "Alcaraz 승",
+    gemini: "오버 22.5",
+    deepseek: "Sinner 승",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "swiatek-gauff",
+    match: "Swiatek vs Gauff",
+    sport: "테니스",
+    league: "WTA",
+    startTime: "2026-06-01 23:00",
+    headline: "리턴 게임과 클레이 코트 적응력이 중요한 WTA 경기",
+    gpt: "Swiatek 승",
+    gemini: "Swiatek 승",
+    deepseek: "Gauff +1.5세트",
+    consensusScore: 67,
+  }),
+  createUpcomingMatch({
+    id: "djokovic-medvedev",
+    match: "Djokovic vs Medvedev",
+    sport: "테니스",
+    league: "ATP",
+    startTime: "2026-06-02 01:30",
+    headline: "긴 랠리 안정성과 세트 초반 브레이크가 변수인 경기",
+    gpt: "Djokovic 승",
+    gemini: "언더 23.5",
+    deepseek: "Medvedev 승",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "monaco-gp-qualifying",
+    match: "Monaco GP Qualifying",
+    sport: "Formula 1",
+    league: "F1",
+    startTime: "2026-06-01 22:00",
+    headline: "트랙 포지션과 예선 랩 완성도가 승부를 가르는 F1 세션",
+    gpt: "Verstappen Pole",
+    gemini: "Leclerc Top 3",
+    deepseek: "Norris Top 3",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "silverstone-race",
+    match: "British GP Race",
+    sport: "Formula 1",
+    league: "F1",
+    startTime: "2026-06-02 23:00",
+    headline: "타이어 관리와 세이프티카 변수가 큰 실버스톤 레이스",
+    gpt: "Verstappen 우승",
+    gemini: "McLaren Podium",
+    deepseek: "비 예보 변수",
+  }),
+  createUpcomingMatch({
+    id: "suzuka-race",
+    match: "Japanese GP Race",
+    sport: "Formula 1",
+    league: "F1",
+    startTime: "2026-06-03 14:00",
+    headline: "섹터 1 밸런스와 언더컷 타이밍이 중요한 스즈카 레이스",
+    gpt: "Red Bull 우세",
+    gemini: "Ferrari Top 3",
+    deepseek: "Mercedes Podium",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "rangers-bruins",
+    match: "New York Rangers vs Boston Bruins",
+    sport: "아이스하키",
+    league: "NHL",
+    startTime: "2026-06-02 08:00",
+    headline: "골리 컨디션과 파워플레이 효율이 중요한 NHL 경기",
+    gpt: "Rangers 승",
+    gemini: "언더 5.5",
+    deepseek: "Bruins 승",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "leafs-canadiens",
+    match: "Toronto Maple Leafs vs Montreal Canadiens",
+    sport: "아이스하키",
+    league: "NHL",
+    startTime: "2026-06-02 09:00",
+    headline: "라이벌전 특유의 페널티 관리가 승부를 가를 경기",
+    gpt: "Maple Leafs 승",
+    gemini: "Maple Leafs 승",
+    deepseek: "Canadiens +1.5",
+  }),
+  createUpcomingMatch({
+    id: "oilers-stars",
+    match: "Edmonton Oilers vs Dallas Stars",
+    sport: "아이스하키",
+    league: "NHL",
+    startTime: "2026-06-02 10:00",
+    headline: "상위 라인 득점력과 수비 전환 속도가 중요한 경기",
+    gpt: "Oilers 승",
+    gemini: "오버 6.0",
+    deepseek: "Stars 승",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "geng-hle",
+    match: "GEN vs HLE",
+    sport: "e스포츠",
+    league: "LCK",
+    startTime: "2026-06-02 18:00",
+    headline: "초반 오브젝트 설계와 한타 집중력이 중요한 LCK 경기",
+    gpt: "GEN 승",
+    gemini: "GEN 승",
+    deepseek: "HLE +1.5",
+  }),
+  createUpcomingMatch({
+    id: "blg-tes",
+    match: "BLG vs TES",
+    sport: "e스포츠",
+    league: "LPL",
+    startTime: "2026-06-02 20:00",
+    headline: "라인전 주도권과 교전 빈도가 높은 LPL 매치",
+    gpt: "BLG 승",
+    gemini: "오버 2.5맵",
+    deepseek: "TES 승",
+    consensusScore: 33,
+    consensusLabel: "Split Opinion",
+  }),
+  createUpcomingMatch({
+    id: "drx-prx",
+    match: "DRX vs PRX",
+    sport: "e스포츠",
+    league: "Valorant",
+    startTime: "2026-06-02 21:30",
+    headline: "맵 밴픽과 피스톨 라운드 성공률이 중요한 발로란트 경기",
+    gpt: "DRX 승",
+    gemini: "DRX 승",
+    deepseek: "PRX 승",
+    consensusScore: 67,
+  }),
+];
+
+const scorePresets: Record<AnalysisMatch["sport"], Array<{ score: string; total?: number }>> = {
+  축구: [
+    { score: "{home} 2 : 1 {away}", total: 3 },
+    { score: "{home} 3 : 1 {away}", total: 4 },
+    { score: "{home} 1 : 1 {away}", total: 2 },
+  ],
+  야구: [
+    { score: "{home} 6 : 4 {away}", total: 10 },
+    { score: "{home} 5 : 3 {away}", total: 8 },
+    { score: "{home} 4 : 6 {away}", total: 10 },
+  ],
+  농구: [
+    { score: "{home} 82 : 76 {away}", total: 158 },
+    { score: "{home} 84 : 79 {away}", total: 163 },
+    { score: "{home} 78 : 81 {away}", total: 159 },
+  ],
+  테니스: [
+    { score: "{home} 2 : 0 {away}", total: 2 },
+    { score: "{home} 2 : 1 {away}", total: 3 },
+    { score: "{home} 1 : 2 {away}", total: 3 },
+  ],
+  "Formula 1": [
+    { score: "1위 Verstappen / 2위 Leclerc / 3위 Norris" },
+    { score: "1위 Leclerc / 2위 Norris / 3위 Verstappen" },
+    { score: "1위 Norris / 2위 Verstappen / 3위 Hamilton" },
+  ],
+  아이스하키: [
+    { score: "{home} 4 : 2 {away}", total: 6 },
+    { score: "{home} 3 : 2 {away}", total: 5 },
+    { score: "{home} 2 : 4 {away}", total: 6 },
+  ],
+  e스포츠: [
+    { score: "{home} 2 : 1 {away}", total: 3 },
+    { score: "{home} 2 : 0 {away}", total: 2 },
+    { score: "{home} 1 : 2 {away}", total: 3 },
+  ],
+};
+
+function addExpectedScores(match: AnalysisMatch): AnalysisMatch {
+  const [home, away = "상대"] = match.match.split(/\s+vs\s+/i);
+
+  return {
+    ...match,
+    analyses: match.analyses.map((analysis, index) => {
+      const preset = scorePresets[match.sport][index % scorePresets[match.sport].length];
+
+      return {
+        ...analysis,
+        expectedScore: analysis.expectedScore ?? preset.score.replaceAll("{home}", home).replaceAll("{away}", away),
+        predictedTotal: analysis.predictedTotal ?? preset.total,
+      };
+    }),
+  };
+}
+
+export const analysisMatches: AnalysisMatch[] = [...baseAnalysisMatches, ...upcomingAnalysisMatches].map(addExpectedScores);
 
 export const combinations: Combination[] = [
   {

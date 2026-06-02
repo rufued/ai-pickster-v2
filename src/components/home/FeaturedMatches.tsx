@@ -13,6 +13,9 @@ const sportIcon: Record<Sport, string> = {
   축구: "⚽",
   야구: "⚾",
   농구: "🏀",
+  테니스: "🎾",
+  "Formula 1": "🏁",
+  아이스하키: "🏒",
   e스포츠: "🎮",
 };
 

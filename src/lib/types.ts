@@ -1,4 +1,4 @@
-export type Sport = "축구" | "야구" | "농구" | "e스포츠";
+export type Sport = "축구" | "야구" | "농구" | "테니스" | "Formula 1" | "아이스하키" | "e스포츠";
 
 export type CombinationStatus = "대기중" | "적중" | "미적중";
 
@@ -84,6 +84,8 @@ export type FeaturedMatch = {
 export type AIAnalysis = {
   aiName: string;
   prediction: string;
+  expectedScore?: string;
+  predictedTotal?: number;
   confidence: number;
   roiChange?: number;
   analysisAngle: string;

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { aiCompetitors, analysisMatches, getAnalysisMatch } from "@/lib/data";
-import { formatTime } from "@/lib/format";
+import { formatPredictedTotal, formatTime } from "@/lib/format";
 
 type AnalysisDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -81,6 +81,19 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
               <div className="mt-5 rounded-md border border-accent-green/20 bg-accent-green/10 p-3">
                 <p className="text-xs font-bold text-accent-green">{analysis.analysisAngle}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-200">{analysis.summary}</p>
+              </div>
+
+              <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
+                <p className="text-xs font-bold text-accent-green">
+                  {match.sport === "테니스" || match.sport === "e스포츠" ? "예상 세트 스코어" : "예상 스코어"}
+                </p>
+                <p className="mt-2 text-lg font-black text-white">{analysis.expectedScore}</p>
+                {formatPredictedTotal(match.sport, analysis.predictedTotal) ? (
+                  <p className="mt-2 text-sm font-semibold text-slate-300">
+                    {match.sport === "테니스" || match.sport === "e스포츠" ? "예상 총 세트" : "예상 총 득점"}{" "}
+                    <span className="text-accent-green">{formatPredictedTotal(match.sport, analysis.predictedTotal)}</span>
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">

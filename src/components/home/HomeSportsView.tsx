@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import clsx from "clsx";
+import { ArrowUpRight } from "lucide-react";
+import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { BattleCard } from "@/components/battle/BattleCard";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
-import { SportsSidebar } from "@/components/sports/SportsSidebar";
-import { formatPercent } from "@/lib/format";
-import { getSportFromParam } from "@/lib/sports";
+import { formatPercent, formatTime } from "@/lib/format";
+import { getSportFromParam, sportCategories } from "@/lib/sports";
 import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch } from "@/lib/types";
 
 type HomeSportsViewProps = {
@@ -22,30 +25,31 @@ type HomeSportsViewProps = {
 export function HomeSportsView({ ais, combinations, decisionProcesses, matches, battleMatches, fallbackBattleMatch }: HomeSportsViewProps) {
   const [selectedSport, setSelectedSport] = useState("all");
   const sport = getSportFromParam(selectedSport);
-  const filteredCombinations = useMemo(
-    () => (sport ? combinations.filter((combination) => combination.selections.some((selection) => selection.sport === sport)) : combinations),
-    [combinations, sport],
-  );
+  const selectedCategory = sportCategories.find((category) => category.id === selectedSport);
   const filteredMatches = useMemo(() => (sport ? matches.filter((match) => match.sport === sport) : matches), [matches, sport]);
   const filteredBattleMatches = useMemo(() => (sport ? battleMatches.filter((match) => match.sport === sport) : battleMatches), [battleMatches, sport]);
   const selectedBattleMatch = filteredBattleMatches[0] ?? fallbackBattleMatch;
+  const isAllSports = selectedSport === "all";
 
   return (
     <div className="container-shell grid min-w-0 gap-4 overflow-hidden py-6 lg:grid-cols-[220px_1fr] lg:gap-6 lg:overflow-visible lg:py-12">
-      <SportsSidebar activeSport={selectedSport} onSportChange={setSelectedSport} />
+      <HomeSportsTabs selectedSport={selectedSport} onSelect={setSelectedSport} />
       <main className="min-w-0 space-y-8 lg:space-y-12">
+        {!isAllSports ? (
+          <UpcomingMatchList title={`${selectedCategory?.label ?? "Sports"} 예정 경기`} matches={filteredBattleMatches} />
+        ) : (
+          <>
         <section>
           <div className="mb-4 lg:mb-5">
             <p className="text-xs font-semibold text-accent-green sm:text-sm">Today Combinations</p>
             <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">오늘의 AI 조합</h2>
-            <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">선택한 종목이 포함된 AI 조합만 표시합니다.</p>
+            <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">All Sports에서는 AI 조합과 리그 흐름을 함께 확인합니다.</p>
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
-            {filteredCombinations.map((combination) => (
+            {combinations.map((combination) => (
               <CombinationCard key={combination.id} combination={combination} compact />
             ))}
           </div>
-          {filteredCombinations.length === 0 ? <EmptySportState /> : null}
         </section>
 
         <section>
@@ -87,8 +91,97 @@ export function HomeSportsView({ ais, combinations, decisionProcesses, matches, 
 
         <FeaturedMatches matches={filteredMatches} contained={false} />
         {filteredMatches.length === 0 ? <EmptySportState /> : null}
+          </>
+        )}
       </main>
     </div>
+  );
+}
+
+function HomeSportsTabs({ selectedSport, onSelect }: { selectedSport: string; onSelect: (sportId: string) => void }) {
+  return (
+    <aside className="min-w-0 max-w-full lg:sticky lg:top-24 lg:self-start">
+      <div className="panel max-w-full overflow-hidden border-accent-green/20 p-3 lg:overflow-visible">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">Sports</p>
+          <span className="hidden rounded-full border border-accent-green/30 bg-accent-green/10 px-2 py-0.5 text-[10px] font-black text-accent-green lg:inline-flex">
+            FILTER
+          </span>
+        </div>
+        <div className="scrollbar-hide flex max-w-full gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+          {sportCategories.map((category) => {
+            const active = selectedSport === category.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onSelect(category.id)}
+                className={clsx(
+                  "inline-flex h-10 flex-none cursor-pointer touch-manipulation items-center gap-2 whitespace-nowrap rounded-md border px-3 text-sm font-bold transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
+                  active
+                    ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
+                    : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",
+                )}
+              >
+                <span aria-hidden>{category.icon}</span>
+                <span>{category.label}</span>
+                {category.isNew ? (
+                  <span className={active ? "rounded bg-black/20 px-1.5 py-0.5 text-[10px] text-black" : "rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green"}>
+                    NEW
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function UpcomingMatchList({ title, matches }: { title: string; matches: AnalysisMatch[] }) {
+  return (
+    <section>
+      <div className="mb-4 lg:mb-5">
+        <p className="text-xs font-semibold text-accent-green sm:text-sm">Upcoming Matches</p>
+        <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">{title}</h2>
+        <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">경기를 선택하면 GPT, Gemini, DeepSeek의 분석 비교 페이지로 이동합니다.</p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {matches.map((match) => (
+          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
+                  <span>{match.sport}</span>
+                  <span className="h-1 w-1 rounded-full bg-slate-600" />
+                  <span>{match.league}</span>
+                  <span className="h-1 w-1 rounded-full bg-slate-600" />
+                  <span>{formatTime(match.startTime)}</span>
+                </div>
+                <h3 className="mt-2 text-xl font-black text-white">{match.match}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{match.headline}</p>
+              </div>
+              <ConsensusBadge score={match.consensusScore} label={match.consensusLabel} />
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 rounded-md border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm">
+                <p className="font-bold text-accent-green">AI 분석 완료</p>
+                <p className="mt-1 text-slate-500">AI 의견 일치도 {match.consensusScore}%</p>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent-green px-3 py-2 text-sm font-bold text-black">
+                분석 보기 <ArrowUpRight size={16} />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {matches.length === 0 ? <EmptySportState /> : null}
+    </section>
   );
 }
 

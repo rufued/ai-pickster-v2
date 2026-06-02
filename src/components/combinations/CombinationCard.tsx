@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, Layers3 } from "lucide-react";
 import type { Combination } from "@/lib/types";
 import { formatCurrency, formatSignedCurrency } from "@/lib/format";
+import { getAnalysisMatch } from "@/lib/data";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type CombinationCardProps = {
@@ -37,6 +38,7 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
             <div key={`${combination.id}-${selection.match}-${index}`} className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
               <div>
                 <p className="text-sm font-semibold text-white">{selection.prediction}</p>
+                <ExpectedScoreNote aiName={combination.aiName} analysisId={selection.analysisId} />
                 <p className="mt-1 text-xs text-slate-500">
                   {selection.league} · {selection.match}
                 </p>
@@ -73,6 +75,17 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
       ) : null}
     </article>
   );
+}
+
+function ExpectedScoreNote({ aiName, analysisId }: { aiName: string; analysisId: string }) {
+  const match = getAnalysisMatch(analysisId);
+  const analysis = match?.analyses.find((item) => item.aiName === aiName);
+
+  if (!analysis?.expectedScore) {
+    return null;
+  }
+
+  return <p className="mt-1 text-xs font-semibold text-accent-green">예상 스코어 {analysis.expectedScore}</p>;
 }
 
 function Metric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
