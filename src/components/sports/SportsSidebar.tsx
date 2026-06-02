@@ -1,13 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import clsx from "clsx";
 import { sportCategories } from "@/lib/sports";
 
 type SportsSidebarProps = {
-  basePath: string;
+  basePath?: string;
   activeSport?: string;
+  onSportChange?: (sportId: string) => void;
 };
 
-export function SportsSidebar({ basePath, activeSport = "all" }: SportsSidebarProps) {
+export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChange }: SportsSidebarProps) {
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="panel border-accent-green/20 p-3">
@@ -21,18 +24,14 @@ export function SportsSidebar({ basePath, activeSport = "all" }: SportsSidebarPr
           {sportCategories.map((category) => {
             const active = activeSport === category.id || (!activeSport && category.id === "all");
             const href = category.id === "all" ? basePath : `${basePath}?sport=${category.id}`;
-
-            return (
-              <Link
-                key={category.id}
-                href={href}
-                className={clsx(
-                  "flex min-w-max items-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition lg:min-w-0 lg:justify-start",
-                  active
-                    ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
-                    : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",
-                )}
-              >
+            const className = clsx(
+              "flex min-w-max items-center gap-2 rounded-md border px-3 py-2 text-sm font-bold transition lg:min-w-0 lg:justify-start",
+              active
+                ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
+                : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",
+            );
+            const content = (
+              <>
                 <span aria-hidden>{category.icon}</span>
                 <span>{category.label}</span>
                 {category.isNew ? (
@@ -40,6 +39,20 @@ export function SportsSidebar({ basePath, activeSport = "all" }: SportsSidebarPr
                     NEW
                   </span>
                 ) : null}
+              </>
+            );
+
+            if (onSportChange) {
+              return (
+                <button key={category.id} type="button" onClick={() => onSportChange(category.id)} className={className}>
+                  {content}
+                </button>
+              );
+            }
+
+            return (
+              <Link key={category.id} href={href} className={className}>
+                {content}
               </Link>
             );
           })}
