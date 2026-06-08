@@ -9,14 +9,12 @@ export type SportCategory = {
 };
 
 export const sportCategories: SportCategory[] = [
-  { id: "all", label: "All Sports", icon: "◎" },
-  { id: "football", label: "Football", icon: "⚽", sport: "축구" },
-  { id: "basketball", label: "Basketball", icon: "🏀", sport: "농구" },
-  { id: "baseball", label: "Baseball", icon: "⚾", sport: "야구" },
-  { id: "tennis", label: "Tennis", icon: "🎾", sport: "테니스" },
-  { id: "formula-1", label: "Formula 1", icon: "🏁", sport: "Formula 1" },
-  { id: "ice-hockey", label: "Ice Hockey", icon: "🏒", sport: "아이스하키" },
-  { id: "esports", label: "Esports", icon: "🎮", sport: "e스포츠", isNew: true },
+  { id: "all", label: "전체", icon: "ALL" },
+  { id: "football", label: "축구", icon: "축", sport: "축구" },
+  { id: "baseball", label: "야구", icon: "야", sport: "야구" },
+  { id: "basketball", label: "농구", icon: "농", sport: "농구" },
+  { id: "volleyball", label: "배구", icon: "배", sport: "배구" },
+  { id: "esports", label: "e스포츠", icon: "E", sport: "e스포츠", isNew: true },
 ];
 
 export function getSportFromParam(value?: string): Sport | undefined {

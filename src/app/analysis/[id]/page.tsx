@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
-import { createTemporaryMlbAnalysis } from "@/lib/analysis/liveMatchAnalysis";
-import { fetchUpcomingOdds } from "@/lib/api/theOddsApi";
-import { aiCompetitors, analysisMatches, getAnalysisMatch } from "@/lib/data";
+import Link from "next/link";
+import { ArrowLeft, Bot, Clock, LineChart, ListChecks, MapPin, Trophy } from "lucide-react";
+import type { ReactNode } from "react";
+import { analysisMatches, getAnalysisMatch } from "@/lib/data";
 import { formatDateTime, formatPredictedTotal } from "@/lib/format";
 
 type AnalysisDetailPageProps = {
@@ -17,126 +15,104 @@ export function generateStaticParams() {
 
 export default async function AnalysisDetailPage({ params }: AnalysisDetailPageProps) {
   const { id } = await params;
-  const match = getAnalysisMatch(id) ?? (await getLiveMlbAnalysisMatch(id));
+  const match = getAnalysisMatch(id);
 
   if (!match) {
     notFound();
   }
 
   return (
-    <section className="container-shell py-12">
-      <Link href="/analysis" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white">
-        <ArrowLeft size={16} /> 분석 센터
+    <section className="container-shell py-8">
+      <Link href="/analysis" className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-700">
+        <ArrowLeft size={16} /> 경기분석으로 돌아가기
       </Link>
 
-      <div className="panel mb-8 p-6">
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="panel mb-5 p-5">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold text-accent-green">
-              {match.sport} · {match.league} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
-              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
-            </p>
-            <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">{match.match}</h1>
-            <p className="mt-3 text-slate-400">{match.headline}</p>
+            <p className="text-sm font-bold text-blue-700">{match.sport} · {match.league}</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-950">{match.homeTeam} vs {match.awayTeam}</h1>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
+              <span className="inline-flex items-center gap-1"><Clock size={15} /> {formatDateTime(match.startTime)}</span>
+              <span className="inline-flex items-center gap-1"><MapPin size={15} /> {match.venue}</span>
+            </div>
           </div>
-          <ConsensusBadge score={match.consensusScore} label={match.consensusLabel} size="lg" />
+          <div className="grid min-w-[220px] grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+            <p className="truncate text-sm font-black text-slate-800">{match.homeTeam}</p>
+            <p className="text-2xl font-black text-slate-950">{match.status === "scheduled" ? "VS" : `${match.homeScore} : ${match.awayScore}`}</p>
+            <p className="truncate text-sm font-black text-slate-800">{match.awayTeam}</p>
+          </div>
         </div>
+        <p className="mt-4 rounded-lg bg-blue-50 p-3 text-sm font-semibold text-blue-800">{match.headline}</p>
       </div>
 
-      <div className="mb-6 panel p-5">
-        <p className="text-sm font-semibold text-slate-400">AI 예상 결과와 분석 관점 비교</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {match.analyses.map((analysis) => {
-            const profile = aiCompetitors.find((ai) => ai.name === analysis.aiName);
-            return (
-              <div key={analysis.aiName} className="rounded-md border border-white/10 bg-black/20 p-4">
-                <p className="font-black text-white">{analysis.aiName}</p>
-                <p className="mt-1 text-xs font-bold text-accent-green">{profile?.analysisStyle}</p>
-                <p className="mt-3 text-lg font-bold text-white">{analysis.prediction}</p>
-                <p className="mt-1 text-sm text-slate-400">{analysis.analysisAngle}</p>
-                <span className="mt-3 inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-bold text-slate-200">
-                  {analysis.decisionStatus}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+      <div className="mb-5 grid gap-4 lg:grid-cols-3">
+        <InfoPanel icon={<LineChart size={18} />} title="최근 경기 흐름" items={match.recentForm ?? []} />
+        <InfoPanel icon={<ListChecks size={18} />} title="상대전적" items={(match.headToHead ?? []).map((item) => `${item.date} · ${item.result} · ${item.note}`)} />
+        <InfoPanel icon={<Trophy size={18} />} title="리그 순위" items={(match.standings ?? []).map((item) => `${item.rank}위 ${item.team} · ${item.points}점 · ${item.form}`)} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {match.analyses.map((analysis) => {
-          const profile = aiCompetitors.find((ai) => ai.name === analysis.aiName);
-          return (
-            <article key={analysis.aiName} className="panel p-5">
-              <div className="flex items-start justify-between gap-4">
+      <div className="panel overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h2 className="flex items-center gap-2 text-base font-black text-slate-950">
+            <Bot size={18} className="text-blue-600" />
+            AI 분석 탭
+          </h2>
+          <span className="text-xs font-black text-slate-500">GPT · Gemini · Grok · DeepSeek</span>
+        </div>
+
+        <div className="grid gap-4 p-4 lg:grid-cols-4">
+          {match.analyses.map((analysis) => (
+            <article key={analysis.aiName} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xl font-black text-white">{analysis.aiName}</p>
-                  <p className="mt-1 text-sm font-bold text-accent-green">{profile?.analysisStyle}</p>
-                  <p className="mt-3 text-sm text-slate-400">예상 결과</p>
-                  <p className="mt-1 text-lg font-bold text-white">{analysis.prediction}</p>
+                  <p className="text-lg font-black text-slate-950">{analysis.aiName}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{analysis.analysisAngle}</p>
                 </div>
-                <span className="rounded-lg bg-white/10 px-3 py-2 text-right">
-                  <span className="block text-xs font-semibold text-slate-500">신뢰도</span>
-                  <span className="block text-lg font-black text-white">{analysis.confidence}%</span>
-                </span>
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700">{analysis.confidence}%</span>
               </div>
 
-              <div className="mt-5 rounded-md border border-accent-green/20 bg-accent-green/10 p-3">
-                <p className="text-xs font-bold text-accent-green">{analysis.analysisAngle}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-200">{analysis.summary}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <MiniStat label="예측 결과" value={analysis.prediction} />
+                <MiniStat label="예상 스코어" value={analysis.expectedScore ?? "-"} />
+                <MiniStat label="오버/언더" value={analysis.overUnder ?? "-"} />
+                <MiniStat label="예상 총점" value={formatPredictedTotal(match.sport, analysis.predictedTotal) ?? "-"} />
               </div>
 
-              <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-bold text-accent-green">
-                  {match.sport === "테니스" || match.sport === "e스포츠" ? "예상 세트 스코어" : "예상 스코어"}
-                </p>
-                <p className="mt-2 text-lg font-black text-white">{analysis.expectedScore}</p>
-                {formatPredictedTotal(match.sport, analysis.predictedTotal) ? (
-                  <p className="mt-2 text-sm font-semibold text-slate-300">
-                    {match.sport === "테니스" || match.sport === "e스포츠" ? "예상 총 세트" : "예상 총 득점"}{" "}
-                    <span className="text-accent-green">{formatPredictedTotal(match.sport, analysis.predictedTotal)}</span>
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-bold text-accent-green">선택 이유</p>
-                <p className="mt-2 text-lg font-black text-white">{analysis.decisionStatus}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{analysis.decisionReason}</p>
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                <DetailBlock label="강점" items={analysis.strengths} tone="positive" />
-                <DetailBlock label="리스크" items={analysis.risks} tone="negative" />
+              <p className="mt-4 text-sm leading-6 text-slate-600">{analysis.summary}</p>
+              <div className="mt-4 rounded-md bg-slate-50 p-3">
+                <p className="text-xs font-black text-slate-500">짧은 분석 코멘트</p>
+                <p className="mt-1 text-sm font-semibold text-slate-800">{analysis.decisionReason}</p>
               </div>
             </article>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-async function getLiveMlbAnalysisMatch(id: string) {
-  if (!id.startsWith("mlb-")) {
-    return undefined;
-  }
-
-  const matches = await fetchUpcomingOdds("baseball_mlb", { fallback: [] });
-  const match = matches.find((item) => item.id === id);
-
-  return match ? createTemporaryMlbAnalysis(match) : undefined;
+function InfoPanel({ icon, title, items }: { icon: ReactNode; title: string; items: string[] }) {
+  return (
+    <section className="panel p-4">
+      <h2 className="flex items-center gap-2 text-sm font-black text-slate-950">
+        <span className="text-blue-600">{icon}</span>
+        {title}
+      </h2>
+      <div className="mt-3 space-y-2">
+        {items.map((item) => (
+          <p key={item} className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">{item}</p>
+        ))}
+      </div>
+    </section>
+  );
 }
 
-function DetailBlock({ label, items, tone }: { label: string; items: string[]; tone: "positive" | "negative" }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-black/20 p-3">
-      <p className={tone === "positive" ? "text-xs font-bold text-emerald-300" : "text-xs font-bold text-red-300"}>{label}</p>
-      <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-300">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+      <p className="text-[11px] font-bold text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-black text-slate-950">{value}</p>
     </div>
   );
 }

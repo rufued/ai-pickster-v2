@@ -1,20 +1,17 @@
 "use client";
 
+import clsx from "clsx";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import clsx from "clsx";
 
 const navItems = [
-  { href: "/", label: "홈" },
-  { href: "/predictions", label: "예측" },
-  { href: "/battle", label: "AI 배틀" },
+  { href: "/", label: "스코어" },
   { href: "/analysis", label: "경기분석" },
   { href: "/ranking", label: "AI 랭킹" },
   { href: "/history", label: "기록실" },
   { href: "/community", label: "커뮤니티" },
-  { href: "/about", label: "소개" },
 ];
 
 export function Header() {
@@ -22,16 +19,16 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-surface-950/88 backdrop-blur">
-      <div className="container-shell flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="container-shell flex h-16 items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-green/30 bg-accent-green/10 text-sm font-black text-accent-green">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
             AI
           </span>
-          <span className="text-base font-bold tracking-wide text-white">AI Pickster</span>
+          <span className="text-base font-black tracking-tight text-slate-950">AI Sports Hub</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 xl:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
@@ -39,8 +36,8 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  "rounded-md px-3 py-2 text-sm font-medium transition",
-                  active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white",
+                  "rounded-md px-3 py-2 text-sm font-bold transition",
+                  active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
                 )}
               >
                 {item.label}
@@ -49,10 +46,15 @@ export function Header() {
           })}
         </nav>
 
+        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400 md:flex">
+          <Search size={16} />
+          <span>팀, 리그, 경기 검색</span>
+        </div>
+
         <button
           type="button"
           aria-label="메뉴"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 text-slate-200 xl:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 lg:hidden"
           onClick={() => setIsOpen((current) => !current)}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -60,7 +62,7 @@ export function Header() {
       </div>
 
       {isOpen ? (
-        <nav className="container-shell grid gap-1 border-t border-white/10 py-3 xl:hidden">
+        <nav className="container-shell grid gap-1 border-t border-slate-200 py-3 lg:hidden">
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
@@ -69,8 +71,8 @@ export function Header() {
                 href={item.href}
                 onClick={() => setIsOpen(false)}
                 className={clsx(
-                  "rounded-md px-3 py-3 text-sm font-medium",
-                  active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white",
+                  "rounded-md px-3 py-3 text-sm font-bold",
+                  active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100",
                 )}
               >
                 {item.label}

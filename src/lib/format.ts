@@ -10,13 +10,10 @@ export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.
 export const formatSignedCurrency = (value: number) =>
   `${value > 0 ? "+" : ""}${formatCurrency(value)}`;
 
-export const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("ko-KR", {
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    timeZone: "Asia/Seoul",
-  }).format(new Date(value.replace(" ", "T")));
+export const formatDate = (value: string) => {
+  const { month, day } = getDateTimeParts(value);
+  return `${Number(month)}월 ${Number(day)}일`;
+};
 
 export const formatDateTime = (value: string, mode: "desktop" | "mobile" = "desktop") => {
   const { year, month, day, hour, minute } = getDateTimeParts(value);
@@ -30,7 +27,6 @@ export const formatDateTime = (value: string, mode: "desktop" | "mobile" = "desk
 
 export const formatTime = (value: string) => {
   const { hour, minute } = getDateTimeParts(value);
-
   return `${hour}:${minute}`;
 };
 
@@ -68,7 +64,7 @@ export const formatPredictedTotal = (sport: string, total?: number) => {
     return `${total}골`;
   }
 
-  if (sport === "테니스" || sport === "e스포츠") {
+  if (sport === "배구" || sport === "e스포츠") {
     return `${total}세트`;
   }
 
