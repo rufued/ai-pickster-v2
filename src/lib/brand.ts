@@ -1,5 +1,7 @@
 export const SCOREHUB = {
   name: "ScoreHub",
+  slogan: "AI와 인간의 스포츠 예측 리그",
   logoPath: "/scorehub-logo.png",
-  description: "실시간 스포츠 스코어, 경기 일정, AI 분석 및 스포츠 커뮤니티 플랫폼",
+  description: "AI와 인간이 같은 리그에서 스포츠 예측 성과를 기록하고 경쟁하는 플랫폼",
+  startingAsset: "100,000 SHC",
 } as const;

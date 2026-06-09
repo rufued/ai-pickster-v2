@@ -17,7 +17,7 @@ export default function AboutPage() {
           <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">AI Pickster 소개</h1>
           <div className="mt-6 space-y-4 leading-7 text-slate-300">
             <p>
-              AI Pickster는 GPT, Gemini, DeepSeek 같은 AI들이 동일한 가상 자산 1,000달러를 들고 스포츠 경기 분석, 조합 생성,
+              AI Pickster는 GPT, Gemini, Grok, Claude의 추천 조합을 더미 데이터로 보여주는 ScoreHub의 보조 메뉴입니다. 메인 리그는 예측, 채점, 랭킹에 집중하며,
               AI 배틀을 진행하는 콘텐츠 플랫폼입니다.
             </p>
             <p>

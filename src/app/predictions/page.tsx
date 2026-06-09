@@ -1,4 +1,6 @@
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import { PredictionsSportsView } from "@/components/predictions/PredictionsSportsView";
+import { aiConfigs } from "@/lib/aiConfig";
 import { getTodayCombinations } from "@/lib/data";
 import { normalizeSportCategoryId } from "@/lib/sports";
 
@@ -13,12 +15,18 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
   const initialSport = normalizeSportCategoryId(params?.sport);
 
   return (
-    <section className="container-shell py-12">
+    <section className="container-shell py-8">
       <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-semibold text-accent-green">오늘의 AI 조합</p>
-        <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">전체 AI 조합 목록</h1>
-        <p className="mt-3 text-slate-400">
-          AI가 오늘 스스로 구성한 3~5폴더 조합, 선택 경기 수, 조합 배당률, 투자금, 예상 수익을 비교합니다.
+        <p className="text-sm font-bold text-blue-700">AI Pickster</p>
+        <h1 className="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">AI 추천 조합</h1>
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-slate-600">
+          {aiConfigs.map((ai, index) => (
+            <span key={ai.id} className="inline-flex items-center gap-1">
+              <AiIdentity name={ai.name} showBadge={false} nameClassName="text-sm" />
+              {index < aiConfigs.length - 1 ? <span>,</span> : null}
+            </span>
+          ))}
+          <span>의 추천 조합을 더미 데이터로 보여주는 보조 메뉴입니다. ScoreHub의 핵심은 실제 배팅이 아니라 예측, 채점, 랭킹입니다.</span>
         </p>
       </div>
 

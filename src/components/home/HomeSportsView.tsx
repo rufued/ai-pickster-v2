@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { ArrowUpRight } from "lucide-react";
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { BattleCard } from "@/components/battle/BattleCard";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
@@ -216,7 +217,7 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
       <div className="mb-4 lg:mb-5">
         <p className="text-xs font-semibold text-accent-green sm:text-sm">예정 경기 목록</p>
         <h2 className="mt-1 text-xl font-black text-white sm:mt-2 sm:text-2xl">{title}</h2>
-        <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">경기를 선택하면 GPT, Gemini, DeepSeek의 분석 비교 페이지로 이동합니다.</p>
+        <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">경기를 선택하면 GPT, Gemini, Grok, Claude의 분석 비교 페이지로 이동합니다.</p>
       </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-2">
@@ -274,7 +275,7 @@ function RecentPerformanceCard({ ai }: { ai: AICompetitor }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold text-slate-500">
-            {ai.name} · {ai.analysisStyle}
+            <AiIdentity name={ai.name} showBadge={false} nameClassName="text-xs text-slate-500" /> · {ai.analysisStyle}
           </p>
           <p className={ai.recent30DayRoi >= 0 ? "mt-2 text-4xl font-black text-emerald-300" : "mt-2 text-4xl font-black text-red-300"}>
             {formatPercent(ai.recent30DayRoi)}

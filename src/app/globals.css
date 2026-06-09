@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: light;
+  --scorehub-blue: #2563eb;
+  --scorehub-blue-dark: #1d4ed8;
+  --scorehub-blue-hover: #3b82f6;
 }
 
 * {
@@ -20,8 +23,8 @@ body {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  background: #f4f7fb;
-  color: #111827;
+  background: #f5f7fb;
+  color: #0f172a;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -51,6 +54,26 @@ a {
   background: rgba(37, 99, 235, 0.18);
 }
 
+.ai-chip-gpt {
+  @apply border-blue-200 bg-blue-50 text-blue-700;
+}
+
+.ai-chip-gemini {
+  @apply border-purple-200 bg-purple-50 text-purple-700;
+}
+
+.ai-chip-grok {
+  @apply border-slate-300 bg-slate-100 text-slate-950;
+}
+
+.ai-chip-claude {
+  @apply border-orange-200 bg-orange-50 text-orange-700;
+}
+
+.ai-chip-deepseek {
+  @apply border-teal-200 bg-teal-50 text-teal-700;
+}
+
 @media (min-width: 640px) {
   .scorehub-logo {
     width: 126px;
@@ -66,11 +89,11 @@ a {
   }
 
   .panel {
-    @apply max-w-full rounded-lg border border-slate-200 bg-white shadow-sm;
+    @apply max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md;
   }
 
   .muted {
-    @apply text-sm text-slate-500;
+    @apply text-sm text-slate-600;
   }
 
   .scrollbar-hide {

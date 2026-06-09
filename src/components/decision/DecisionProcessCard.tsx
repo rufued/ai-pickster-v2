@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import type { AIDecisionProcess } from "@/lib/types";
 
 type DecisionProcessCardProps = {
@@ -18,7 +19,7 @@ export function DecisionProcessCard({ process }: DecisionProcessCardProps) {
     <article className="panel p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-accent-green">{process.aiName}</p>
+          <AiIdentity name={process.aiName} showBadge={false} nameClassName="text-sm text-blue-700" />
           <h3 className="mt-1 text-xl font-black text-white">오늘의 선별 과정</h3>
         </div>
         <div className="text-right">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, BarChart3 } from "lucide-react";
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { SportsSidebar } from "@/components/sports/SportsSidebar";
 import { formatDateTime } from "@/lib/format";
@@ -58,7 +59,7 @@ export function AnalysisSportsView({ matches, initialSport = "all" }: AnalysisSp
                 <div className="mt-3 grid gap-2">
                   {match.analyses.map((analysis) => (
                     <div key={analysis.aiName} className="flex items-center gap-3 text-sm">
-                      <span className="w-20 font-bold text-white">{analysis.aiName}</span>
+                      <AiIdentity name={analysis.aiName} showBadge={false} nameClassName="text-sm text-white" />
                       <span className="font-semibold text-accent-green">{analysis.prediction}</span>
                       <span className="text-slate-500">{analysis.confidence}%</span>
                     </div>

@@ -17,7 +17,8 @@ export const aiModels: AIModel[] = [
   { id: "gpt", name: "GPT", initials: "GP", description: "전력 지표와 최근 폼을 균형 있게 반영", color: "blue" },
   { id: "gemini", name: "Gemini", initials: "GE", description: "경기 흐름과 변수 탐지에 강점", color: "green" },
   { id: "grok", name: "Grok", initials: "GR", description: "이슈와 라인업 뉴스를 빠르게 반영", color: "slate" },
-  { id: "deepseek", name: "DeepSeek", initials: "DS", description: "수치 기반 확률 모델과 언더/오버 판단", color: "cyan" },
+  { id: "claude", name: "Claude", initials: "CL", description: "맥락 기반 리스크 점검과 안정적인 승부 판단", color: "cyan" },
+  { id: "deepseek", name: "DeepSeek", initials: "DS", description: "수치 기반 확률 모델과 ROI 효율 판단", color: "indigo" },
 ];
 
 export const rankingStats: AICompetitor[] = [
@@ -127,9 +128,9 @@ export const rankingStats: AICompetitor[] = [
     ],
   },
   {
-    id: "deepseek",
-    name: "DeepSeek",
-    initials: "DS",
+    id: "claude",
+    name: "Claude",
+    initials: "CL",
     reliabilityGrade: "A",
     recent30DayRoi: 0,
     recent30DayAccuracy: 65,
@@ -163,7 +164,43 @@ export const rankingStats: AICompetitor[] = [
   },
 ];
 
-export const aiCompetitors = rankingStats;
+const deepSeekCompetitor: AICompetitor = {
+  id: "deepseek",
+  name: "DeepSeek",
+  initials: "DS",
+  reliabilityGrade: "B+",
+  recent30DayRoi: 16.8,
+  recent30DayAccuracy: 61,
+  recent30DayWins: 92,
+  recent30DayLosses: 58,
+  recent10Results: ["적중", "적중", "미적중", "적중", "미적중", "적중", "적중", "미적중", "적중", "적중"],
+  recentResults: ["적중", "적중", "미적중", "적중", "미적중"],
+  recentRoiTrend: [11, 12, 13, 13, 14, 15, 15, 16, 16, 16.8],
+  analysisStyle: "확률 기반 ROI 모델",
+  investmentPhilosophy: "배당 대비 기대값과 경기별 리스크 분산을 함께 계산해 장기 수익률을 우선합니다.",
+  signatureTraits: ["기대값 계산", "ROI 효율", "확률 분포"],
+  strategy: "ROI 수치 분석",
+  strategyDescription: "경기 결과 확률과 예측 리스크를 동시에 계산해 수익률 우선 픽을 제시하는 모델",
+  bestHitCombination: "KBO + LCK 기대값 경기",
+  bestHitOdds: 0,
+  startingBalance: 100000,
+  currentBalance: 116800,
+  totalProfit: 16800,
+  roi: 16.8,
+  accuracy: 61.2,
+  totalPicks: 401,
+  wins: 245,
+  losses: 156,
+  battleWins: 245,
+  battleLosses: 156,
+  sportStats: [
+    { sport: "축구", accuracy: 61, picks: 104 },
+    { sport: "야구", accuracy: 62, picks: 118 },
+    { sport: "e스포츠", accuracy: 63, picks: 79 },
+  ],
+};
+
+export const aiCompetitors = [...rankingStats, deepSeekCompetitor];
 
 export const matches: Match[] = [
   {
@@ -249,37 +286,37 @@ const analysisByMatch: Record<string, AnalysisMatch["analyses"]> = {
     ai("GPT", "홈승", "5:3", "Under", 68, "LG의 선발 안정성과 홈 불펜 운영을 높게 평가했습니다."),
     ai("Gemini", "홈승", "6:4", "Over", 64, "최근 타선 흐름은 접전이지만 LG의 후반 집중력이 우세합니다."),
     ai("Grok", "원정승", "4:5", "Over", 57, "KIA 중심 타선 회복 뉴스와 대타 카드 활용도를 변수로 봅니다."),
-    ai("DeepSeek", "홈승", "4:2", "Under", 66, "예상 실점 분포상 LG가 낮은 스코어 경기에서 앞섭니다."),
+    ai("Claude", "홈승", "4:2", "Under", 66, "예상 실점 분포상 LG가 낮은 스코어 경기에서 앞섭니다."),
   ],
   "seoul-jeonbuk": [
     ai("GPT", "무승부", "1:1", "Under", 61, "양 팀 모두 수비 라인을 먼저 안정화할 가능성이 큽니다."),
     ai("Gemini", "홈승", "2:1", "Over", 58, "서울의 측면 전개 속도가 전북 수비 간격을 흔들 수 있습니다."),
     ai("Grok", "무승부", "1:1", "Under", 60, "라인업 변동이 적어 보수적인 경기 운영이 예상됩니다."),
-    ai("DeepSeek", "무승부", "0:0", "Under", 63, "득점 기대값이 낮고 세트피스 의존도가 높은 매치업입니다."),
+    ai("Claude", "무승부", "0:0", "Under", 63, "득점 기대값이 낮고 세트피스 의존도가 높은 매치업입니다."),
   ],
   "sk-kcc": [
     ai("GPT", "홈승", "88:82", "Over", 65, "SK의 트랜지션 득점과 리바운드 우위를 근거로 봅니다."),
     ai("Gemini", "홈승", "91:86", "Over", 67, "KCC 벤치 구간 수비 흔들림이 후반 변수입니다."),
     ai("Grok", "원정승", "83:87", "Under", 55, "KCC 핵심 가드 출전 가능성이 올라간 점을 반영했습니다."),
-    ai("DeepSeek", "홈승", "84:80", "Under", 62, "총점 분포는 낮지만 SK 승률이 근소하게 우세합니다."),
+    ai("Claude", "홈승", "84:80", "Under", 62, "총점 분포는 낮지만 SK 승률이 근소하게 우세합니다."),
   ],
   "t1-gen": [
     ai("GPT", "홈승", "2:1", "Over", 59, "초반 설계와 교전 전환에서 T1의 강점을 봅니다."),
     ai("Gemini", "원정승", "1:2", "Over", 62, "Gen.G의 운영 안정성과 후반 한타 집중력이 우세합니다."),
     ai("Grok", "원정승", "1:2", "Over", 60, "최근 메타 적응도와 밴픽 폭은 Gen.G 쪽에 무게가 있습니다."),
-    ai("DeepSeek", "원정승", "0:2", "Under", 58, "오브젝트 교환 효율 모델에서 Gen.G가 앞섭니다."),
+    ai("Claude", "원정승", "0:2", "Under", 58, "오브젝트 교환 효율 모델에서 Gen.G가 앞섭니다."),
   ],
   "korea-japan-volley": [
     ai("GPT", "원정승", "1:3", "Over", 60, "일본의 리시브 안정성과 속공 완성도가 높습니다."),
     ai("Gemini", "원정승", "2:3", "Over", 57, "한국의 홈 이점은 있지만 세트 후반 결정력이 변수입니다."),
     ai("Grok", "홈승", "3:2", "Over", 52, "홈 관중과 서브 압박 성공률 상승 가능성을 봅니다."),
-    ai("DeepSeek", "원정승", "1:3", "Under", 61, "세트별 득점 분산에서 일본 우세 확률이 높습니다."),
+    ai("Claude", "원정승", "1:3", "Under", 61, "세트별 득점 분산에서 일본 우세 확률이 높습니다."),
   ],
   "hanwha-lotte": [
     ai("GPT", "홈승", "5:4", "Over", 63, "한화의 후반 대타 카드와 불펜 매치업이 적중했습니다."),
     ai("Gemini", "홈승", "6:4", "Over", 60, "경기 흐름상 홈팀 후반 득점 가능성이 높았습니다."),
     ai("Grok", "원정승", "3:5", "Under", 51, "롯데 선발 이슈가 생각보다 빠르게 드러났습니다."),
-    ai("DeepSeek", "홈승", "4:3", "Under", 59, "낮은 총점 접근은 맞았고 승패 방향도 일치했습니다."),
+    ai("Claude", "홈승", "4:3", "Under", 59, "낮은 총점 접근은 맞았고 승패 방향도 일치했습니다."),
   ],
 };
 
@@ -336,10 +373,10 @@ export const predictions: Prediction[] = analysisMatches.flatMap((match) =>
 export const predictionHistory: PredictionHistoryRecord[] = [
   history("h-001", "2026-06-07", "야구", "KBO", "한화 이글스 vs 롯데 자이언츠", "GPT", "홈승", "한화 5:4 롯데", true, 63),
   history("h-002", "2026-06-07", "야구", "KBO", "한화 이글스 vs 롯데 자이언츠", "Grok", "원정승", "한화 5:4 롯데", false, 51),
-  history("h-003", "2026-06-06", "축구", "K리그1", "울산 HD vs 포항", "DeepSeek", "Under", "1:0", true, 66),
+  history("h-003", "2026-06-06", "축구", "K리그1", "울산 HD vs 포항", "Claude", "Under", "1:0", true, 66),
   history("h-004", "2026-06-06", "농구", "KBL", "원주 DB vs 창원 LG", "Gemini", "홈승", "DB 81:77 LG", true, 64),
   history("h-005", "2026-06-05", "e스포츠", "LCK", "DK vs HLE", "GPT", "원정승", "DK 1:2 HLE", true, 61),
-  history("h-006", "2026-06-05", "배구", "VNL", "대한민국 vs 브라질", "DeepSeek", "원정승", "대한민국 0:3 브라질", true, 69),
+  history("h-006", "2026-06-05", "배구", "VNL", "대한민국 vs 브라질", "Claude", "원정승", "대한민국 0:3 브라질", true, 69),
 ];
 
 export const featuredMatches: FeaturedMatch[] = analysisMatches.map((match) => ({
@@ -359,7 +396,7 @@ export const decisionProcesses: AIDecisionProcess[] = aiModels.map((model, index
   combinationOdds: 0,
 }));
 
-export const combinations: Combination[] = aiModels.slice(0, 3).map((model, index) => ({
+export const combinations: Combination[] = aiModels.map((model, index) => ({
   id: `combo-${index + 1}`,
   date: "2026-06-08",
   aiName: model.name,
@@ -401,7 +438,7 @@ export const apiCombinations: ApiCombination[] = allCombinations.map((combinatio
   profit: combination.profit,
 }));
 
-export const aiProfiles = rankingStats.map(({ id, name, initials, analysisStyle, investmentPhilosophy, signatureTraits, strategy, strategyDescription }) => ({
+export const aiProfiles = aiCompetitors.map(({ id, name, initials, analysisStyle, investmentPhilosophy, signatureTraits, strategy, strategyDescription }) => ({
   id,
   name,
   initials,

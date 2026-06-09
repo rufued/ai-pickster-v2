@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AiProfileCard } from "@/components/ai/AiProfileCard";
 import { BattleCard } from "@/components/battle/BattleCard";
 import { BattleRanking } from "@/components/battle/BattleRanking";
 import { SportsSidebar } from "@/components/sports/SportsSidebar";
@@ -33,31 +32,23 @@ export function BattleSportsView({ ais, matches, initialSport = "all" }: BattleS
   return (
     <div className="grid min-w-0 gap-6 overflow-hidden lg:grid-cols-[220px_1fr] lg:overflow-visible">
       <SportsSidebar basePath="/battle" activeSport={selectedSport} onSportChange={handleSportChange} />
-      <div className="min-w-0">
-        <div className="mb-8">
-          <BattleRanking ais={ais} />
-        </div>
+      <div className="min-w-0 space-y-6">
+        <BattleRanking ais={ais} />
 
-        <div className="mb-8">
-          <div className="mb-5">
-              <p className="text-sm font-semibold text-accent-green">AI 프로필</p>
-            <h2 className="mt-1 text-2xl font-black text-white">배틀 참가 AI 스타일</h2>
+        <section>
+          <div className="mb-4">
+            <p className="text-sm font-bold text-blue-600">Match Battles</p>
+            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">경기별 AI 예측 대결</h2>
           </div>
-          <div className="grid gap-4 xl:grid-cols-3">
-            {ais.map((ai) => (
-              <AiProfileCard key={ai.id} ai={ai} />
+          <div className="grid gap-4 xl:grid-cols-2">
+            {filteredMatches.map((match) => (
+              <BattleCard key={match.id} match={match} />
             ))}
+            {filteredMatches.length === 0 ? (
+              <div className="panel p-5 text-sm font-medium text-slate-600 xl:col-span-2">현재 선택한 종목의 AI 배틀이 없습니다.</div>
+            ) : null}
           </div>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          {filteredMatches.map((match) => (
-            <BattleCard key={match.id} match={match} />
-          ))}
-          {filteredMatches.length === 0 ? (
-            <div className="panel p-5 text-sm text-slate-400 xl:col-span-2">현재 더미데이터에는 해당 종목 배틀이 없습니다.</div>
-          ) : null}
-        </div>
+        </section>
       </div>
     </div>
   );

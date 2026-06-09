@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { BarChart3, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import { analysisMatches } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
 import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
@@ -23,7 +24,7 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
         <div>
           <p className="text-sm font-bold text-blue-700">AI 분석 센터</p>
           <h1 className="mt-1 text-3xl font-black text-slate-950">경기별 AI 예측 비교</h1>
-          <p className="mt-2 text-sm text-slate-600">GPT, Gemini, Grok, DeepSeek의 승부 예측과 예상 스코어를 한 번에 비교합니다.</p>
+          <p className="mt-2 text-sm text-slate-600">GPT, Gemini, Grok, Claude, DeepSeek의 승부 예측과 예상 스코어를 한 번에 비교합니다.</p>
         </div>
         <div className="flex gap-2 overflow-x-auto">
           {sportCategories.map((category) => (
@@ -57,7 +58,9 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
                   <BarChart3 size={16} className="text-blue-600" />
                   AI 최고 신뢰도
                 </p>
-                <p className="mt-2 text-sm text-slate-600">{top.aiName} · {top.prediction} · {top.expectedScore}</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600">
+                  <AiIdentity name={top.aiName} showBadge={false} nameClassName="text-sm" /> · {top.prediction} · {top.expectedScore}
+                </p>
                 <div className="mt-3 h-2 rounded-full bg-slate-200">
                   <div className="h-2 rounded-full bg-blue-600" style={{ width: `${top.confidence}%` }} />
                 </div>

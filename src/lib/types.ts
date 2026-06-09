@@ -3,7 +3,7 @@ export type Sport = "축구" | "야구" | "농구" | "배구" | "e스포츠" | "
 export type MatchStatus = "scheduled" | "live" | "final";
 export type MatchResultPick = "홈승" | "무승부" | "원정승";
 export type OverUnderPick = "Over" | "Under";
-export type AIModelId = "gpt" | "gemini" | "grok" | "deepseek" | "claude" | string;
+export type AIModelId = "gpt" | "gemini" | "grok" | "claude" | "deepseek" | string;
 
 export type CombinationStatus = "대기중" | "적중" | "미적중" | string;
 export type AIStyle = string;

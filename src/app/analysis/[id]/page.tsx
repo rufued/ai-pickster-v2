@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Bot, Clock, LineChart, ListChecks, MapPin, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
+import { AiIdentity } from "@/components/ai/AiIdentity";
+import { getBattleAnalyses } from "@/lib/battleAnalyses";
 import { analysisMatches, getAnalysisMatch } from "@/lib/data";
 import { formatDateTime, formatPredictedTotal } from "@/lib/format";
 
@@ -20,6 +22,8 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
   if (!match) {
     notFound();
   }
+
+  const analyses = getBattleAnalyses(match.analyses);
 
   return (
     <section className="container-shell py-8">
@@ -58,15 +62,21 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
             <Bot size={18} className="text-blue-600" />
             AI 분석 탭
           </h2>
-          <span className="text-xs font-black text-slate-500">GPT · Gemini · Grok · DeepSeek</span>
+          <span className="hidden text-xs font-black text-slate-500 sm:inline-flex sm:items-center sm:gap-2">
+            <AiIdentity name="GPT" showBadge={false} nameClassName="text-xs" />
+            <AiIdentity name="Gemini" showBadge={false} nameClassName="text-xs" />
+            <AiIdentity name="Claude" showBadge={false} nameClassName="text-xs" />
+            <AiIdentity name="Grok" showBadge={false} nameClassName="text-xs" />
+            <AiIdentity name="DeepSeek" showBadge={false} nameClassName="text-xs" />
+          </span>
         </div>
 
-        <div className="grid gap-4 p-4 lg:grid-cols-4">
-          {match.analyses.map((analysis) => (
+        <div className="grid gap-4 p-4 lg:grid-cols-3 xl:grid-cols-5">
+          {analyses.map((analysis) => (
             <article key={analysis.aiName} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-black text-slate-950">{analysis.aiName}</p>
+                  <AiIdentity name={analysis.aiName} showBadge={false} nameClassName="text-lg" />
                   <p className="mt-1 text-xs font-bold text-slate-500">{analysis.analysisAngle}</p>
                 </div>
                 <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700">{analysis.confidence}%</span>

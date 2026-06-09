@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { MessageSquare, ThumbsUp } from "lucide-react";
-import { useMemo, useState } from "react";
 import clsx from "clsx";
+import { MessageSquare, ThumbsUp } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import type { CommunityCategory, CommunityPost } from "@/lib/types";
 
 const categories: Array<"전체" | CommunityCategory> = ["전체", "자유게시판", "경기분석", "픽공유", "질문답변", "AI토론"];
@@ -29,10 +29,10 @@ export function CommunityBoard({ posts }: CommunityBoardProps) {
             type="button"
             onClick={() => setActiveCategory(category)}
             className={clsx(
-              "rounded-md border px-4 py-2 text-sm font-semibold transition",
+              "rounded-md border px-4 py-2 text-sm transition",
               activeCategory === category
-                ? "border-accent-green bg-accent-green text-black"
-                : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
+                ? "border-blue-600 bg-blue-600 font-semibold text-white"
+                : "border-slate-200 bg-white font-medium text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",
             )}
           >
             {category}
@@ -41,25 +41,25 @@ export function CommunityBoard({ posts }: CommunityBoardProps) {
       </div>
 
       <div className="panel overflow-hidden">
-        <div className="divide-y divide-white/10">
+        <div className="divide-y divide-slate-100">
           {filteredPosts.map((post) => (
-            <Link key={post.id} href={`/community/${post.id}`} className="grid gap-3 p-5 transition hover:bg-white/[0.03] lg:grid-cols-[1fr_auto]">
-              <div>
+            <Link key={post.id} href={`/community/${post.id}`} className="grid gap-3 p-5 transition hover:bg-blue-50/60 lg:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-bold text-accent-green">
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                     {post.category}
                   </span>
-                  <span className="text-xs text-slate-500">{post.createdAt}</span>
+                  <span className="text-xs font-medium text-slate-600">{post.createdAt}</span>
                 </div>
-                <h2 className="mt-3 text-lg font-black text-white">{post.title}</h2>
-                <p className="mt-2 text-sm text-slate-400">작성자 {post.author}</p>
+                <h2 className="mt-3 truncate text-lg font-extrabold text-slate-900">{post.title}</h2>
+                <p className="mt-2 text-sm font-medium text-slate-600">작성자 {post.author}</p>
               </div>
-              <div className="flex items-center gap-4 text-sm text-slate-400 lg:justify-end">
+              <div className="flex items-center gap-4 text-sm font-medium text-slate-600 lg:justify-end">
                 <span>조회 {post.views}</span>
                 <span className="inline-flex items-center gap-1">
                   <MessageSquare size={15} /> {post.comments}
                 </span>
-                <span className="inline-flex items-center gap-1 text-emerald-300">
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-600">
                   <ThumbsUp size={15} /> {post.likes}
                 </span>
               </div>

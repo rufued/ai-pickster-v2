@@ -1,7 +1,7 @@
 import type { AnalysisMatch, Match } from "@/lib/types";
 
 type AiTemplate = {
-  aiName: "GPT" | "Gemini" | "DeepSeek";
+  aiName: "GPT" | "Gemini" | "Claude";
   confidence: number;
   angle: string;
   decisionStatus: "조합 포함" | "후보만 선정" | "최종 제외";
@@ -21,7 +21,7 @@ const aiTemplates: AiTemplate[] = [
     decisionStatus: "후보만 선정",
   },
   {
-    aiName: "DeepSeek",
+    aiName: "Claude",
     confidence: 52,
     angle: "배당 가치와 업셋 가능성 분석",
     decisionStatus: "최종 제외",

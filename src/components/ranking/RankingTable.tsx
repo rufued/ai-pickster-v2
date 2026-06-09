@@ -1,3 +1,4 @@
+import { AiIdentity } from "@/components/ai/AiIdentity";
 import type { AICompetitor } from "@/lib/types";
 import { formatCurrency, formatPercent, formatSignedCurrency } from "@/lib/format";
 
@@ -34,7 +35,7 @@ export function RankingTable({ ais }: RankingTableProps) {
                     <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-xs font-black text-white">
                       {ai.initials}
                     </span>
-                    <span className="font-semibold text-white">{ai.name}</span>
+                    <AiIdentity name={ai.name} showBadge={false} nameClassName="text-sm text-white" />
                   </div>
                 </td>
                 <td className="px-4 py-4">

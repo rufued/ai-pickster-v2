@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import clsx from "clsx";
+import Link from "next/link";
 import { sportCategories } from "@/lib/sports";
 
 type SportsSidebarProps = {
@@ -13,29 +13,34 @@ type SportsSidebarProps = {
 export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChange }: SportsSidebarProps) {
   return (
     <aside className="min-w-0 max-w-full lg:sticky lg:top-24 lg:self-start">
-      <div className="panel max-w-full overflow-hidden border-accent-green/20 p-3 lg:overflow-visible">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">Sports</p>
-          <span className="hidden rounded-full border border-accent-green/30 bg-accent-green/10 px-2 py-0.5 text-[10px] font-black text-accent-green lg:inline-flex">
-            FILTER
-          </span>
+      <div className="panel max-w-full overflow-hidden p-3 lg:overflow-visible">
+        <div className="mb-3 px-1">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-600">Sports</p>
         </div>
         <nav className="scrollbar-hide flex max-w-full gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
           {sportCategories.map((category) => {
             const active = activeSport === category.id || (!activeSport && category.id === "all");
             const href = category.id === "all" ? basePath : `${basePath}?sport=${category.id}`;
             const className = clsx(
-              "inline-flex h-10 flex-none cursor-pointer touch-manipulation items-center gap-2 whitespace-nowrap rounded-md border px-3 text-sm font-bold transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
+              "group inline-flex h-11 flex-none cursor-pointer touch-manipulation items-center gap-3 whitespace-nowrap rounded-lg border px-3 text-sm transition lg:flex lg:w-full lg:min-w-0 lg:justify-start",
               active
-                ? "border-accent-green bg-accent-green text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]"
-                : "border-white/10 bg-black/20 text-slate-300 hover:border-accent-green/40 hover:text-white",
+                ? "border-blue-600 bg-blue-600 font-semibold text-white shadow-sm"
+                : "border-slate-200 bg-white font-medium text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",
             );
             const content = (
               <>
-                <span aria-hidden>{category.icon}</span>
+                <span
+                  aria-hidden
+                  className={clsx(
+                    "inline-flex h-5 w-5 shrink-0 items-center justify-center text-[19px] leading-none transition",
+                    active ? "text-white" : "text-slate-600 group-hover:text-blue-600",
+                  )}
+                >
+                  {category.icon}
+                </span>
                 <span>{category.label}</span>
                 {category.isNew ? (
-                  <span className={active ? "rounded bg-black/20 px-1.5 py-0.5 text-[10px] text-black" : "rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green"}>
+                  <span className={active ? "rounded bg-white/15 px-1.5 py-0.5 text-[10px] text-white" : "rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700"}>
                     NEW
                   </span>
                 ) : null}

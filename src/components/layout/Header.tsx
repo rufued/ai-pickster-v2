@@ -8,10 +8,11 @@ import { useState } from "react";
 import { SCOREHUB } from "@/lib/brand";
 
 const navItems = [
-  { href: "/", label: "스코어" },
-  { href: "/analysis", label: "경기분석" },
-  { href: "/ranking", label: "AI 랭킹" },
-  { href: "/history", label: "기록실" },
+  { href: "/", label: "리그 홈" },
+  { href: "/ranking", label: "랭킹" },
+  { href: "/battle", label: "AI 배틀" },
+  { href: "/history", label: "픽 기록실" },
+  { href: "/predictions", label: "AI Pickster" },
   { href: "/community", label: "커뮤니티" },
 ];
 
@@ -20,7 +21,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="container-shell flex h-16 min-w-0 items-center justify-between gap-3">
         <Link href="/" aria-label={`${SCOREHUB.name} 홈`} className="flex min-w-0 shrink-0 items-center" onClick={() => setIsOpen(false)}>
           <span className="scorehub-logo" aria-hidden />
@@ -35,8 +36,8 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  "rounded-md px-3 py-2 text-sm font-bold transition",
-                  active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                  "rounded-md px-3 py-2 text-sm transition",
+                  active ? "bg-blue-50 font-semibold text-blue-700" : "font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600",
                 )}
               >
                 {item.label}
@@ -45,15 +46,15 @@ export function Header() {
           })}
         </nav>
 
-        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400 md:flex">
-          <Search size={16} />
-          <span>팀, 리그, 경기 검색</span>
+        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600 md:flex">
+          <Search size={16} className="text-blue-600" />
+          <span>참가자, 리그, 경기 검색</span>
         </div>
 
         <button
           type="button"
           aria-label="메뉴"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-700 lg:hidden"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:hidden"
           onClick={() => setIsOpen((current) => !current)}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -70,8 +71,8 @@ export function Header() {
                 href={item.href}
                 onClick={() => setIsOpen(false)}
                 className={clsx(
-                  "rounded-md px-3 py-3 text-sm font-bold",
-                  active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100",
+                  "rounded-md px-3 py-3 text-sm transition",
+                  active ? "bg-blue-50 font-semibold text-blue-700" : "font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600",
                 )}
               >
                 {item.label}
