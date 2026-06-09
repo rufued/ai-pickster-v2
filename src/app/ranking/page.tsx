@@ -1,12 +1,26 @@
 import clsx from "clsx";
+import Link from "next/link";
 import { Medal, TrendingUp, Wallet } from "lucide-react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
 import { SCOREHUB } from "@/lib/brand";
-import { getRoiRankings } from "@/lib/league";
+import { formatCurrency } from "@/lib/format";
+import { getRoiRankings, type LeagueParticipant } from "@/lib/league";
 
-export default function RankingPage() {
-  const roiRankings = getRoiRankings();
+const tabs = ["전체", "축구", "야구", "농구", "e스포츠"] as const;
+
+type RankingPageProps = {
+  searchParams?: Promise<{
+    sport?: string | string[];
+  }>;
+};
+
+export default async function RankingPage({ searchParams }: RankingPageProps) {
+  const params = await searchParams;
+  const requested = Array.isArray(params?.sport) ? params?.sport[0] : params?.sport;
+  const activeSport = tabs.find((tab) => tab === requested) ?? "전체";
+  const roiRankings = getRoiRankings(activeSport);
   const leader = roiRankings[0];
+  const topHuman = roiRankings.find((participant) => participant.kind === "인간") ?? leader;
 
   return (
     <section className="container-shell py-8">
@@ -14,14 +28,29 @@ export default function RankingPage() {
         <p className="text-sm font-bold text-blue-600">{SCOREHUB.slogan}</p>
         <h1 className="mt-1 text-3xl font-extrabold text-slate-900">시즌 랭킹</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          랭킹 기준은 ROI, 현재 자산, 적중률 순입니다. 사용자는 누가 같은 초기 자산을 가장 잘 불렸는지 한눈에 볼 수 있습니다.
+          AI와 인간 참가자가 같은 100,000 SHC 시즌 자산으로 경쟁합니다. 종목별 탭에서 ROI 순위를 비교해보세요.
         </p>
+      </div>
+
+      <div className="mb-5 flex flex-wrap gap-2 sm:gap-3">
+        {tabs.map((tab) => (
+          <Link
+            key={tab}
+            href={tab === "전체" ? "/ranking" : `/ranking?sport=${encodeURIComponent(tab)}`}
+            className={clsx(
+              "rounded-md border px-4 py-2 text-sm font-bold transition",
+              activeSport === tab ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",
+            )}
+          >
+            {tab}
+          </Link>
+        ))}
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <MetricCard icon={<TrendingUp size={18} />} label="ROI 1위" value={leader.name} helper={`+${leader.roi.toFixed(1)}%`} />
-        <MetricCard icon={<Wallet size={18} />} label="현재 자산 1위" value={`${leader.asset.toLocaleString()} SHC`} helper="초기 100,000 SHC" />
-        <MetricCard icon={<Medal size={18} />} label="인간 최고 순위" value="축구도사" helper="+31.2% ROI" />
+        <MetricCard icon={<Wallet size={18} />} label="현재 자산 1위" value={formatCurrency(leader.asset)} helper="초기 100,000 SHC" />
+        <MetricCard icon={<Medal size={18} />} label="인간 최고 순위" value={topHuman.name} helper={`+${topHuman.roi.toFixed(1)}% ROI`} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -34,27 +63,21 @@ export default function RankingPage() {
                     {index + 1}
                   </span>
                   <div className="min-w-0">
-                    {participant.kind === "AI" ? (
-                      <AiIdentity name={participant.name} showBadge={false} nameClassName="text-xl" />
-                    ) : (
-                      <h2 className="truncate text-xl font-extrabold text-slate-900">{participant.name}</h2>
-                    )}
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      <TypeBadge kind={participant.kind} />
-                    </div>
+                    <ParticipantName participant={participant} className="text-xl" />
+                    <TypeBadge kind={participant.kind} />
                   </div>
                 </div>
               </div>
               {index === 0 ? <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-black text-white">LEADER</span> : null}
             </div>
 
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-bold text-slate-600">현재 자산</p>
-              <p className="mt-1 text-3xl font-extrabold text-slate-900">{participant.asset.toLocaleString()} SHC</p>
+              <p className="mt-1 text-3xl font-extrabold text-slate-900">{formatCurrency(participant.asset)}</p>
             </div>
 
             <div className="mt-4">
-              <p className="text-xs font-bold text-slate-600">ROI</p>
+              <p className="text-xs font-bold text-slate-600">{activeSport} ROI</p>
               <p className={clsx("mt-1 text-5xl font-black tracking-tight", participant.roi >= 0 ? "text-emerald-600" : "text-red-600")}>
                 {participant.roi >= 0 ? "+" : ""}
                 {participant.roi.toFixed(1)}%
@@ -69,6 +92,14 @@ export default function RankingPage() {
         ))}
       </div>
     </section>
+  );
+}
+
+function ParticipantName({ participant, className }: { participant: LeagueParticipant; className?: string }) {
+  return participant.kind === "AI" ? (
+    <AiIdentity name={participant.name} showBadge={false} nameClassName={className} />
+  ) : (
+    <h2 className={clsx("truncate font-extrabold text-slate-900", className)}>{participant.name}</h2>
   );
 }
 

@@ -19,9 +19,7 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <AiIdentity name={combination.aiName} nameClassName="text-xl" />
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-              AI Pickster
-            </span>
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">AI Pickster</span>
           </div>
           <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
             <Layers3 size={16} className="text-blue-600" />
@@ -44,9 +42,7 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="w-fit rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">
-                  {selection.odds.toFixed(2)}
-                </span>
+                <span className="w-fit rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">{selection.odds.toFixed(2)}</span>
                 <Link
                   href={`/analysis/${selection.analysisId}`}
                   className="inline-flex items-center gap-1 rounded-md border border-blue-200 px-2 py-1 text-xs font-bold text-blue-700 transition hover:bg-blue-600 hover:text-white"
@@ -59,18 +55,16 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
-        <Metric label="조합 지수" value={combination.totalOdds.toFixed(2)} highlight />
+      <div className="mt-5 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+        <Metric label="조합 지수" value={combination.totalOdds.toFixed(1)} highlight />
         <Metric label="가상 투입" value={formatCurrency(combination.stake)} />
-        <Metric label="예상 SHC" value={formatCurrency(combination.potentialReturn)} highlight />
+        <Metric label="예상 수익" value={formatSignedCurrency(combination.profit)} highlight />
       </div>
 
       {!compact && combination.status !== "대기중" ? (
         <div className="mt-4 flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
           <span className="text-slate-500">{combination.result}</span>
-          <span className={combination.profit >= 0 ? "font-bold text-emerald-600" : "font-bold text-red-600"}>
-            {formatSignedCurrency(combination.profit)}
-          </span>
+          <span className={combination.profit >= 0 ? "font-bold text-emerald-600" : "font-bold text-red-600"}>{formatSignedCurrency(combination.profit)}</span>
         </div>
       ) : null}
     </article>

@@ -18,7 +18,7 @@ export function BattleRanking({ ais }: BattleRankingProps) {
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {ranked.map((ai, index) => (
-          <div key={ai.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm">
+          <div key={ai.id} className="rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-blue-700">#{index + 1}</p>
               <p className="text-2xl font-extrabold text-slate-900">{getBattleWinRate(ai)}%</p>

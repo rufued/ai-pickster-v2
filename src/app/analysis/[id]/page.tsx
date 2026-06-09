@@ -60,7 +60,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="flex items-center gap-2 text-base font-black text-slate-950">
             <Bot size={18} className="text-blue-600" />
-            AI 분석 탭
+            AI 분석 비교
           </h2>
           <span className="hidden text-xs font-black text-slate-500 sm:inline-flex sm:items-center sm:gap-2">
             <AiIdentity name="GPT" showBadge={false} nameClassName="text-xs" />
@@ -91,7 +91,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
 
               <p className="mt-4 text-sm leading-6 text-slate-600">{analysis.summary}</p>
               <div className="mt-4 rounded-md bg-slate-50 p-3">
-                <p className="text-xs font-black text-slate-500">짧은 분석 코멘트</p>
+                <p className="text-xs font-black text-slate-500">지표 분석 코멘트</p>
                 <p className="mt-1 text-sm font-semibold text-slate-800">{analysis.decisionReason}</p>
               </div>
             </article>

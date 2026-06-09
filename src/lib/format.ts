@@ -1,14 +1,9 @@
-export const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-  }).format(value);
-
-export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+export const formatCurrency = (value: number) => `${Math.round(value).toLocaleString("en-US")} SHC`;
 
 export const formatSignedCurrency = (value: number) =>
-  `${value > 0 ? "+" : ""}${formatCurrency(value)}`;
+  `${value > 0 ? "+" : value < 0 ? "-" : ""}${formatCurrency(Math.abs(value))}`;
+
+export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 
 export const formatDate = (value: string) => {
   const { month, day } = getDateTimeParts(value);

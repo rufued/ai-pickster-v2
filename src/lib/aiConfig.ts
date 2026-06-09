@@ -1,12 +1,11 @@
 export type AiColor = "blue" | "purple" | "dark" | "orange" | "teal";
-export type AiCountry = "US" | "CN" | string;
+export type AiCountry = "US" | "CN";
 
 export type AiConfig = {
   id: string;
   name: string;
   provider: string;
   country: AiCountry;
-  countryName: string;
   color: AiColor;
   chipClass: string;
 };
@@ -17,45 +16,40 @@ export const aiConfigs: AiConfig[] = [
     name: "GPT",
     provider: "OpenAI",
     country: "US",
-    countryName: "미국",
     color: "blue",
-    chipClass: "ai-chip-gpt",
+    chipClass: "border-blue-200 bg-blue-50 text-blue-700",
   },
   {
     id: "gemini",
     name: "Gemini",
     provider: "Google",
     country: "US",
-    countryName: "미국",
     color: "purple",
-    chipClass: "ai-chip-gemini",
+    chipClass: "border-violet-200 bg-violet-50 text-violet-700",
   },
   {
     id: "claude",
     name: "Claude",
     provider: "Anthropic",
     country: "US",
-    countryName: "미국",
     color: "orange",
-    chipClass: "ai-chip-claude",
+    chipClass: "border-orange-200 bg-orange-50 text-orange-700",
   },
   {
     id: "grok",
     name: "Grok",
     provider: "xAI",
     country: "US",
-    countryName: "미국",
     color: "dark",
-    chipClass: "ai-chip-grok",
+    chipClass: "border-slate-300 bg-slate-100 text-slate-800",
   },
   {
     id: "deepseek",
     name: "DeepSeek",
     provider: "DeepSeek",
     country: "CN",
-    countryName: "중국",
     color: "teal",
-    chipClass: "ai-chip-deepseek",
+    chipClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
 ];
 
@@ -64,11 +58,11 @@ export const battleAiOrder = aiConfigs.map((ai) => ai.name);
 export function getCountryFlag(country?: string) {
   switch (country?.toUpperCase()) {
     case "US":
-      return "\uD83C\uDDFA\uD83C\uDDF8";
+      return "🇺🇸";
     case "CN":
-      return "\uD83C\uDDE8\uD83C\uDDF3";
+      return "🇨🇳";
     default:
-      return "\uD83C\uDFF3\uFE0F";
+      return "🏳️";
   }
 }
 
@@ -82,5 +76,5 @@ export function getAiChipClass(name: string) {
 
 export function formatAiNameWithFlag(name: string) {
   const ai = getAiConfig(name);
-  return `${getCountryFlag(ai?.country)} ${name}`;
+  return `${getCountryFlag(ai?.country)} ${ai?.name ?? name}`;
 }

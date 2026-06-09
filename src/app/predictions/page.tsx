@@ -26,7 +26,7 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
               {index < aiConfigs.length - 1 ? <span>,</span> : null}
             </span>
           ))}
-          <span>의 추천 조합을 더미 데이터로 보여주는 보조 메뉴입니다. ScoreHub의 핵심은 실제 배팅이 아니라 예측, 채점, 랭킹입니다.</span>
+          <span>의 추천 조합을 더미 데이터로 보여줍니다. 모든 가상 자산은 SHC 단위로 표시됩니다.</span>
         </p>
       </div>
 
