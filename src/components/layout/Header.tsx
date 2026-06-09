@@ -5,6 +5,7 @@ import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { SCOREHUB } from "@/lib/brand";
 
 const navItems = [
   { href: "/", label: "스코어" },
@@ -19,13 +20,11 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="container-shell flex h-16 items-center justify-between gap-3">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
-            AI
-          </span>
-          <span className="text-base font-black tracking-tight text-slate-950">AI Sports Hub</span>
+    <header className="sticky top-0 z-50 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="container-shell flex h-16 min-w-0 items-center justify-between gap-3">
+        <Link href="/" aria-label={`${SCOREHUB.name} 홈`} className="flex min-w-0 shrink-0 items-center" onClick={() => setIsOpen(false)}>
+          <span className="scorehub-logo" aria-hidden />
+          <span className="sr-only">{SCOREHUB.name}</span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -54,7 +53,7 @@ export function Header() {
         <button
           type="button"
           aria-label="메뉴"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 lg:hidden"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-700 lg:hidden"
           onClick={() => setIsOpen((current) => !current)}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}

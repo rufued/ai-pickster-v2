@@ -11,6 +11,7 @@ import type {
   Prediction,
   PredictionHistoryRecord,
 } from "./types";
+import { SCOREHUB } from "./brand";
 
 export const aiModels: AIModel[] = [
   { id: "gpt", name: "GPT", initials: "GP", description: "전력 지표와 최근 폼을 균형 있게 반영", color: "blue" },
@@ -424,7 +425,7 @@ export const communityPosts: CommunityPost[] = [
     id: "post-001",
     category: "공지",
     title: "커뮤니티 메뉴는 추후 스포츠 토론 기능으로 확장 예정입니다.",
-    author: "AI Sports Hub",
+    author: SCOREHUB.name,
     createdAt: "2026-06-08 09:00",
     views: 128,
     comments: 0,

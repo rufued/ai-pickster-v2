@@ -14,28 +14,28 @@ type BattleCardProps = {
 
 export function BattleCard({ match, featured = false }: BattleCardProps) {
   return (
-    <article className={featured ? "panel border-accent-green/30 p-5" : "panel p-5"}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <article className={featured ? "panel min-w-0 overflow-hidden border-accent-green/30 p-5" : "panel min-w-0 overflow-hidden p-5"}>
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
           <p className="text-xs font-semibold text-slate-500">
             {match.league} · {match.sport} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
             <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
           </p>
-          <h3 className="mt-2 text-2xl font-black text-white">{match.match}</h3>
+          <h3 className="mt-2 break-words text-2xl font-black text-white">{match.match}</h3>
         </div>
         <Swords className="shrink-0 text-accent-green" size={24} />
       </div>
 
       <div className="mt-5 grid gap-3">
         {match.analyses.map((analysis) => (
-          <div key={analysis.aiName} className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-4 py-3">
-            <div>
+          <div key={analysis.aiName} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 px-4 py-3">
+            <div className="min-w-0">
               <span className="font-black text-white">{analysis.aiName}</span>
               <p className="mt-1 text-xs font-semibold text-slate-500">{getAiStyle(analysis.aiName)}</p>
             </div>
-            <div className="text-right">
-              <span className="font-bold text-accent-green">{analysis.prediction}</span>
-              <p className="mt-1 text-xs text-slate-500">{analysis.analysisAngle}</p>
+            <div className="min-w-0 text-right">
+              <span className="block truncate font-bold text-accent-green">{analysis.prediction}</span>
+              <p className="mt-1 truncate text-xs text-slate-500">{analysis.analysisAngle}</p>
             </div>
           </div>
         ))}

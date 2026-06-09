@@ -124,9 +124,9 @@ function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Matc
         <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">Baseball 카테고리에서만 실제 upcoming odds 데이터를 우선 표시합니다.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         {matches.map((match) => (
-          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
+          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block min-w-0 overflow-hidden p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
               <span>{match.sport}</span>
               <span className="h-1 w-1 rounded-full bg-slate-600" />
@@ -136,12 +136,12 @@ function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Matc
               <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
             </div>
 
-            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div className="mt-4 grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-slate-500">홈팀</p>
                 <h3 className="mt-1 truncate text-lg font-black text-white">{match.homeTeam}</h3>
               </div>
-              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-400">VS</span>
+              <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-400">VS</span>
               <div className="min-w-0 text-right">
                 <p className="text-xs font-semibold text-slate-500">원정팀</p>
                 <h3 className="mt-1 truncate text-lg font-black text-white">{match.awayTeam}</h3>
@@ -219,10 +219,10 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
         <p className="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">경기를 선택하면 GPT, Gemini, DeepSeek의 분석 비교 페이지로 이동합니다.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         {matches.map((match) => (
-          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
-            <div className="flex items-start justify-between gap-4">
+          <Link key={match.id} href={`/analysis/${match.id}`} className="panel block min-w-0 overflow-hidden p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
+            <div className="flex min-w-0 items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
                   <span>{match.sport}</span>
@@ -232,7 +232,7 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
                   <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
                   <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
                 </div>
-                <h3 className="mt-2 text-xl font-black text-white">{match.match}</h3>
+                <h3 className="mt-2 break-words text-xl font-black text-white">{match.match}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{match.headline}</p>
               </div>
               <ConsensusBadge score={match.consensusScore} label={match.consensusLabel} />

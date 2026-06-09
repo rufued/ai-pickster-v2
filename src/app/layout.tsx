@@ -2,10 +2,15 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { SCOREHUB } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "AI Sports Hub",
-  description: "라이브스코어형 스포츠 정보 플랫폼과 AI 경기 예측 서비스",
+  title: SCOREHUB.name,
+  description: SCOREHUB.description,
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
