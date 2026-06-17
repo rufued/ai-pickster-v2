@@ -22,7 +22,7 @@ export function RecentCombinationResults({ combinations }: RecentCombinationResu
                 <AiIdentity name={combination.aiName} showBadge={false} /> · {combination.selections.length}폴더
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                조합 지수 {combination.totalOdds.toFixed(1)} · {combination.result}
+                배당 {combination.totalOdds.toFixed(2)} · {combination.result}
               </p>
             </div>
             <p className="text-sm text-slate-700">{combination.selections.map((selection) => selection.prediction).join(" / ")}</p>

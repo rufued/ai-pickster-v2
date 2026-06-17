@@ -170,7 +170,7 @@ export type ApiCombination = {
   aiName: string;
   combinationId: string;
   date: string;
-  style: string;
+  style: AIStyle;
   legs: CombinationLeg[];
   odds: number;
   stake: number;

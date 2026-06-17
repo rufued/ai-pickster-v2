@@ -17,7 +17,7 @@ export function SportsSidebar({ basePath = "/", activeSport = "all", onSportChan
         <div className="mb-3 px-1">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-600">Sports</p>
         </div>
-        <nav className="flex max-w-full flex-wrap gap-2 pb-1 sm:gap-3 lg:flex-col lg:flex-nowrap lg:pb-0">
+        <nav className="scrollbar-hide flex max-w-full gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
           {sportCategories.map((category) => {
             const active = activeSport === category.id || (!activeSport && category.id === "all");
             const href = category.id === "all" ? basePath : `${basePath}?sport=${category.id}`;

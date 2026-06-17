@@ -6,7 +6,7 @@ import { AiIdentity } from "@/components/ai/AiIdentity";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import type { Combination } from "@/lib/types";
 
-const filters = ["전체", "GPT", "Gemini", "Claude", "Grok", "DeepSeek"] as const;
+const filters = ["전체", "GPT", "Gemini", "Grok", "Claude", "DeepSeek"] as const;
 
 type CombinationFilterListProps = {
   combinations: Combination[];
@@ -22,14 +22,14 @@ export function CombinationFilterList({ combinations }: CombinationFilterListPro
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2 sm:gap-3">
+      <div className="flex flex-wrap gap-2">
         {filters.map((filter) => (
           <button
             key={filter}
             type="button"
             onClick={() => setActiveFilter(filter)}
             className={clsx(
-              "inline-flex min-h-10 items-center gap-2 rounded-md border px-4 py-2 text-sm font-bold transition",
+              "inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-bold transition",
               activeFilter === filter
                 ? "border-blue-600 bg-blue-600 text-white"
                 : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",

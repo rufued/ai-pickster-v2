@@ -17,7 +17,7 @@ export default async function BattlePage({ searchParams }: BattlePageProps) {
   return (
     <section className="container-shell py-8">
       <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-bold text-blue-600">AI Battle</p>
+        <p className="text-sm font-bold text-blue-600">오늘의 AI 배틀</p>
         <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">AI 배틀</h1>
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-base leading-7 text-slate-600">
           <span>같은 경기에서</span>
@@ -27,7 +27,7 @@ export default async function BattlePage({ searchParams }: BattlePageProps) {
               {index < aiConfigs.length - 1 ? <span>,</span> : null}
             </span>
           ))}
-          <span>의 예측을 비교합니다.</span>
+          <span>의 예측이 어떻게 갈리는지 비교합니다.</span>
         </p>
       </div>
 

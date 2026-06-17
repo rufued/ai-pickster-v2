@@ -24,9 +24,9 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
         <div>
           <p className="text-sm font-bold text-blue-700">AI 분석 센터</p>
           <h1 className="mt-1 text-3xl font-black text-slate-950">경기별 AI 예측 비교</h1>
-          <p className="mt-2 text-sm text-slate-600">🇺🇸 GPT, 🇺🇸 Gemini, 🇺🇸 Claude, 🇺🇸 Grok, 🇨🇳 DeepSeek의 승부 예측과 예상 스코어를 한 번에 비교합니다.</p>
+          <p className="mt-2 text-sm text-slate-600">GPT, Gemini, Grok, Claude, DeepSeek의 승부 예측과 예상 스코어를 한 번에 비교합니다.</p>
         </div>
-        <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="flex gap-2 overflow-x-auto">
           {sportCategories.map((category) => (
             <Link
               key={category.id}
@@ -36,7 +36,7 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
                 selectedSport === category.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600",
               )}
             >
-              {category.icon} {category.label}
+              {category.label}
             </Link>
           ))}
         </div>

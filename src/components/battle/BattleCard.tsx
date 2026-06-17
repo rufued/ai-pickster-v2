@@ -31,7 +31,7 @@ export function BattleCard({ match, featured = false }: BattleCardProps) {
 
       <div className="mt-5 grid gap-3">
         {analyses.map((analysis) => (
-          <div key={analysis.aiName} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <div key={analysis.aiName} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <div className="min-w-0">
               <AiIdentity name={analysis.aiName} />
               <p className="mt-1 truncate text-xs font-medium text-slate-600">{analysis.analysisAngle}</p>
