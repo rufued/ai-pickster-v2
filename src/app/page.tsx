@@ -1,156 +1,89 @@
+"use client";
+
 import clsx from "clsx";
-import { BookOpen, Bot, ChevronRight, Clock, MessageSquare, Swords, Target, TrendingUp, Trophy, Users, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, LineChart, Target, Trophy } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
-import { analysisMatches, combinations, communityPosts, matches } from "@/lib/data";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { SCOREHUB } from "@/lib/brand";
-import { formatDateTime, formatTime } from "@/lib/format";
-import { getRoiRankings, leaguePickHistory, seasonRankings, todayPredictions, type LeaguePick, type LeagueParticipant } from "@/lib/league";
-import type { Match, MatchStatus } from "@/lib/types";
+import { getAiColorHex } from "@/lib/aiConfig";
+import { aiCompetitors, getSettledCombinations, getTodayCombinations } from "@/lib/data";
+import { formatCurrency, formatPercent, formatSignedCurrency } from "@/lib/format";
+import type { AICompetitor, Combination } from "@/lib/types";
 
 export default function Home() {
-  const liveMatches = matches.slice(0, 5);
-  const roiRankings = getRoiRankings();
-  const battleMatch = analysisMatches[0];
-  const battleLeft = battleMatch?.analyses.find((analysis) => analysis.aiName === "GPT") ?? battleMatch?.analyses[0];
-  const battleRight = battleMatch?.analyses.find((analysis) => analysis.aiName === "Gemini") ?? battleMatch?.analyses[1];
-  const picksterPreview = combinations.slice(0, 4);
-  const historyPreview = leaguePickHistory.slice(0, 5);
-  const communityPreview = communityPosts.slice(0, 3);
+  const rankings = [...aiCompetitors].sort((a, b) => b.currentBankroll - a.currentBankroll || b.roi - a.roi);
+  const leader = rankings[0];
+  const todayCombinations = getTodayCombinations();
+  const recentSettled = getSettledCombinations().slice(0, 5);
 
   return (
     <div className="w-full max-w-full overflow-x-hidden bg-slate-50">
       <section className="border-b border-slate-200 bg-white">
-        <div className="container-shell py-5">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+        <div className="container-shell py-6">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
             <div className="min-w-0">
-              <p className="text-sm font-black text-blue-600">{SCOREHUB.name}</p>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{SCOREHUB.slogan}</h1>
-              <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-slate-700">
-                AI와 인간 참가자가 같은 경기, 같은 규칙, 같은 초기 자산 {SCOREHUB.startingAsset}으로 예측을 남기고 적중률과 ROI를 겨룹니다.
+              <p className="text-sm font-black text-blue-600">{SCOREHUB.slogan}</p>
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">AI 스포츠 가상배팅 리그</h1>
+              <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-slate-700">
+                AI들이 같은 가상머니로 스포츠 배팅 조합을 공개하고, 현재 자산과 누적 수익으로 순위를 겨루는 ScoreHub 대시보드입니다.
               </p>
+              <p className="mt-2 text-xs font-bold text-slate-500">모든 금액은 가상머니 기준입니다.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link href="/history" className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-700">
+                  배팅기록실 <ArrowRight size={16} />
+                </Link>
+                <Link href="/ranking" className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-blue-200 hover:bg-blue-50">
+                  전체 순위
+                </Link>
+              </div>
             </div>
-            <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-blue-100 bg-blue-50 text-center">
-              <Stat label="참가자" value={`${seasonRankings.length}명`} />
-              <Stat label="리그 총 자산" value="742,800 SHC" />
-              <Stat label="시즌" value="1 진행중" />
-            </div>
+            <LeaderCard leader={leader} />
           </div>
         </div>
       </section>
 
       <main className="container-shell space-y-5 py-5">
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-          <Panel
-            icon={<Trophy size={18} />}
-            title="시즌 랭킹"
-            description="ROI 기준 통합 순위입니다. 누가 같은 초기 자산을 가장 잘 불렸는지 보여줍니다."
-            action="전체 랭킹"
-            href="/ranking"
-          >
-            <div className="divide-y divide-slate-100">
-              {roiRankings.slice(0, 7).map((participant) => (
-                <RankingRow key={participant.name} participant={participant} />
-              ))}
-            </div>
-          </Panel>
+        <Panel icon={<LineChart size={18} />} title="AI별 누적 수익률" description="가상머니로 스포츠 배팅을 진행한 AI들의 누적 ROI 흐름입니다.">
+          <RoiLineChart ais={rankings} />
+        </Panel>
 
-          <Panel icon={<Swords size={18} />} title="오늘의 AI 배틀" description="같은 경기를 두 AI가 다르게 읽었을 때 승자는 누구일까요?" action="배틀 보기" href="/battle">
-            {battleMatch && battleLeft && battleRight ? (
-              <div className="space-y-4 p-4">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-bold text-slate-500">{battleMatch.league} · {formatDateTime(battleMatch.startTime)}</p>
-                  <h3 className="mt-1 text-lg font-black text-slate-950">{battleMatch.match}</h3>
-                </div>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2">
-                  <BattleSide name={battleLeft.aiName} pick={battleLeft.prediction} confidence={battleLeft.confidence} />
-                  <div className="flex items-center justify-center text-xs font-black text-slate-400">VS</div>
-                  <BattleSide name={battleRight.aiName} pick={battleRight.prediction} confidence={battleRight.confidence} />
-                </div>
-                <div className="rounded-md bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700">경기 종료 후 자동 채점으로 배틀 승자가 표시됩니다.</div>
-              </div>
-            ) : null}
-          </Panel>
-        </section>
+        <Panel icon={<Trophy size={18} />} title="ROI 리더보드" description="현재 자산, 누적 수익, ROI, 배팅 횟수를 순위대로 비교합니다." action="전체 랭킹" href="/ranking">
+          <div className="space-y-3 p-4">
+            {rankings.map((ai, index) => (
+              <AiLeaderboardRow key={ai.id} ai={ai} rank={index + 1} />
+            ))}
+          </div>
+        </Panel>
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <Panel icon={<TrendingUp size={18} />} title="ROI 랭킹" description="가상 시즌 자산 기준 수익률입니다. 모든 참가자는 100,000 SHC로 시작합니다.">
-            <div className="grid gap-3 p-4 sm:grid-cols-2">
-              {roiRankings.slice(0, 4).map((participant) => (
-                <RoiCard key={participant.name} participant={participant} />
-              ))}
-            </div>
-          </Panel>
+        <Panel icon={<Target size={18} />} title="오늘의 AI 배팅 조합" description="오늘 각 AI가 공개한 조합을 바로 확인할 수 있습니다." action="조합 전체 보기" href="/predictions">
+          <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-5">
+            {todayCombinations.map((combination) => (
+              <TodayComboCard key={combination.id} combination={combination} />
+            ))}
+          </div>
+        </Panel>
 
-          <Panel icon={<Target size={18} />} title="오늘의 예측" description="AI들과 상위 유저들의 오늘 공개 픽입니다." action="기록실" href="/history">
-            <div className="grid gap-3 p-4 md:grid-cols-2">
-              {todayPredictions.map((prediction) => (
-                <PredictionCard key={`${prediction.name}-${prediction.match}`} prediction={prediction} />
-              ))}
-            </div>
-          </Panel>
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <Panel icon={<Zap size={18} />} title="실시간 경기" description="예측 채점 대상이 되는 경기 일정과 진행 상태입니다.">
-            <div className="divide-y divide-slate-100">
-              {liveMatches.map((match) => (
-                <MatchRow key={match.id} match={match} />
-              ))}
-            </div>
-          </Panel>
-
-          <Panel icon={<Users size={18} />} title="리그 규칙" description="MVP는 예측, 채점, 랭킹에만 집중합니다.">
-            <div className="space-y-3 p-4 text-sm text-slate-600">
-              <RuleItem label="참가자" value="AI와 인간 회원이 동일한 방식으로 예측 제출" />
-              <RuleItem label="채점" value="경기 종료 후 승패와 적중률 자동 계산" />
-              <RuleItem label="자산" value="100,000 SHC 가상 시즌 자산 지급" />
-              <RuleItem label="제외" value="결제, 실제 배팅, 현금 환전, 가상머니 판매 없음" />
-            </div>
-          </Panel>
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-3">
-          <Panel icon={<BookOpen size={18} />} title="픽 기록실 미리보기" description="AI와 유저의 예측 결과를 누적 기록합니다." action="전체 기록" href="/history">
-            <div className="divide-y divide-slate-100">
-              {historyPreview.map((record) => (
-                <HistoryPreviewRow key={record.id} record={record} />
-              ))}
-            </div>
-          </Panel>
-
-          <Panel icon={<Bot size={18} />} title="AI Pickster 미리보기" description="AI 추천 조합은 별도 메뉴에서 보조 콘텐츠로 제공합니다." action="AI Pickster" href="/predictions">
-            <div className="space-y-3 p-4">
-              {picksterPreview.map((combination) => (
-                <Link key={combination.id} href="/predictions" className="block rounded-lg border border-slate-200 p-3 transition hover:border-blue-300 hover:bg-blue-50">
-                  <p className="text-sm font-black text-slate-950">
-                    <AiIdentity name={combination.aiName} showBadge={false} nameClassName="text-sm" /> 추천 조합
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{combination.selections.length}경기 · 가상 수익 {combination.profit >= 0 ? "+" : ""}{combination.profit.toLocaleString()} SHC</p>
-                </Link>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel icon={<MessageSquare size={18} />} title="커뮤니티" description="AI를 이긴 인간 픽과 경기별 의견을 나누는 공간입니다." action="커뮤니티" href="/community">
-            <div className="divide-y divide-slate-100">
-              {communityPreview.map((post) => (
-                <Link key={post.id} href={`/community/${post.id}`} className="block p-4 transition hover:bg-slate-50">
-                  <p className="truncate text-sm font-black text-slate-950">{post.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{post.author} · 조회 {post.views} · 댓글 {post.comments}</p>
-                </Link>
-              ))}
-            </div>
-          </Panel>
-        </section>
+        <Panel icon={<BarChart3 size={18} />} title="최근 정산 결과" description="최근 정산된 AI 조합의 손익을 빠르게 확인합니다." action="기록실" href="/history">
+          <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-5">
+            {recentSettled.map((combination) => (
+              <RecentResultCard key={combination.id} combination={combination} />
+            ))}
+          </div>
+        </Panel>
       </main>
     </div>
   );
 }
 
 function Panel({ icon, title, description, action, href, children }: { icon: ReactNode; title: string; description?: string; action?: string; href?: string; children: ReactNode }) {
-  const actionNode = action ? <span className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{action}<ChevronRight size={14} /></span> : null;
+  const actionNode = action ? (
+    <span className="inline-flex items-center gap-1 text-xs font-black text-blue-700">
+      {action}
+      <ArrowRight size={14} />
+    </span>
+  ) : null;
 
   return (
     <section className="panel min-w-0 overflow-hidden">
@@ -169,160 +102,224 @@ function Panel({ icon, title, description, action, href, children }: { icon: Rea
   );
 }
 
-function RankingRow({ participant }: { participant: LeagueParticipant }) {
-  return (
-    <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4">
-      <span className={clsx("flex h-9 w-9 items-center justify-center rounded-md text-sm font-black", participant.rank === 1 ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-700")}>
-        {participant.rank}
-      </span>
-      <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {participant.kind === "AI" ? (
-            <AiIdentity name={participant.name} showBadge={false} nameClassName="text-base" />
-          ) : (
-            <p className="truncate text-base font-extrabold text-slate-900">{participant.name}</p>
-          )}
-          <TypeBadge kind={participant.kind} />
-        </div>
-        <p className="mt-1 truncate text-xs font-medium text-slate-600">현재 자산 {participant.asset.toLocaleString()} SHC · 최근 10경기 {participant.recent10}</p>
-      </div>
-      <div className="text-right">
-        <p className={clsx("text-2xl font-black", participant.roi >= 0 ? "text-emerald-600" : "text-red-600")}>{participant.roi >= 0 ? "+" : ""}{participant.roi.toFixed(1)}%</p>
-        <p className="text-xs text-slate-500">ROI</p>
-      </div>
-    </div>
-  );
-}
+function LeaderCard({ leader }: { leader: AICompetitor }) {
+  const color = getAiColorHex(leader.name);
 
-function RoiCard({ participant }: { participant: LeagueParticipant }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
+    <article className="rounded-lg border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {participant.kind === "AI" ? (
-            <AiIdentity name={participant.name} showBadge={false} nameClassName="text-sm" />
-          ) : (
-            <p className="truncate text-sm font-extrabold text-slate-900">{participant.name}</p>
-          )}
-          <p className="mt-1 text-xs font-medium text-slate-600">{participant.asset.toLocaleString()} SHC</p>
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-slate-400">현재 1위</p>
+          <div className="mt-2">
+            <AiIdentity name={leader.name} showBadge={false} nameClassName="text-2xl text-white" markerClassName="h-3 w-3" />
+          </div>
         </div>
-        <TypeBadge kind={participant.kind} />
+        <span className="rounded-full px-3 py-1 text-xs font-black text-white" style={{ backgroundColor: color }}>
+          LEADER
+        </span>
       </div>
-      <p className={clsx("mt-4 text-3xl font-black", participant.roi >= 0 ? "text-emerald-600" : "text-red-600")}>{participant.roi >= 0 ? "+" : ""}{participant.roi.toFixed(1)}%</p>
-      <p className="mt-1 text-xs font-bold text-slate-600">시즌 ROI</p>
+      <div className="mt-6 grid gap-3">
+        <LeaderMetric label="현재 자산" value={formatCurrency(leader.currentBankroll)} emphasis />
+        <div className="grid grid-cols-2 gap-3">
+          <LeaderMetric label="ROI" value={formatPercent(leader.roi)} positive={leader.roi >= 0} />
+          <LeaderMetric label="누적 수익" value={formatSignedCurrency(leader.totalProfit)} positive={leader.totalProfit >= 0} />
+        </div>
+      </div>
     </article>
   );
 }
 
-function BattleSide({ name, pick, confidence }: { name: string; pick: string; confidence: number }) {
+function LeaderMetric({ label, value, emphasis, positive }: { label: string; value: string; emphasis?: boolean; positive?: boolean }) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-center">
-      <AiIdentity name={name} showBadge={false} className="justify-center" nameClassName="text-sm" />
-      <p className="mt-2 rounded-md bg-blue-50 px-2 py-2 text-sm font-black text-blue-700">{pick}</p>
-      <p className="mt-2 text-xs font-medium text-slate-600">신뢰도 {confidence}%</p>
+    <div className="rounded-md border border-white/10 bg-white/5 p-3">
+      <p className="text-xs font-bold text-slate-400">{label}</p>
+      <p className={clsx("mt-1 font-black", emphasis ? "text-2xl text-white" : positive ? "text-emerald-300" : "text-red-300")}>{value}</p>
     </div>
   );
 }
 
-function PredictionCard({ prediction }: { prediction: (typeof todayPredictions)[number] }) {
-  return (
-    <article className="min-w-0 rounded-lg border border-slate-200 bg-white p-3">
-      <div className="flex items-center justify-between gap-2">
-        {prediction.kind === "AI" ? (
-          <AiIdentity name={prediction.name} showBadge={false} nameClassName="text-sm" />
-        ) : (
-          <p className="truncate text-sm font-extrabold text-slate-900">{prediction.name}</p>
-        )}
-        <TypeBadge kind={prediction.kind as "AI" | "인간"} />
-      </div>
-      <p className="mt-2 truncate text-xs font-bold text-slate-600">{prediction.match}</p>
-      <p className="mt-2 text-base font-black text-blue-700">{prediction.pick}</p>
-      <p className="mt-1 text-xs text-slate-500">신뢰도 {prediction.confidence}%</p>
-    </article>
-  );
-}
-
-function MatchRow({ match }: { match: Match }) {
-  return (
-    <Link href={`/analysis/${match.id}`} className="grid min-w-0 gap-3 p-4 transition hover:bg-slate-50 sm:grid-cols-[120px_minmax(0,1fr)_auto] sm:items-center">
-      <div className="min-w-0">
-        <p className="text-xs font-bold text-slate-500">{match.sport} · {match.league}</p>
-        <p className="mt-1 flex items-center gap-1 text-sm font-black text-slate-950">
-          <Clock size={14} className="text-slate-400" />
-          {formatTime(match.startTime)}
-        </p>
-      </div>
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-        <p className="min-w-0 truncate text-right text-sm font-black text-slate-900">{match.homeTeam}</p>
-        <span className="shrink-0 rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">{match.status === "scheduled" ? "VS" : `${match.homeScore} : ${match.awayScore}`}</span>
-        <p className="min-w-0 truncate text-sm font-black text-slate-900">{match.awayTeam}</p>
-      </div>
-      <StatusBadge status={match.status} />
-    </Link>
-  );
-}
-
-function HistoryPreviewRow({ record }: { record: LeaguePick }) {
-  const pending = record.result === "대기중";
+function RoiLineChart({ ais }: { ais: AICompetitor[] }) {
+  const width = 760;
+  const height = 320;
+  const plot = { left: 58, right: 114, top: 34, bottom: 58 };
+  const allValues = ais.flatMap((ai) => ai.performanceHistory.map((point) => point.roi));
+  const min = Math.floor(Math.min(-6, ...allValues) - 1);
+  const max = Math.ceil(Math.max(14, ...allValues) + 1);
+  const leader = ais[0];
+  const plotWidth = width - plot.left - plot.right;
+  const plotHeight = height - plot.top - plot.bottom;
+  const xFor = (index: number, count: number) => plot.left + index * (plotWidth / Math.max(count - 1, 1));
+  const yFor = (roi: number) => plot.top + (max - roi) * (plotHeight / Math.max(max - min, 1));
+  const zeroY = yFor(0);
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 p-4">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-black text-slate-950">
-          {record.kind === "AI" ? <AiIdentity name={record.participant} showBadge={false} nameClassName="text-sm" /> : record.participant} · {record.pick}
-        </p>
-        <p className="mt-1 truncate text-xs text-slate-500">{record.match} · {record.result}</p>
+    <div className="space-y-4 p-4">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="AI별 누적 ROI 흐름" className="h-[340px] min-w-[720px] w-full sm:h-[380px]">
+          <defs>
+            <filter id="leader-glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          {[min, 0, Math.round((min + max) / 2), max].map((value) => {
+            const y = yFor(value);
+            const isZero = value === 0;
+            return (
+              <g key={value}>
+                <line x1={plot.left} x2={width - plot.right + 78} y1={y} y2={y} stroke={isZero ? "#0f172a" : "#e2e8f0"} strokeDasharray={isZero ? "5 5" : undefined} strokeOpacity={isZero ? "0.5" : "1"} strokeWidth={isZero ? "1.4" : "1"} />
+                <text x={plot.left - 12} y={y + 4} textAnchor="end" className={clsx("text-[11px] font-bold", isZero ? "fill-slate-600" : "fill-slate-400")}>
+                  {value > 0 ? "+" : ""}
+                  {value}%
+                </text>
+              </g>
+            );
+          })}
+          <text x={plot.left + 6} y={zeroY - 8} className="fill-slate-500 text-[11px] font-black">ROI 0%</text>
+
+          {ais.map((ai) => {
+            const color = getAiColorHex(ai.name);
+            const isLeader = ai.id === leader.id;
+            const pointCoords = ai.performanceHistory.map((point, pointIndex) => ({
+              ...point,
+              x: xFor(pointIndex, ai.performanceHistory.length),
+              y: yFor(point.roi),
+            }));
+            const points = pointCoords.map((point) => `${point.x},${point.y}`).join(" ");
+            const last = pointCoords.at(-1);
+
+            return (
+              <g key={ai.id}>
+                <polyline points={points} fill="none" stroke={color} strokeWidth={isLeader ? "5" : "3"} strokeLinecap="round" strokeLinejoin="round" filter={isLeader ? "url(#leader-glow)" : undefined} opacity={isLeader ? 1 : 0.72} />
+                {pointCoords.map((point, pointIndex) => {
+                  const tooltipX = point.x > width - 300 ? point.x - 248 : point.x + 14;
+                  const tooltipY = Math.max(12, point.y - 72);
+
+                  return (
+                    <g key={`${ai.id}-${point.date}`} className="group">
+                      <circle cx={point.x} cy={point.y} r="13" fill="transparent" />
+                      <circle cx={point.x} cy={point.y} r={isLeader && pointIndex === pointCoords.length - 1 ? "6.5" : "4"} fill="#fff" stroke={color} strokeWidth={isLeader ? "3" : "2"} />
+                      <foreignObject x={tooltipX} y={tooltipY} width="232" height="126" className="pointer-events-none opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <div className="rounded-md border border-slate-200 bg-white p-3 text-xs shadow-xl">
+                          <p className="font-black text-slate-950">{ai.name}</p>
+                          <p className={clsx("mt-1 font-black", point.roi >= 0 ? "text-emerald-600" : "text-red-600")}>ROI {formatPercent(point.roi)}</p>
+                          <p className="mt-1 text-slate-600">라운드 {pointIndex + 1} · {point.date}</p>
+                          <p className="text-slate-600">현재 자산 {formatCurrency(point.bankroll)}</p>
+                          <p className={clsx(point.bankroll - ai.startingBankroll >= 0 ? "text-emerald-600" : "text-red-600")}>누적 수익 {formatSignedCurrency(point.bankroll - ai.startingBankroll)}</p>
+                          <p className="text-slate-600">총 배팅 {ai.totalBets}회</p>
+                        </div>
+                      </foreignObject>
+                    </g>
+                  );
+                })}
+                {isLeader && last ? (
+                  <g>
+                    <line x1={last.x + 8} x2={width - plot.right + 18} y1={last.y} y2={last.y} stroke={color} strokeOpacity="0.45" strokeWidth="1" />
+                    <rect x={width - plot.right + 22} y={last.y - 16} width="92" height="32" rx="6" fill="#fff" stroke={color} strokeOpacity="0.38" />
+                    <circle cx={width - plot.right + 36} cy={last.y} r="4" fill={color} />
+                    <text x={width - plot.right + 46} y={last.y + 4} className="fill-slate-950 text-[12px] font-black">
+                      {ai.name} {formatPercent(ai.roi)}
+                    </text>
+                  </g>
+                ) : null}
+              </g>
+            );
+          })}
+        </svg>
       </div>
-      <span className={pending ? "rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700" : record.hit ? "rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700" : "rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700"}>
-        {pending ? "대기" : record.hit ? "승" : "패"}
-      </span>
+
+      <div className="flex flex-wrap gap-2">
+        {ais.map((ai) => (
+          <span key={ai.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-700">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getAiColorHex(ai.name) }} />
+            {ai.name} {formatPercent(ai.roi)}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
-function RuleItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-      <p className="text-xs font-black text-blue-700">{label}</p>
-      <p className="mt-1 leading-5">{value}</p>
-    </div>
-  );
-}
-
-function TypeBadge({ kind }: { kind: "AI" | "인간" }) {
-  return (
-    <span className={kind === "AI" ? "shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700" : "shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-700"}>
-      {kind}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: MatchStatus }) {
-  const labels = {
-    scheduled: "예정",
-    live: "진행중",
-    final: "종료",
-  };
+function AiLeaderboardRow({ ai, rank }: { ai: AICompetitor; rank: number }) {
+  const color = getAiColorHex(ai.name);
+  const rankTone = "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
-    <span
+    <article
       className={clsx(
-        "inline-flex shrink-0 justify-center rounded-full px-2.5 py-1 text-xs font-black",
-        status === "live" && "bg-emerald-50 text-emerald-700",
-        status === "scheduled" && "bg-blue-50 text-blue-700",
-        status === "final" && "bg-slate-100 text-slate-600",
+        "grid gap-3 rounded-lg border bg-white p-4 shadow-sm sm:grid-cols-[88px_minmax(160px,1.1fr)_repeat(4,minmax(96px,0.8fr))] sm:items-center",
+        "border-slate-200",
       )}
+      style={{ borderLeftColor: color, borderLeftWidth: 4 }}
     >
-      {labels[status]}
-    </span>
+      <div className="flex items-center gap-3 sm:block">
+        <span className={clsx("inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-3 text-sm font-black", rankTone)}>
+          {rank}위
+        </span>
+      </div>
+      <div className="min-w-0">
+        <AiIdentity name={ai.name} showBadge={false} nameClassName="text-lg text-slate-950" markerClassName="h-3 w-3" />
+      </div>
+      <LeaderboardMetric label="자산" value={formatCurrency(ai.currentBankroll)} primary />
+      <LeaderboardMetric label="수익" value={formatSignedCurrency(ai.totalProfit)} positive={ai.totalProfit >= 0} />
+      <LeaderboardMetric label="ROI" value={formatPercent(ai.roi)} positive={ai.roi >= 0} />
+      <LeaderboardMetric label="배팅" value={`${ai.totalBets}회`} />
+    </article>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function LeaderboardMetric({ label, value, primary, positive }: { label: string; value: string; primary?: boolean; positive?: boolean }) {
   return (
-    <div className="border-r border-blue-100 px-3 py-3 last:border-r-0">
-      <p className="text-lg font-black text-slate-950">{value}</p>
-      <p className="text-xs font-bold text-slate-600">{label}</p>
+    <div className="min-w-0 rounded-md bg-slate-50 px-3 py-2 sm:bg-transparent sm:p-0">
+      <p className="text-[11px] font-black uppercase text-slate-500">{label}</p>
+      <p className={clsx("mt-0.5 truncate font-black", primary ? "text-lg text-slate-950" : positive === undefined ? "text-slate-900" : positive ? "text-emerald-600" : "text-red-600")}>
+        {value}
+      </p>
     </div>
+  );
+}
+
+function TodayComboCard({ combination }: { combination: Combination }) {
+  const firstLeg = combination.legs[0];
+
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" style={{ borderLeftColor: getAiColorHex(combination.aiName), borderLeftWidth: 4 }}>
+      <AiIdentity name={combination.aiName} showBadge={false} nameClassName="text-base" />
+      <p className="mt-4 text-2xl font-black text-slate-950">{combination.legs.length}폴더 조합</p>
+      {firstLeg ? (
+        <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <LeagueBadge league={firstLeg.league} />
+          </div>
+          <TeamMatchup homeTeam={firstLeg.homeTeam} awayTeam={firstLeg.awayTeam} compact />
+        </div>
+      ) : null}
+      <p className="mt-3 text-xs font-bold text-slate-500">총 배당 {combination.totalOdds.toFixed(2)} · 배팅금 {formatCurrency(combination.stake)}</p>
+      <Link href={`/history/combo/${combination.id}`} className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+        자세히 보기 <ArrowRight size={14} />
+      </Link>
+    </article>
+  );
+}
+
+function RecentResultCard({ combination }: { combination: Combination }) {
+  const positive = combination.profit >= 0;
+
+  return (
+    <Link href={`/history/combo/${combination.id}`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:bg-blue-50">
+      <div className="flex items-center justify-between gap-2">
+        <AiIdentity name={combination.aiName} showBadge={false} nameClassName="text-sm" />
+        <span className={clsx("rounded-full px-2 py-0.5 text-[11px] font-black", positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
+          {positive ? "적중" : "실패"}
+        </span>
+      </div>
+      <p className={clsx("mt-4 text-2xl font-black", positive ? "text-emerald-600" : "text-red-600")}>{formatSignedCurrency(combination.profit)}</p>
+      <p className="mt-1 text-xs font-bold text-slate-500">
+        {combination.legs.length}폴더 · {combination.date}
+      </p>
+    </Link>
   );
 }

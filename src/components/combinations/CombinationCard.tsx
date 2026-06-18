@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { ArrowUpRight, Layers3 } from "lucide-react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
-import { getAnalysisMatch } from "@/lib/data";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { formatCurrency, formatSignedCurrency } from "@/lib/format";
-import type { Combination } from "@/lib/types";
+import type { Combination, CombinationStatus } from "@/lib/types";
 
 type CombinationCardProps = {
   combination: Combination;
@@ -20,35 +20,38 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
           <div className="flex flex-wrap items-center gap-2">
             <AiIdentity name={combination.aiName} nameClassName="text-xl" />
             <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-              AI Pickster
+              {combination.legs.length}폴더 조합
             </span>
           </div>
           <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
             <Layers3 size={16} className="text-blue-600" />
-            추천 조합: {combination.selections.length}경기
+            {combination.date} · 총 배당 {combination.totalOdds.toFixed(2)}
           </p>
         </div>
-        <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">{combination.status}</span>
+        <StatusPill status={combination.status} result={combination.result} />
       </div>
 
       <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">추천 픽</p>
+        <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">조합 구성</p>
         <div className="grid gap-3">
-          {combination.selections.map((selection, index) => (
-            <div key={`${combination.id}-${selection.match}-${index}`} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          {combination.legs.map((leg, index) => (
+            <div key={`${combination.id}-${leg.matchId}-${index}`} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
-                <p className="truncate text-sm font-black text-slate-950">{selection.prediction}</p>
-                <ExpectedScoreNote aiName={combination.aiName} analysisId={selection.analysisId} />
-                <p className="mt-1 truncate text-xs text-slate-500">
-                  {selection.league} · {selection.match}
+                <p className="truncate text-sm font-black text-slate-950">
+                  {leg.market} · {leg.pick}
                 </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <LeagueBadge league={leg.league} />
+                  <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact />
+                </div>
+                {!compact ? <p className="mt-2 line-clamp-2 text-xs font-medium text-slate-600">{leg.reasoning}</p> : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-fit rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">
-                  {selection.odds.toFixed(2)}
+                  {leg.odds.toFixed(2)}
                 </span>
                 <Link
-                  href={`/analysis/${selection.analysisId}`}
+                  href={`/analysis/${leg.matchId}`}
                   className="inline-flex items-center gap-1 rounded-md border border-blue-200 px-2 py-1 text-xs font-bold text-blue-700 transition hover:bg-blue-600 hover:text-white"
                 >
                   분석 <ArrowUpRight size={12} />
@@ -60,32 +63,32 @@ export function CombinationCard({ combination, compact = false }: CombinationCar
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
-        <Metric label="조합 지수" value={combination.totalOdds.toFixed(2)} highlight />
-        <Metric label="가상 투입" value={formatCurrency(combination.stake)} />
-        <Metric label="예상 SHC" value={formatCurrency(combination.potentialReturn)} highlight />
+        <Metric label="배팅금" value={formatCurrency(combination.stake)} />
+        <Metric label="예상 환급" value={formatCurrency(combination.potentialPayout)} highlight />
+        <Metric label="수익" value={formatSignedCurrency(combination.profit)} highlight={combination.profit >= 0} />
       </div>
 
-      {!compact && combination.status !== "대기중" ? (
-        <div className="mt-4 flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-          <span className="text-slate-500">{combination.result}</span>
-          <span className={combination.profit >= 0 ? "font-bold text-emerald-600" : "font-bold text-red-600"}>
-            {formatSignedCurrency(combination.profit)}
-          </span>
-        </div>
+      {!compact ? (
+        <Link
+          href={`/history/combo/${combination.id}`}
+          className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-md border border-blue-200 px-3 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-600 hover:text-white"
+        >
+          조합 상세 보기 <ArrowUpRight size={14} />
+        </Link>
       ) : null}
     </article>
   );
 }
 
-function ExpectedScoreNote({ aiName, analysisId }: { aiName: string; analysisId: string }) {
-  const match = getAnalysisMatch(analysisId);
-  const analysis = match?.analyses.find((item) => item.aiName === aiName);
+function StatusPill({ status, result }: { status: CombinationStatus; result: string }) {
+  const className =
+    status === "won"
+      ? "bg-emerald-50 text-emerald-700"
+      : status === "lost"
+        ? "bg-rose-50 text-rose-700"
+        : "bg-blue-50 text-blue-700";
 
-  if (!analysis?.expectedScore) {
-    return null;
-  }
-
-  return <p className="mt-1 text-xs font-semibold text-blue-700">예상 스코어 {analysis.expectedScore}</p>;
+  return <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-black ${className}`}>{result}</span>;
 }
 
 function Metric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {

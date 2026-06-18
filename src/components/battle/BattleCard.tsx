@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { Swords } from "lucide-react";
 import Link from "next/link";
 import { AiIdentity } from "@/components/ai/AiIdentity";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { getBattleAnalyses } from "@/lib/battleAnalyses";
 import { formatDateTime } from "@/lib/format";
 import type { AnalysisMatch } from "@/lib/types";
@@ -15,16 +16,22 @@ type BattleCardProps = {
 
 export function BattleCard({ match, featured = false }: BattleCardProps) {
   const analyses = getBattleAnalyses(match.analyses);
+  const homeTeam = match.homeTeam ?? match.match.split(" vs ")[0];
+  const awayTeam = match.awayTeam ?? match.match.split(" vs ")[1] ?? "";
 
   return (
     <article className={clsx("panel min-w-0 overflow-hidden p-5", featured && "border-blue-300")}>
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-600">
-            {match.league} · {match.sport} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
+            <LeagueBadge league={match.league} />
+            <span>{match.sport}</span>
+            <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
             <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
-          </p>
-          <h3 className="mt-2 break-words text-2xl font-extrabold text-slate-900">{match.match}</h3>
+          </div>
+          <h3 className="mt-3 break-words text-2xl font-extrabold text-slate-900">
+            <TeamMatchup homeTeam={homeTeam} awayTeam={awayTeam} />
+          </h3>
         </div>
         <Swords className="shrink-0 text-blue-600" size={24} />
       </div>

@@ -59,7 +59,7 @@ export function RankingTable({ ais }: RankingTableProps) {
                     {ai.recentResults.map((result, resultIndex) => (
                       <span
                         key={`${ai.id}-${result}-${resultIndex}`}
-                        className={result === "적중" ? "h-2.5 w-2.5 rounded-full bg-emerald-400" : "h-2.5 w-2.5 rounded-full bg-red-400"}
+                        className={result === "won" ? "h-2.5 w-2.5 rounded-full bg-emerald-400" : result === "lost" ? "h-2.5 w-2.5 rounded-full bg-red-400" : "h-2.5 w-2.5 rounded-full bg-blue-400"}
                       />
                     ))}
                   </div>

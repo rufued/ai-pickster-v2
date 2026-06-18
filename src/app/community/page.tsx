@@ -9,7 +9,7 @@ export default function CommunityPage() {
         <div className="max-w-3xl">
           <p className="text-sm font-bold text-blue-600">Community</p>
           <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">커뮤니티</h1>
-          <p className="mt-3 text-base leading-7 text-slate-600">AI를 이긴 인간 픽, 오늘의 배틀 의견, 경기별 예측 토론을 나누는 ScoreHub 리그 라운지입니다.</p>
+          <p className="mt-3 text-base leading-7 text-slate-600">AI 조합, 경기 분석, 정산 결과에 대한 의견을 나누는 보조 공간입니다.</p>
         </div>
         <button
           type="button"
@@ -20,7 +20,7 @@ export default function CommunityPage() {
       </div>
 
       <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-slate-700">
-        MVP 단계에서는 실제 저장 없이 게시판 구조와 토론 흐름을 미리 보여줍니다.
+        MVP 단계에서는 AI 리그 관전과 경기별 의견 흐름을 보여주는 보조 메뉴로 운영합니다.
       </div>
 
       <CommunityBoard posts={communityPosts} />

@@ -1,11 +1,12 @@
 export type Sport = "축구" | "야구" | "농구" | "배구" | "e스포츠" | "테니스" | "아이스하키" | "Formula 1" | string;
 
 export type MatchStatus = "scheduled" | "live" | "final";
-export type MatchResultPick = "홈승" | "무승부" | "원정승";
+export type MatchResultPick = "홈승" | "무승부" | "원정승" | string;
 export type OverUnderPick = "Over" | "Under";
 export type AIModelId = "gpt" | "gemini" | "grok" | "claude" | "deepseek" | string;
 
-export type CombinationStatus = "대기중" | "적중" | "미적중" | string;
+export type CombinationStatus = "scheduled" | "won" | "lost" | "pending";
+export type LegResult = "won" | "lost" | "pending";
 export type AIStyle = string;
 export type CommunityCategory = string;
 export type ConsensusLabel = "Strong Consensus" | "Partial Consensus" | "Split Opinion";
@@ -96,11 +97,29 @@ export type AnalysisMatch = {
   analyses: AIAnalysis[];
 };
 
+export type PerformancePoint = {
+  date: string;
+  bankroll: number;
+  roi: number;
+};
+
 export type AICompetitor = {
   id: string;
   name: string;
   initials: string;
   reliabilityGrade: "A+" | "A" | "B+" | "B" | "C";
+  startingBankroll: number;
+  currentBankroll: number;
+  startingBalance: number;
+  currentBalance: number;
+  roi: number;
+  winRate: number;
+  accuracy: number;
+  totalBets: number;
+  totalPicks: number;
+  totalProfit: number;
+  bettingStyle: string;
+  performanceHistory: PerformancePoint[];
   recent30DayRoi: number;
   recent30DayAccuracy: number;
   recent30DayWins: number;
@@ -115,12 +134,6 @@ export type AICompetitor = {
   strategyDescription: string;
   bestHitCombination: string;
   bestHitOdds: number;
-  startingBalance: number;
-  currentBalance: number;
-  totalProfit: number;
-  roi: number;
-  accuracy: number;
-  totalPicks: number;
   wins: number;
   losses: number;
   battleWins: number;
@@ -137,6 +150,20 @@ export type AIDecisionProcess = {
   combinationOdds: number;
 };
 
+export type BettingComboLeg = {
+  matchId: string;
+  sport: Sport;
+  league: string;
+  homeTeam: string;
+  awayTeam: string;
+  market: string;
+  pick: string;
+  odds: number;
+  result: LegResult;
+  confidence: number;
+  reasoning: string;
+};
+
 export type Selection = {
   analysisId: string;
   match: string;
@@ -148,15 +175,18 @@ export type Selection = {
 
 export type Combination = {
   id: string;
+  comboId: string;
   date: string;
   aiName: string;
   style: AIStyle;
   stake: number;
   totalOdds: number;
+  potentialPayout: number;
   potentialReturn: number;
   status: CombinationStatus;
   result: string;
   profit: number;
+  legs: BettingComboLeg[];
   selections: Selection[];
 };
 

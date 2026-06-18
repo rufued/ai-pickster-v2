@@ -74,12 +74,14 @@ function RecentForm({ ai }: { ai: AICompetitor }) {
           <span
             key={`${ai.id}-recent10-${index}`}
             className={
-              result.includes("적중")
+              result === "won"
                 ? "flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-xs font-black text-emerald-600"
-                : "flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-xs font-black text-red-600"
+                : result === "lost"
+                  ? "flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-xs font-black text-red-600"
+                  : "flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-xs font-black text-blue-600"
             }
           >
-            {result.includes("적중") ? "O" : "X"}
+            {result === "won" ? "O" : result === "lost" ? "X" : "-"}
           </span>
         ))}
       </div>

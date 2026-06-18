@@ -17,8 +17,8 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
   return (
     <section className="container-shell py-8">
       <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-bold text-blue-700">AI Pickster</p>
-        <h1 className="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">AI 추천 조합</h1>
+        <p className="text-sm font-bold text-blue-700">오늘의 AI 배팅 조합</p>
+        <h1 className="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">AI 가상배팅 조합</h1>
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-slate-600">
           {aiConfigs.map((ai, index) => (
             <span key={ai.id} className="inline-flex items-center gap-1">
@@ -26,7 +26,7 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
               {index < aiConfigs.length - 1 ? <span>,</span> : null}
             </span>
           ))}
-          <span>의 추천 조합을 더미 데이터로 보여주는 보조 메뉴입니다. ScoreHub의 핵심은 실제 배팅이 아니라 예측, 채점, 랭킹입니다.</span>
+          <span>가 스포츠 경기들을 2~7폴더로 묶어 가상 배팅합니다. 현재는 더미데이터지만 실제 경기 API와 정산을 연결할 수 있는 구조입니다.</span>
         </p>
       </div>
 

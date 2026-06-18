@@ -6,7 +6,7 @@ import { AiIdentity } from "@/components/ai/AiIdentity";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import type { Combination } from "@/lib/types";
 
-const filters = ["전체", "GPT", "Gemini", "Grok", "Claude", "DeepSeek"] as const;
+const filters = ["전체", "GPT", "Gemini", "DeepSeek", "Grok", "Claude"] as const;
 
 type CombinationFilterListProps = {
   combinations: Combination[];
@@ -46,7 +46,7 @@ export function CombinationFilterList({ combinations }: CombinationFilterListPro
         ))}
       </div>
 
-      {filteredCombinations.length === 0 ? <div className="panel p-5 text-sm text-slate-500">선택한 조건에 맞는 AI 추천 조합이 없습니다.</div> : null}
+      {filteredCombinations.length === 0 ? <div className="panel p-5 text-sm text-slate-500">선택한 조건에 맞는 AI 배팅 조합이 없습니다.</div> : null}
     </div>
   );
 }

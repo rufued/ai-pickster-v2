@@ -1,22 +1,13 @@
 "use client";
 
 import { Dumbbell, Gamepad2 } from "lucide-react";
-import type { FeaturedMatch, Sport } from "@/lib/types";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { formatDateTime } from "@/lib/format";
+import type { FeaturedMatch } from "@/lib/types";
 
 type FeaturedMatchesProps = {
   matches: FeaturedMatch[];
   contained?: boolean;
-};
-
-const sportIcon: Record<Sport, string> = {
-  축구: "⚽",
-  야구: "⚾",
-  농구: "🏀",
-  테니스: "🎾",
-  "Formula 1": "🏁",
-  아이스하키: "🏒",
-  e스포츠: "🎮",
 };
 
 export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesProps) {
@@ -31,24 +22,25 @@ export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesPr
       </div>
 
       <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {matches.map((match) => (
-          <article key={match.id} className="panel min-w-0 overflow-hidden p-5">
-            <div className="flex min-w-0 items-center justify-between gap-3">
-              <span className="text-2xl" aria-hidden>
-                {sportIcon[match.sport]}
-              </span>
-              <span className="min-w-0 truncate rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-bold text-slate-300">
-                {match.league}
-              </span>
-            </div>
-            <h3 className="mt-4 min-h-12 break-words text-lg font-black leading-snug text-white">{match.match}</h3>
-            <div className="mt-4 flex min-w-0 items-center gap-2 text-sm text-slate-400">
-              <Gamepad2 size={16} className="text-accent-green" />
-              <span className="hidden sm:inline">{formatDateTime(match.startTime)} 시작</span>
-              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")} 시작</span>
-            </div>
-          </article>
-        ))}
+        {matches.map((match) => {
+          const [homeTeam, awayTeam = ""] = match.match.split(" vs ");
+
+          return (
+            <article key={match.id} className="panel min-w-0 overflow-hidden p-5">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
+              </div>
+              <h3 className="mt-4 min-h-12 break-words text-lg font-black leading-snug text-white">
+                <TeamMatchup homeTeam={homeTeam} awayTeam={awayTeam} compact />
+              </h3>
+              <div className="mt-4 flex min-w-0 items-center gap-2 text-sm text-slate-400">
+                <Gamepad2 size={16} className="text-accent-green" />
+                <span className="hidden sm:inline">{formatDateTime(match.startTime)} 시작</span>
+                <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")} 시작</span>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </>
   );

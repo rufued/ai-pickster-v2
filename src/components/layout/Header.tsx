@@ -8,11 +8,11 @@ import { useState } from "react";
 import { SCOREHUB } from "@/lib/brand";
 
 const navItems = [
-  { href: "/", label: "리그 홈" },
-  { href: "/ranking", label: "랭킹" },
-  { href: "/battle", label: "AI 배틀" },
-  { href: "/history", label: "픽 기록실" },
-  { href: "/predictions", label: "AI Pickster" },
+  { href: "/", label: "AI 리그" },
+  { href: "/ranking", label: "ROI 랭킹" },
+  { href: "/predictions", label: "오늘의 조합" },
+  { href: "/history", label: "배팅기록실" },
+  { href: "/analysis", label: "경기 분석" },
   { href: "/community", label: "커뮤니티" },
 ];
 
@@ -48,7 +48,7 @@ export function Header() {
 
         <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600 md:flex">
           <Search size={16} className="text-blue-600" />
-          <span>참가자, 리그, 경기 검색</span>
+          <span>AI, 조합, 경기 검색</span>
         </div>
 
         <button

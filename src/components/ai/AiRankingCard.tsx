@@ -64,12 +64,14 @@ export function AiRankingCard({ ai, rank }: AiRankingCardProps) {
               aria-label={result}
               className={clsx(
                 "flex h-6 w-6 items-center justify-center rounded-md border text-[11px] font-black",
-                result === "적중"
+                result === "won"
                   ? "border-emerald-300/40 bg-emerald-400/15 text-emerald-300"
-                  : "border-red-300/40 bg-red-400/15 text-red-300",
+                  : result === "lost"
+                    ? "border-red-300/40 bg-red-400/15 text-red-300"
+                    : "border-blue-300/40 bg-blue-400/15 text-blue-300",
               )}
             >
-              {result === "적중" ? "O" : "X"}
+              {result === "won" ? "O" : result === "lost" ? "X" : "-"}
             </span>
           ))}
         </div>

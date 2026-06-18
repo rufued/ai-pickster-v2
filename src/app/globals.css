@@ -55,11 +55,11 @@ a {
 }
 
 .ai-chip-gpt {
-  @apply border-blue-200 bg-blue-50 text-blue-700;
+  @apply border-emerald-200 bg-emerald-50 text-emerald-700;
 }
 
 .ai-chip-gemini {
-  @apply border-purple-200 bg-purple-50 text-purple-700;
+  @apply border-blue-200 bg-blue-50 text-blue-700;
 }
 
 .ai-chip-grok {
@@ -71,7 +71,7 @@ a {
 }
 
 .ai-chip-deepseek {
-  @apply border-teal-200 bg-teal-50 text-teal-700;
+  @apply border-violet-200 bg-violet-50 text-violet-700;
 }
 
 @media (min-width: 640px) {

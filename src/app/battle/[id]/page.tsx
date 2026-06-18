@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { getBattleAnalyses } from "@/lib/battleAnalyses";
 import { aiCompetitors, analysisMatches, getAnalysisMatch } from "@/lib/data";
 import { formatDateTime, formatSignedCurrency } from "@/lib/format";
@@ -38,12 +39,15 @@ export default async function BattleDetailPage({ params }: BattleDetailPageProps
       <div className="panel mb-8 p-6">
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-blue-600">
-              {match.league} · {match.sport} · <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
+            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-blue-600">
+              <LeagueBadge league={match.league} />
+              <span>{match.sport}</span>
+              <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
               <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
             </p>
-            <h1 className="mt-2 flex min-w-0 items-center gap-3 break-words text-3xl font-black text-slate-900 sm:text-4xl">
-              <Swords className="shrink-0 text-blue-600" size={30} /> {match.match}
+            <h1 className="mt-3 flex min-w-0 items-center gap-3 break-words text-3xl font-black text-slate-900 sm:text-4xl">
+              <Swords className="shrink-0 text-blue-600" size={30} />
+              <TeamMatchup homeTeam={match.homeTeam ?? match.match.split(" vs ")[0]} awayTeam={match.awayTeam ?? match.match.split(" vs ")[1] ?? ""} />
             </h1>
             <p className="mt-3 text-slate-600">{match.headline}</p>
           </div>

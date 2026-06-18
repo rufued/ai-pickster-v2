@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { CommunityCategory, CommunityPost } from "@/lib/types";
 
-const categories: Array<"전체" | CommunityCategory> = ["전체", "자유게시판", "경기분석", "픽공유", "질문답변", "AI토론"];
+const categories: Array<"전체" | CommunityCategory> = ["전체", "공지", "경기분석", "AI토론", "정산후기"];
 
 type CommunityBoardProps = {
   posts: CommunityPost[];

@@ -11,6 +11,7 @@ import { BattleCard } from "@/components/battle/BattleCard";
 import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
+import { LeagueBadge, TeamMatchup, TeamName } from "@/components/sports/SportsBrand";
 import { formatDateTime, formatPercent } from "@/lib/format";
 import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
 import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch, Match } from "@/lib/types";
@@ -130,9 +131,7 @@ function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Matc
           <Link key={match.id} href={`/analysis/${match.id}`} className="panel block min-w-0 overflow-hidden p-5 transition hover:border-accent-green/40 hover:bg-white/[0.03]">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
               <span>{match.sport}</span>
-              <span className="h-1 w-1 rounded-full bg-slate-600" />
-              <span>{match.league}</span>
-              <span className="h-1 w-1 rounded-full bg-slate-600" />
+              <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
               <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
               <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
             </div>
@@ -140,12 +139,12 @@ function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Matc
             <div className="mt-4 grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-slate-500">홈팀</p>
-                <h3 className="mt-1 truncate text-lg font-black text-white">{match.homeTeam}</h3>
+                <h3 className="mt-1 truncate text-lg font-black text-white"><TeamName team={match.homeTeam} /></h3>
               </div>
               <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-400">VS</span>
               <div className="min-w-0 text-right">
                 <p className="text-xs font-semibold text-slate-500">원정팀</p>
-                <h3 className="mt-1 truncate text-lg font-black text-white">{match.awayTeam}</h3>
+                <h3 className="mt-1 truncate text-lg font-black text-white"><TeamName team={match.awayTeam} /></h3>
               </div>
             </div>
 
@@ -227,13 +226,13 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
                   <span>{match.sport}</span>
-                  <span className="h-1 w-1 rounded-full bg-slate-600" />
-                  <span>{match.league}</span>
-                  <span className="h-1 w-1 rounded-full bg-slate-600" />
+                  <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
                   <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
                   <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
                 </div>
-                <h3 className="mt-2 break-words text-xl font-black text-white">{match.match}</h3>
+                <h3 className="mt-3 break-words text-xl font-black text-white">
+                  <TeamMatchup homeTeam={match.homeTeam ?? match.match.split(" vs ")[0]} awayTeam={match.awayTeam ?? match.match.split(" vs ")[1] ?? ""} />
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{match.headline}</p>
               </div>
               <ConsensusBadge score={match.consensusScore} label={match.consensusLabel} />
@@ -305,12 +304,14 @@ function RecentPerformanceCard({ ai }: { ai: AICompetitor }) {
             <span
               key={`${ai.id}-home-recent-${index}`}
               className={
-                result === "적중"
+                result === "won"
                   ? "flex h-6 w-6 items-center justify-center rounded-md bg-emerald-400/15 text-[11px] font-black text-emerald-300"
-                  : "flex h-6 w-6 items-center justify-center rounded-md bg-red-400/15 text-[11px] font-black text-red-300"
+                  : result === "lost"
+                    ? "flex h-6 w-6 items-center justify-center rounded-md bg-red-400/15 text-[11px] font-black text-red-300"
+                    : "flex h-6 w-6 items-center justify-center rounded-md bg-blue-400/15 text-[11px] font-black text-blue-300"
               }
             >
-              {result === "적중" ? "O" : "X"}
+              {result === "won" ? "O" : result === "lost" ? "X" : "-"}
             </span>
           ))}
         </div>

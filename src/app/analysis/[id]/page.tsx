@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Bot, Clock, LineChart, ListChecks, MapPin, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
+import { LeagueBadge, TeamName } from "@/components/sports/SportsBrand";
 import { getBattleAnalyses } from "@/lib/battleAnalyses";
 import { analysisMatches, getAnalysisMatch } from "@/lib/data";
 import { formatDateTime, formatPredictedTotal } from "@/lib/format";
@@ -34,17 +35,24 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
       <div className="panel mb-5 p-5">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-bold text-blue-700">{match.sport} · {match.league}</p>
-            <h1 className="mt-2 text-3xl font-black text-slate-950">{match.homeTeam} vs {match.awayTeam}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-blue-700">
+              <span>{match.sport}</span>
+              <LeagueBadge league={match.league} />
+            </div>
+            <h1 className="mt-3 flex flex-wrap items-center gap-3 text-3xl font-black text-slate-950">
+              <TeamName team={match.homeTeam ?? ""} size="lg" />
+              <span className="text-xl text-slate-400">VS</span>
+              <TeamName team={match.awayTeam ?? ""} size="lg" />
+            </h1>
             <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
               <span className="inline-flex items-center gap-1"><Clock size={15} /> {formatDateTime(match.startTime)}</span>
               <span className="inline-flex items-center gap-1"><MapPin size={15} /> {match.venue}</span>
             </div>
           </div>
-          <div className="grid min-w-[220px] grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
-            <p className="truncate text-sm font-black text-slate-800">{match.homeTeam}</p>
+          <div className="grid min-w-[260px] grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+            <p className="min-w-0 text-sm font-black text-slate-800"><TeamName team={match.homeTeam ?? ""} /></p>
             <p className="text-2xl font-black text-slate-950">{match.status === "scheduled" ? "VS" : `${match.homeScore} : ${match.awayScore}`}</p>
-            <p className="truncate text-sm font-black text-slate-800">{match.awayTeam}</p>
+            <p className="min-w-0 text-sm font-black text-slate-800"><TeamName team={match.awayTeam ?? ""} /></p>
           </div>
         </div>
         <p className="mt-4 rounded-lg bg-blue-50 p-3 text-sm font-semibold text-blue-800">{match.headline}</p>
@@ -52,7 +60,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
 
       <div className="mb-5 grid gap-4 lg:grid-cols-3">
         <InfoPanel icon={<LineChart size={18} />} title="최근 경기 흐름" items={match.recentForm ?? []} />
-        <InfoPanel icon={<ListChecks size={18} />} title="상대전적" items={(match.headToHead ?? []).map((item) => `${item.date} · ${item.result} · ${item.note}`)} />
+        <InfoPanel icon={<ListChecks size={18} />} title="상대 전적" items={(match.headToHead ?? []).map((item) => `${item.date} · ${item.result} · ${item.note}`)} />
         <InfoPanel icon={<Trophy size={18} />} title="리그 순위" items={(match.standings ?? []).map((item) => `${item.rank}위 ${item.team} · ${item.points}점 · ${item.form}`)} />
       </div>
 
@@ -60,7 +68,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="flex items-center gap-2 text-base font-black text-slate-950">
             <Bot size={18} className="text-blue-600" />
-            AI 분석 탭
+            AI 분석 표
           </h2>
           <span className="hidden text-xs font-black text-slate-500 sm:inline-flex sm:items-center sm:gap-2">
             <AiIdentity name="GPT" showBadge={false} nameClassName="text-xs" />
@@ -91,7 +99,7 @@ export default async function AnalysisDetailPage({ params }: AnalysisDetailPageP
 
               <p className="mt-4 text-sm leading-6 text-slate-600">{analysis.summary}</p>
               <div className="mt-4 rounded-md bg-slate-50 p-3">
-                <p className="text-xs font-black text-slate-500">짧은 분석 코멘트</p>
+                <p className="text-xs font-black text-slate-500">진입 분석 코멘트</p>
                 <p className="mt-1 text-sm font-semibold text-slate-800">{analysis.decisionReason}</p>
               </div>
             </article>

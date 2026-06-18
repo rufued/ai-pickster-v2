@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { BarChart3, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AiIdentity } from "@/components/ai/AiIdentity";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { analysisMatches } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
 import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
@@ -45,11 +46,20 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
       <div className="grid gap-4">
         {visibleMatches.map((match) => {
           const top = [...match.analyses].sort((a, b) => b.confidence - a.confidence)[0];
+          const homeTeam = match.homeTeam ?? match.match.split(" vs ")[0];
+          const awayTeam = match.awayTeam ?? match.match.split(" vs ")[1] ?? "";
+
           return (
             <Link key={match.id} href={`/analysis/${match.id}`} className="panel grid gap-4 p-5 transition hover:border-blue-300 hover:shadow-md lg:grid-cols-[1fr_280px_auto] lg:items-center">
               <div>
-                <p className="text-xs font-bold text-slate-500">{match.sport} · {match.league} · {formatDateTime(match.startTime)}</p>
-                <h2 className="mt-2 text-xl font-black text-slate-950">{match.match}</h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+                  <span>{match.sport}</span>
+                  <LeagueBadge league={match.league} />
+                  <span>{formatDateTime(match.startTime)}</span>
+                </div>
+                <h2 className="mt-3 text-xl font-black text-slate-950">
+                  <TeamMatchup homeTeam={homeTeam} awayTeam={awayTeam} />
+                </h2>
                 <p className="mt-2 text-sm text-slate-600">{match.headline}</p>
               </div>
 

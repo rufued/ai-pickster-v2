@@ -8,9 +8,17 @@ type StatusBadgeProps = {
 };
 
 const styles: Record<CombinationStatus, string> = {
-  대기중: "border-slate-500/40 bg-slate-500/10 text-slate-300",
-  적중: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
-  미적중: "border-red-400/40 bg-red-400/10 text-red-300",
+  scheduled: "border-blue-400/40 bg-blue-400/10 text-blue-300",
+  pending: "border-slate-500/40 bg-slate-500/10 text-slate-300",
+  won: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
+  lost: "border-red-400/40 bg-red-400/10 text-red-300",
+};
+
+const labels: Record<CombinationStatus, string> = {
+  scheduled: "예정",
+  pending: "정산 대기",
+  won: "당첨",
+  lost: "낙첨",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
@@ -21,7 +29,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         styles[status],
       )}
     >
-      {status}
+      {labels[status]}
     </span>
   );
 }
