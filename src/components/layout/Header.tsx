@@ -8,11 +8,10 @@ import { useState } from "react";
 import { SCOREHUB } from "@/lib/brand";
 
 const navItems = [
-  { href: "/", label: "AI 리그" },
-  { href: "/ranking", label: "ROI 랭킹" },
-  { href: "/predictions", label: "오늘의 조합" },
-  { href: "/history", label: "배팅기록실" },
-  { href: "/analysis", label: "경기 분석" },
+  { href: "/", label: "홈" },
+  { href: "/picks", label: "AI 픽 조합" },
+  { href: "/records", label: "AI 배팅 내역" },
+  { href: "/games", label: "경기·배당" },
   { href: "/community", label: "커뮤니티" },
 ];
 
@@ -21,9 +20,9 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="container-shell flex h-16 min-w-0 items-center justify-between gap-3">
-        <Link href="/" aria-label={`${SCOREHUB.name} 홈`} className="flex min-w-0 shrink-0 items-center" onClick={() => setIsOpen(false)}>
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+      <div className="container-shell flex h-16 items-center justify-between gap-3">
+        <Link href="/" aria-label={SCOREHUB.name} className="flex shrink-0 items-center" onClick={() => setIsOpen(false)}>
           <span className="scorehub-logo" aria-hidden />
           <span className="sr-only">{SCOREHUB.name}</span>
         </Link>
@@ -37,7 +36,7 @@ export function Header() {
                 href={item.href}
                 className={clsx(
                   "rounded-md px-3 py-2 text-sm transition",
-                  active ? "bg-blue-50 font-semibold text-blue-700" : "font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600",
+                  active ? "bg-blue-50 font-black text-blue-700" : "font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700",
                 )}
               >
                 {item.label}
@@ -46,9 +45,9 @@ export function Header() {
           })}
         </nav>
 
-        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600 md:flex">
+        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-600 md:flex">
           <Search size={16} className="text-blue-600" />
-          <span>AI, 조합, 경기 검색</span>
+          <span>AI, 경기, 픽 검색</span>
         </div>
 
         <button
@@ -72,7 +71,7 @@ export function Header() {
                 onClick={() => setIsOpen(false)}
                 className={clsx(
                   "rounded-md px-3 py-3 text-sm transition",
-                  active ? "bg-blue-50 font-semibold text-blue-700" : "font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600",
+                  active ? "bg-blue-50 font-black text-blue-700" : "font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700",
                 )}
               >
                 {item.label}

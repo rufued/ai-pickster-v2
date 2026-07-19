@@ -1,67 +1,39 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageSquare, ThumbsUp } from "lucide-react";
-import { communityPosts } from "@/lib/data";
-
-type CommunityDetailPageProps = {
-  params: Promise<{ id: string }>;
-};
+import { Flag, MessageSquare, ThumbsUp } from "lucide-react";
+import { DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
+import { getCommunityPost, getCommunityPosts } from "@/services/scorehub";
 
 export function generateStaticParams() {
-  return communityPosts.map((post) => ({ id: post.id }));
+  return getCommunityPosts().map((post) => ({ id: post.id }));
 }
 
-export default async function CommunityDetailPage({ params }: CommunityDetailPageProps) {
+export default async function CommunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const post = communityPosts.find((item) => item.id === id);
-
-  if (!post) {
-    notFound();
-  }
+  const post = getCommunityPost(id);
+  if (!post) notFound();
 
   return (
-    <section className="container-shell py-12">
-      <Link href="/community" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white">
-        <ArrowLeft size={16} /> 커뮤니티
-      </Link>
-
-      <article className="panel p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-bold text-accent-green">
-            {post.category}
-          </span>
-          <span className="text-xs text-slate-500">{post.createdAt}</span>
+    <DashboardShell title={post.title} eyebrow={post.category} description={`${post.author} · ${post.createdAt}`}>
+      <article className="panel p-5">
+        <p className="text-sm font-medium leading-7 text-slate-700">{post.body}</p>
+        <div className="mt-5 flex flex-wrap gap-3 text-sm font-black text-slate-600">
+          <span className="inline-flex items-center gap-1"><ThumbsUp size={16} /> 추천 {post.likes}</span>
+          <span className="inline-flex items-center gap-1"><Flag size={16} /> 신고 {post.reports}</span>
+          <span className="inline-flex items-center gap-1"><MessageSquare size={16} /> 댓글 {post.comments.length}</span>
         </div>
-        <h1 className="mt-4 text-3xl font-black text-white">{post.title}</h1>
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-400">
-          <span>작성자 {post.author}</span>
-          <span>조회 {post.views}</span>
-          <span className="inline-flex items-center gap-1">
-            <MessageSquare size={15} /> {post.comments}
-          </span>
-          <span className="inline-flex items-center gap-1 text-emerald-300">
-            <ThumbsUp size={15} /> {post.likes}
-          </span>
-        </div>
-        <p className="mt-8 whitespace-pre-line text-base leading-7 text-slate-300">{post.body}</p>
       </article>
-
-      <section className="mt-6 panel overflow-hidden">
-        <div className="border-b border-white/10 px-5 py-4">
-          <h2 className="text-xl font-black text-white">댓글</h2>
-        </div>
-        <div className="divide-y divide-white/10">
-          {post.commentList.map((comment) => (
-            <div key={comment.id} className="p-5">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-bold text-white">{comment.author}</span>
-                <span className="text-xs text-slate-500">{comment.createdAt}</span>
-              </div>
-              <p className="mt-2 text-sm text-slate-300">{comment.content}</p>
-            </div>
-          ))}
+      <section className="panel overflow-hidden">
+        <div className="border-b border-slate-100 px-4 py-3 text-base font-black text-slate-950">댓글</div>
+        <div className="divide-y divide-slate-100">
+          {post.comments.length ? post.comments.map((comment) => (
+            <article key={comment.id} className="p-4">
+              <p className="text-sm font-black text-slate-950">{comment.author}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{comment.createdAt}</p>
+              <p className="mt-3 text-sm font-medium leading-6 text-slate-700">{comment.body}</p>
+            </article>
+          )) : <p className="p-4 text-sm font-bold text-slate-500">아직 댓글이 없습니다.</p>}
         </div>
       </section>
-    </section>
+    </DashboardShell>
   );
 }
