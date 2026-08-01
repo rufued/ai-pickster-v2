@@ -40,8 +40,8 @@ async function fetchSportGames(sport, apiKey, from, to) {
     markets: "h2h",
     oddsFormat: "decimal",
     dateFormat: "iso",
-    commenceTimeFrom: from.toISOString(),
-    commenceTimeTo: to.toISOString(),
+    commenceTimeFrom: from.toISOString().replace(".000", ""),
+    commenceTimeTo: to.toISOString().replace(".000", ""),
   });
 
   const response = await fetch(
@@ -82,6 +82,7 @@ export async function fetchAllGames() {
   }
 
   const from = new Date();
+  from.setMilliseconds(0);
   const to = new Date(from.getTime() + LOOKAHEAD_HOURS * 60 * 60 * 1000);
   const games = [];
 
