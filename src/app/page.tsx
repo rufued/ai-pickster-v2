@@ -22,7 +22,10 @@ export default function Home() {
   const rankings = getRankings();
   const games = getGames();
   const ais = getAis();
-  const recentHits = getSettledBets().filter((bet) => bet.status === "won").slice(0, 3);
+  const activeAiIds = new Set(ais.filter((ai) => ai.total_picks > 0).map((ai) => ai.id));
+  const recentHits = getSettledBets()
+    .filter((bet) => bet.status === "won" && activeAiIds.has(bet.aiId))
+    .slice(0, 3);
   const leader = rankings[0];
   const featuredGame = games[0];
 
