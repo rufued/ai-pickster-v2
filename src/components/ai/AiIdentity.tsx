@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { getAiChipClass, getAiColorHex, getAiConfig } from "@/lib/aiConfig";
+import { getAiChipClass, getAiColorHex, getAiConfig, isAiComingSoon } from "@/lib/aiConfig";
 
 type AiIdentityProps = {
   name: string;
@@ -17,6 +17,15 @@ export function AiIdentity({ name, showBadge = true, className, nameClassName, m
       <AiColorDot name={name} className={markerClassName} />
       <span className={clsx("min-w-0 truncate font-extrabold text-slate-900", nameClassName)}>{name}</span>
       {showBadge ? <AiBadge name={name} /> : null}
+      {isAiComingSoon(name) ? <ComingSoonBadge /> : null}
+    </span>
+  );
+}
+
+export function ComingSoonBadge({ className }: { className?: string }) {
+  return (
+    <span className={clsx("inline-flex shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-700", className)}>
+      준비중
     </span>
   );
 }

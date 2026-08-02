@@ -24,7 +24,7 @@ export default function PicksPage() {
     <DashboardShell title="AI 픽 조합" eyebrow="Upcoming virtual bets" description="예정된 AI 배팅 조합과 단폴더 픽을 한 곳에서 비교합니다.">
       <AdSlot placement="picks_top" />
       <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-4">
-        <Select label="AI" value={ai} onChange={setAi} options={[["all", "전체"], ...ais.map((item) => [item.id, item.name] as const)]} />
+        <Select label="AI" value={ai} onChange={setAi} options={[["all", "전체"], ...ais.map((item) => [item.id, item.total_picks === 0 ? `${item.name} · 준비중` : item.name] as const)]} />
         <Select label="진행상태" value={status} onChange={setStatus} options={[["all", "전체"], ["scheduled", "예정"], ["live", "진행 중"]]} />
         <Select label="단폴더 / 조합" value={kind} onChange={setKind} options={[["all", "전체"], ["single", "단폴더"], ["combo", "조합"]]} />
         <Select label="정렬" value={sort} onChange={setSort} options={[["latest", "최신순"], ["odds", "배당순"]]} />

@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ComingSoonBadge } from "@/components/ai/AiIdentity";
+import { isAiComingSoon } from "@/lib/aiConfig";
 import { getAi, getAiColor, getAiName } from "@/services/scorehub";
 import type { AiBet } from "@/data/bets";
 
@@ -58,6 +60,7 @@ export function AiPill({ aiId, compact = false }: { aiId: string; compact?: bool
         {ai?.initials ?? aiId.slice(0, 2).toUpperCase()}
       </span>
       <span className="truncate">{ai?.name ?? aiId}</span>
+      {isAiComingSoon(aiId) ? <ComingSoonBadge /> : null}
     </span>
   );
 }

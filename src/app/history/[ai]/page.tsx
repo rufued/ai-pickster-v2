@@ -24,6 +24,19 @@ export default async function AiHistoryPage({ params }: AiHistoryPageProps) {
 
   const combinations = getCombosByAi(ai.id).sort((a, b) => b.date.localeCompare(a.date));
 
+  if (ai.totalPicks === 0) {
+    return (
+      <section className="container-shell py-8">
+        <HistoryHeader title={`${ai.name} 배팅기록실`} description={`${ai.name}의 픽 생성 기능을 준비하고 있습니다.`} />
+        <AiFilterLinks active={ai.id} />
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <span className="inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-black text-amber-700">준비중</span>
+          <p className="mt-3 text-sm font-bold text-slate-700">아직 생성된 픽과 배팅 기록이 없습니다.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="container-shell py-8">
       <HistoryHeader title={`${ai.name} 배팅기록실`} description={`${ai.name}가 만든 배팅 조합만 따로 모아봅니다.`} />

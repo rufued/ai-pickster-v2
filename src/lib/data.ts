@@ -307,7 +307,9 @@ export const aiCompetitors: AICompetitor[] = aiModels.map((model) => {
     winRate: settled.length ? (wins / settled.length) * 100 : 0,
     accuracy: settled.length ? (wins / settled.length) * 100 : 0,
     totalBets: override?.totalBets ?? aiCombos.length,
-    totalPicks: aiCombos.reduce((sum, combination) => sum + combination.legs.length, 0),
+    totalPicks: model.name === "GPT" || model.name === "Gemini"
+      ? aiCombos.reduce((sum, combination) => sum + combination.legs.length, 0)
+      : 0,
     totalProfit,
     bettingStyle: model.description,
     performanceHistory: buildPerformanceHistory(model.name, totalProfit),

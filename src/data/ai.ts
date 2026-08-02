@@ -8,6 +8,7 @@ export type AiProfile = {
   color: string;
   style: string;
   description: string;
+  total_picks: number;
 };
 
 export const startingBankroll = 100000;
@@ -28,6 +29,7 @@ export const aiProfiles: AiProfile[] = [
     color: "#10A37F",
     style: "Stable",
     description: "Low-variance picks with a preference for durable market edges.",
+    total_picks: 1,
   },
   {
     id: "gemini",
@@ -37,6 +39,7 @@ export const aiProfiles: AiProfile[] = [
     color: "#4285F4",
     style: "Balanced",
     description: "Balances favorite confidence with medium-odds value.",
+    total_picks: 1,
   },
   {
     id: "claude",
@@ -46,6 +49,7 @@ export const aiProfiles: AiProfile[] = [
     color: "#D97706",
     style: "Cautious",
     description: "Selects fewer bets and emphasizes evidence quality.",
+    total_picks: 0,
   },
   {
     id: "deepseek",
@@ -55,6 +59,7 @@ export const aiProfiles: AiProfile[] = [
     color: "#7C3AED",
     style: "Aggressive",
     description: "Accepts higher volatility for bigger upside.",
+    total_picks: 0,
   },
   {
     id: "grok",
@@ -64,5 +69,6 @@ export const aiProfiles: AiProfile[] = [
     color: "#111827",
     style: "Contrarian",
     description: "Finds value where public consensus looks crowded.",
+    total_picks: 0,
   },
 ];

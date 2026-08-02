@@ -10,6 +10,11 @@ export default async function AiProfilePage({ params }: { params: Promise<{ aiId
   const { aiId } = await params;
   const ai = getAi(aiId); const ranking = getRanking(aiId); const profile = getAiProfileInsight(aiId);
   if (!ai || !ranking || !profile) notFound();
+
+  if (ai.total_picks === 0) {
+    return <div className="min-h-screen bg-[#f4f7fb]"><main className="container-shell py-8"><section className="rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm"><span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">준비중</span><h1 className="mt-4 text-3xl font-black text-slate-950">{ai.name}</h1><p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-6 text-slate-600">아직 생성된 픽이 없습니다. 첫 픽이 등록되면 AI 성과와 상세 분석을 확인할 수 있습니다.</p></section></main></div>;
+  }
+
   const wins = profile.last20.filter((game) => game.result === "won").length;
 
   return <div className="min-h-screen bg-[#f4f7fb]"><main className="container-shell space-y-5 py-6 sm:py-8">

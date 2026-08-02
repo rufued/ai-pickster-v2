@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { useMemo, useState } from "react";
 import type { AiBet, BetLeg } from "@/data/bets";
 import type { AiProfile } from "@/data/ai";
+import { ComingSoonBadge } from "@/components/ai/AiIdentity";
 import { AiPill, StatusBadge, currency, shortDateTime, signedCurrency } from "./ScorehubPrimitives";
 
 export function BettingRecordBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfile[] }) {
@@ -17,6 +18,7 @@ export function BettingRecordBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfil
         {ais.map((ai) => (
           <button key={ai.id} type="button" onClick={() => setSelectedAi(ai.id)} className={filterClass(selectedAi === ai.id)}>
             {ai.name}
+            {ai.total_picks === 0 ? <ComingSoonBadge className="ml-1.5" /> : null}
           </button>
         ))}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowUpRight, CalendarDays, Check, ChevronRight, Radio, Sparkles, Trophy, TrendingUp } from "lucide-react";
+import { ComingSoonBadge } from "@/components/ai/AiIdentity";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
 import { getAis, getGames, getRankings, getSeasonInfo, getSettledBets } from "@/services/scorehub";
 
@@ -73,7 +74,7 @@ export default function Home() {
 
         <DashboardSection eyebrow="PERFORMANCE" title="AI ROI 그래프" description="시작 자산 대비 AI별 누적 수익률 추이">
           <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-100 bg-slate-50/60 px-5 py-3">
-            <div className="flex flex-wrap gap-x-4 gap-y-2">{ais.map((ai) => <span key={ai.id} className="flex items-center gap-1.5 text-xs font-bold text-slate-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ai.color }} />{ai.name}</span>)}</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">{ais.map((ai) => <span key={ai.id} className="flex items-center gap-1.5 text-xs font-bold text-slate-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ai.color }} />{ai.name}{ai.total_picks === 0 ? <ComingSoonBadge /> : null}</span>)}</div>
             <div className="flex rounded-lg border border-slate-200 bg-white p-1">{(["7d", "30d", "season"] as const).map((item) => <button key={item} onClick={() => setRange(item)} className={range === item ? "rounded-md bg-slate-900 px-3 py-1.5 text-xs font-black text-white" : "rounded-md px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-900"}>{item === "7d" ? "7일" : item === "30d" ? "30일" : "시즌"}</button>)}</div>
           </div>
           <div className="p-4 sm:p-6"><RoiChart range={range} /></div>
@@ -85,7 +86,7 @@ export default function Home() {
               <div><div className="flex items-center gap-2 text-xs font-bold text-blue-300"><span>{featuredGame.sport}</span><span>•</span><span>{featuredGame.league}</span><span className="rounded bg-red-500/20 px-2 py-0.5 text-red-300">18:30</span></div><h3 className="mt-2 text-xl font-black sm:text-2xl">{featuredGame.homeTeam} <span className="mx-1 text-slate-500">vs</span> {featuredGame.awayTeam}</h3></div>
               <div className="flex gap-2 text-xs font-bold text-slate-300"><span className="rounded-lg bg-white/10 px-3 py-2">홈 {featuredGame.odds.home?.toFixed(2)}</span><span className="rounded-lg bg-white/10 px-3 py-2">원정 {featuredGame.odds.away?.toFixed(2)}</span></div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{ais.map((ai) => { const prediction = featuredGame.predictions.find((item) => item.aiId === ai.id); return <article key={ai.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"><AiPill aiId={ai.id} compact /><div className="mt-4"><p className="text-[11px] font-bold uppercase text-slate-400">선택</p><p className={prediction ? "mt-1 min-h-11 text-sm font-black text-slate-950" : "mt-1 min-h-11 text-sm font-bold text-slate-400"}>{prediction?.pick ?? "관망"}</p></div><div className="mt-3 flex items-end justify-between border-t border-slate-100 pt-3"><span className="text-xs font-bold text-slate-500">확신도</span><strong className={prediction ? "text-blue-700" : "text-slate-400"}>{prediction ? `${prediction.confidence}%` : "—"}</strong></div>{prediction ? <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${prediction.confidence}%` }} /></div> : null}</article>; })}</div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{ais.map((ai) => { const prediction = ai.total_picks === 0 ? undefined : featuredGame.predictions.find((item) => item.aiId === ai.id); return <article key={ai.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"><AiPill aiId={ai.id} compact /><div className="mt-4"><p className="text-[11px] font-bold uppercase text-slate-400">선택</p><p className={prediction ? "mt-1 min-h-11 text-sm font-black text-slate-950" : "mt-1 min-h-11 text-sm font-bold text-slate-400"}>{prediction?.pick ?? (ai.total_picks === 0 ? "픽 준비중" : "관망")}</p></div><div className="mt-3 flex items-end justify-between border-t border-slate-100 pt-3"><span className="text-xs font-bold text-slate-500">확신도</span><strong className={prediction ? "text-blue-700" : "text-slate-400"}>{prediction ? `${prediction.confidence}%` : "—"}</strong></div>{prediction ? <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${prediction.confidence}%` }} /></div> : null}</article>; })}</div>
           </div>
         </DashboardSection>
 
