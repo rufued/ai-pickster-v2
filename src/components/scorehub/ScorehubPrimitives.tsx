@@ -2,9 +2,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
-import { TeamMatchup } from "@/components/sports/SportsBrand";
-import { LocalDateTime } from "@/components/ui/LocalDateTime";
-import { getAi, getAiColor, getAiName } from "@/services/scorehub";
+import { getAi, getAiName } from "@/services/scorehub";
 import type { AiBet } from "@/data/bets";
 
 export const currency = (value: number) =>
@@ -74,49 +72,6 @@ export function StatusBadge({ status }: { status: AiBet["status"] }) {
           ? "bg-amber-50 text-amber-700"
           : "bg-blue-50 text-blue-700";
   return <span className={clsx("rounded-full px-2.5 py-1 text-xs font-black", tone)}>{label}</span>;
-}
-
-export function BetCard({ bet }: { bet: AiBet }) {
-  return (
-    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm" style={{ borderLeftColor: getAiColor(bet.aiId), borderLeftWidth: 4 }}>
-      <div className="flex items-start justify-between gap-3">
-        <AiPill aiId={bet.aiId} />
-        <StatusBadge status={bet.status} />
-      </div>
-      <div className="mt-4">
-        <p className="text-sm font-bold text-slate-500">{bet.kind === "combo" ? `${bet.legs.length}폴더 조합` : "단폴더"}</p>
-        <div className="mt-2 space-y-2">
-          {bet.legs.map((leg) => (
-            <div key={`${bet.id}-${leg.gameId}`} className="min-w-0 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
-              <h3 className="min-w-0 text-sm font-black text-slate-950 sm:text-base"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></h3>
-              <p className="mt-2 whitespace-normal text-xs font-semibold text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <Mini label="총 배당" value={bet.totalOdds.toFixed(2)} />
-        <Mini label="배팅금액" value={currency(bet.stake)} />
-        <Mini label="예상수익" value={currency(bet.potentialProfit)} />
-        <Mini label="등록시간" value={<LocalDateTime value={bet.registeredAt} mode="mobile" />} />
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-xs font-bold text-slate-500">시작 {timeUntil(bet.startsAt)}</p>
-        <Link href={`/picks/${bet.id}`} className="rounded-md border border-blue-200 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-600 hover:text-white">
-          상세
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-function Mini({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="rounded-md bg-slate-50 px-3 py-2">
-      <p className="text-[11px] font-bold text-slate-500">{label}</p>
-      <p className="mt-0.5 truncate font-black text-slate-900">{value}</p>
-    </div>
-  );
 }
 
 export function shortDateTime(value: string) {
