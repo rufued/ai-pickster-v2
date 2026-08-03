@@ -153,12 +153,13 @@ export async function getLiveData(): Promise<LiveData> {
 
   const bets: AiBet[] = pickRows.map((pick) => {
     const game = gameById.get(text(pick.game_id));
+    const pickId = text(pick.id) || text(pick.pick_id) || `${text(pick.game_id)}-${text(pick.ai_model)}`;
     const stake = number(pick.stake);
     const odds = number(pick.odds_used);
     const profit = number(pick.pnl);
     const status = pickStatus(pick, game);
     return {
-      id: text(pick.id),
+      id: pickId,
       aiId: text(pick.ai_model) as AiProfile["id"],
       kind: "single",
       status,
