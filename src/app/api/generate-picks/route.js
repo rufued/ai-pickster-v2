@@ -18,6 +18,7 @@ async function getGamesNeedingPicks(supabase) {
     .from("games")
     .select("*")
     .eq("status", "upcoming")
+    .gte("commence_time", new Date().toISOString())
     .order("commence_time", { ascending: true })
     .limit(MAX_GAMES_PER_RUN);
 
