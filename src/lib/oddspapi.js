@@ -227,13 +227,20 @@ export async function fetchOddsPapiEsportsGames() {
   for (const entry of tournamentSets) {
     if (fixtureRequestIndex > 0) await delay(2100);
     fixtureRequestIndex += 1;
-    const scheduledFixtures = asArray(await request("/fixtures", {
-      sportId: String(entry.sport.sportId),
-      from: from.toISOString().replace(".000", ""),
-      to: to.toISOString().replace(".000", ""),
-      statusId: "0",
-      language: "en",
-    })).filter((fixture) => {
+    let fixturesResponse = [];
+    try {
+      fixturesResponse = asArray(await request("/fixtures", {
+        sportId: String(entry.sport.sportId),
+        from: from.toISOString().replace(".000", ""),
+        to: to.toISOString().replace(".000", ""),
+        statusId: "0",
+        language: "en",
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!(message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND"))) throw error;
+    }
+    const scheduledFixtures = fixturesResponse.filter((fixture) => {
       const start = new Date(fixture.startTime).getTime();
       return start >= from.getTime() && start <= to.getTime();
     });
