@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { CheckCircle2, Clock3, Layers3, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AiPill, currency, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
-import { TeamMatchup } from "@/components/sports/SportsBrand";
+import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import type { AiProfile } from "@/data/ai";
 import type { AiBet, BetLeg } from "@/data/bets";
@@ -54,7 +54,7 @@ function SingleBetRow({ bet }: { bet: AiBet }) {
       <div className="grid gap-3 lg:grid-cols-[150px_minmax(0,1fr)_minmax(140px,auto)_80px_110px_110px] lg:items-center">
         <div><AiPill aiId={bet.aiId} compact /><p className="mt-1 text-[11px] font-bold text-slate-400"><LocalDateTime value={bet.registeredAt} mode="mobile" /></p></div>
         <div className="min-w-0"><p className="text-sm font-black text-slate-950">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} pickType={leg.pickType} oddsOptions={leg.oddsOptions} compact /> : "-"}</p><p className="mt-1 whitespace-normal text-xs font-bold text-blue-700 [overflow-wrap:anywhere]">{leg?.selection ?? "-"}</p></div>
-        <div className="text-xs font-bold text-slate-500"><p>{leg?.league}</p><p className="mt-1 text-[11px] font-black text-blue-700">{leg ? marketLabel(leg.market, t) : "-"}</p><p className="mt-1 text-sm font-black text-slate-900">{t("games.odds")} {bet.totalOdds.toFixed(2)}</p></div>
+        <div className="text-xs font-bold text-slate-500">{leg ? <LeagueBadge league={leg.league} className="py-0.5 text-[11px]" /> : <p>-</p>}<p className="mt-1 text-[11px] font-black text-blue-700">{leg ? marketLabel(leg.market, t) : "-"}</p><p className="mt-1 text-sm font-black text-slate-900">{t("games.odds")} {bet.totalOdds.toFixed(2)}</p></div>
         <ResultIcon result={leg?.result ?? "pending"} withLabel />
         <Money label={t("records.stake")} value={currency(bet.stake)} />
         <Money label={t("records.profit")} value={isPending(bet) ? "—" : signedCurrency(bet.profit)} tone={bet.profit} />
@@ -93,7 +93,7 @@ function ParlayLeg({ leg, index }: { leg: BetLeg; index: number }) {
   return (
     <div className="grid gap-3 p-4 sm:grid-cols-[28px_minmax(0,1fr)_100px_80px] sm:items-center">
       <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-500">{index + 1}</span>
-      <div className="min-w-0"><p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><span>{leg.league}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{marketLabel(leg.market, t)}</span></p><p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} pickType={leg.pickType} oddsOptions={leg.oddsOptions} compact /></p><p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">{t("common.pick")}: {leg.selection}</p></div>
+      <div className="min-w-0"><p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><LeagueBadge league={leg.league} className="py-0.5 text-[11px]" /><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{marketLabel(leg.market, t)}</span></p><p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} pickType={leg.pickType} oddsOptions={leg.oddsOptions} compact /></p><p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">{t("common.pick")}: {leg.selection}</p></div>
       <div><p className="text-[11px] font-bold text-slate-400">{t("picks.individualOdds")}</p><p className="mt-1 font-black text-slate-950">{leg.odds.toFixed(2)}</p></div>
       <ResultIcon result={leg.result} withLabel />
     </div>
