@@ -1,5 +1,5 @@
 const API_BASE_URL = "https://api.oddspapi.io/v4";
-const DEFAULT_BOOKMAKER = "pinnacle";
+const BOOKMAKER_PRIORITY = ["pinnacle", "bet365", "betfair", "ggbet", "thunderpick", "betway"];
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
 export const ODDSPAPI_ESPORTS = [
   { key: "esports_lol", label: "League of Legends", aliases: ["leagueoflegends"] },
@@ -132,7 +132,9 @@ function bestPlayer(players, side) {
 
 function parseOdds(fixture, markets) {
   const metadataById = marketMetadata(markets);
-  const bookmakers = Object.values(fixture.bookmakerOdds ?? {}).filter((bookmaker) => bookmaker.bookmakerIsActive !== false && bookmaker.suspended !== true);
+  const bookmakers = Object.values(fixture.bookmakerOdds ?? {})
+    .filter((bookmaker) => bookmaker.bookmakerIsActive !== false && bookmaker.suspended !== true)
+    .sort((first, second) => bookmakerRank(first) - bookmakerRank(second));
   const parsed = { home_odds: null, away_odds: null, draw_odds: null, home_spread_point: null, away_spread_point: null, home_spread_odds: null, away_spread_odds: null, total_point: null, over_odds: null, under_odds: null };
 
   for (const bookmaker of bookmakers) {
@@ -169,36 +171,57 @@ function parseOdds(fixture, markets) {
   return parsed;
 }
 
+function bookmakerRank(bookmaker) {
+  const value = normalize(`${bookmaker.bookmakerSlug ?? ""} ${bookmaker.bookmakerName ?? ""}`);
+  const index = BOOKMAKER_PRIORITY.findIndex((name) => value.includes(normalize(name)));
+  return index === -1 ? BOOKMAKER_PRIORITY.length : index;
+}
+
 export async function fetchOddsPapiEsportsGames() {
   const discovered = await getOddsPapiEsportsSports();
   const supported = discovered.filter((entry) => entry.sport);
   const tournamentSets = [];
+  const from = new Date();
+  const to = new Date(from.getTime() + ODDSPAPI_LOOKAHEAD_HOURS * 60 * 60 * 1000);
 
   for (const [index, entry] of supported.entries()) {
     if (index > 0) await delay(1100);
     const tournaments = asArray(await request("/tournaments", { sportId: String(entry.sport.sportId), language: "en" }));
     const active = activeTournaments(tournaments);
-    tournamentSets.push({ ...entry, tournaments, active, batches: chunks(active, 5) });
+    tournamentSets.push({ ...entry, tournaments, active });
   }
 
   const marketsResponse = await request("/markets", { language: "en" });
   const allMarkets = asArray(marketsResponse);
   const games = [];
   const diagnostics = [];
-  const now = Date.now();
-  const until = now + ODDSPAPI_LOOKAHEAD_HOURS * 60 * 60 * 1000;
   let oddsRequestIndex = 0;
+  let fixtureRequestIndex = 0;
 
   for (const entry of tournamentSets) {
+    if (fixtureRequestIndex > 0) await delay(2100);
+    fixtureRequestIndex += 1;
+    const scheduledFixtures = asArray(await request("/fixtures", {
+      sportId: String(entry.sport.sportId),
+      from: from.toISOString().replace(".000", ""),
+      to: to.toISOString().replace(".000", ""),
+      statusId: "0",
+      language: "en",
+    })).filter((fixture) => {
+      const start = new Date(fixture.startTime).getTime();
+      return start >= from.getTime() && start <= to.getTime();
+    });
+    const relevantTournamentIds = [...new Set(scheduledFixtures.map((fixture) => fixture.tournamentId).filter(Boolean))];
+    const tournamentBatches = chunks(relevantTournamentIds, 5);
     const oddsFixtures = [];
     let emptyOddsBatches = 0;
-    for (const batch of entry.batches) {
+    for (const batch of tournamentBatches) {
       if (oddsRequestIndex > 0) await delay(1100);
       oddsRequestIndex += 1;
       try {
         const response = await request("/odds-by-tournaments", {
-          tournamentIds: batch.map((item) => item.tournamentId).join(","),
-          bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
+          tournamentIds: batch.join(","),
+          ...(process.env.ODDSPAPI_BOOKMAKER ? { bookmakers: process.env.ODDSPAPI_BOOKMAKER } : {}),
           language: "en",
           verbosity: "3",
           oddsFormat: "decimal",
@@ -211,28 +234,33 @@ export async function fetchOddsPapiEsportsGames() {
       }
     }
     const markets = allMarkets.filter((market) => Number(market.sportId) === Number(entry.sport.sportId));
-    const sportGames = oddsFixtures.filter((fixture) => {
-      const start = new Date(fixture.startTime).getTime();
-      return Number(fixture.statusId) === 0 && fixture.hasOdds !== false && start >= now && start <= until;
-    }).map((fixture) => ({
+    const oddsByFixtureId = new Map(oddsFixtures.map((fixture) => [String(fixture.fixtureId), fixture]));
+    const sportGames = scheduledFixtures.map((fixture) => {
+      const oddsFixture = oddsByFixtureId.get(String(fixture.fixtureId));
+      return {
       id: `oddspapi:${fixture.fixtureId}`,
       sport: entry.config.key,
       sport_label: fixture.tournamentName || entry.config.label,
       home_team: fixture.participant1Name,
       away_team: fixture.participant2Name,
       commence_time: fixture.startTime,
-      ...parseOdds(fixture, markets),
-    })).filter((game) => game.home_team && game.away_team && game.home_odds && game.away_odds);
+      ...(oddsFixture ? parseOdds(oddsFixture, markets) : parseOdds({}, markets)),
+      };
+    }).filter((game) => game.home_team && game.away_team);
     games.push(...sportGames);
+    const gamesWithOdds = sportGames.filter((game) => game.home_odds && game.away_odds).length;
     diagnostics.push({
       key: entry.config.key,
       label: entry.config.label,
       sport: { sportId: entry.sport.sportId, slug: entry.sport.slug, sportName: entry.sport.sportName },
       supported_tournaments: entry.tournaments.map(tournamentSummary),
       active_tournaments: entry.active.map(tournamentSummary),
+      scheduled_fixtures: scheduledFixtures.map((fixture) => ({ fixtureId: fixture.fixtureId, tournamentId: fixture.tournamentId, tournamentName: fixture.tournamentName, homeTeam: fixture.participant1Name, awayTeam: fixture.participant2Name, startTime: fixture.startTime, hasOdds: fixture.hasOdds })),
       fixtures_with_odds: oddsFixtures.length,
       games_in_window: sportGames.length,
-      odds_request_batches: entry.batches.length,
+      games_with_parsed_odds: gamesWithOdds,
+      schedule_only_games: sportGames.length - gamesWithOdds,
+      odds_request_batches: tournamentBatches.length,
       empty_odds_batches: emptyOddsBatches,
     });
   }
@@ -246,8 +274,8 @@ export async function fetchOddsPapiEsportsGames() {
       }),
       feeds: diagnostics,
       games_in_window: games.length,
-      api_requests: 2 + supported.length + oddsRequestIndex,
-      bookmaker: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
+      api_requests: 2 + supported.length + fixtureRequestIndex + oddsRequestIndex,
+      bookmaker: process.env.ODDSPAPI_BOOKMAKER || "all_available_with_priority_selection",
     },
   };
 }
