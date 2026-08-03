@@ -19,11 +19,24 @@ export async function GET(request: Request) {
     getOddsPapiAccountUsage().catch(() => null),
   ]);
   if (games.error) return NextResponse.json({ error: games.error.message }, { status: 500 });
+
+  const recentRuns = runs.error ? [] : runs.data ?? [];
+  const latestGamesRun = recentRuns.find((run) => run.job_name === "games");
+  const oddsApiUsage = latestGamesRun?.details && typeof latestGamesRun.details === "object"
+    ? (latestGamesRun.details as { quota?: unknown }).quota ?? null
+    : null;
+
   return NextResponse.json({
     games: games.data ?? [],
     counts: { games: gameCount.count ?? 0, picks: pickCount.count ?? 0, parlays: parlayCount.count ?? 0 },
-    runs: runs.error ? [] : runs.data ?? [],
-    providers: { oddsPapi, theOddsApi: { configured: Boolean(process.env.ODDS_API_KEY), usage: "응답 헤더 기반 사용량 미제공" } },
+    runs: recentRuns,
+    providers: {
+      oddsPapi,
+      theOddsApi: {
+        configured: Boolean(process.env.ODDS_API_KEY),
+        usage: oddsApiUsage,
+      },
+    },
     migrationRequired: Boolean(runs.error),
   });
 }

@@ -1,5 +1,7 @@
 const ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 const REQUEST_DELAY_MS = 500;
+let lastQuota = null;
+export function getOddsApiUsage() { return lastQuota; }
 export const LOOKAHEAD_HOURS = 72;
 
 export const SPORTS = [
@@ -91,6 +93,11 @@ async function fetchSportGames(sport, apiKey, from, to) {
       `Odds API request failed for ${sport.key} (${response.status}): ${details}`,
     );
   }
+  lastQuota = {
+    requests_used: Number(response.headers.get("x-requests-used")) || null,
+    requests_remaining: Number(response.headers.get("x-requests-remaining")) || null,
+    requests_last: Number(response.headers.get("x-requests-last")) || null,
+  };
 
   const events = await response.json();
 

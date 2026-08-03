@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllGames, LOOKAHEAD_HOURS } from "@/lib/odds-api";
+import { fetchAllGames, getOddsApiUsage, LOOKAHEAD_HOURS } from "@/lib/odds-api";
 import { getOddsPapiAccountUsage } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 import { logCronRun } from "@/lib/cron-log";
@@ -71,7 +71,7 @@ export async function GET(request) {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
-    await logCronRun("games", "success", startedAt, { fetched: games.length, by_sport: bySport, sources });
+    await logCronRun("games", "success", startedAt, { fetched: games.length, by_sport: bySport, sources, quota: getOddsApiUsage() });
     return NextResponse.json({
       success: true,
       fetched: games.length,
