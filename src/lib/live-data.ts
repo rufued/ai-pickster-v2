@@ -129,7 +129,7 @@ export async function getLiveData(): Promise<LiveData> {
 
   const rankings: AiRanking[] = assets.map((asset, index) => {
     const model = text(asset.ai_model);
-    const modelPicks = pickRows.filter((pick) => text(pick.ai_model) === model);
+    const modelPicks = pickRows.filter((pick) => text(pick.ai_model) === model && pick.is_single_bet !== false);
     const settled = modelPicks.filter((pick) => Boolean(pick.settled_at));
     const modelParlays = parlayRows.filter((parlay) => text(parlay.ai_model) === model);
     const settledParlays = modelParlays.filter((parlay) => Boolean(parlay.settled_at));
@@ -185,7 +185,7 @@ export async function getLiveData(): Promise<LiveData> {
     };
   });
 
-  const singleBets: AiBet[] = pickRows.map((pick) => {
+  const singleBets: AiBet[] = pickRows.filter((pick) => pick.is_single_bet !== false).map((pick) => {
     const game = gameById.get(text(pick.game_id));
     const pickId = idText(pick.id) || idText(pick.pick_id) || `${text(pick.game_id)}-${text(pick.ai_model)}`;
     const stake = number(pick.stake);

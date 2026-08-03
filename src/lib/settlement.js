@@ -164,13 +164,15 @@ export async function settlePicks() {
   let wins = 0;
   let losses = 0;
   let pushes = 0;
+  let comboOnlySettled = 0;
   let picksSettled = 0;
 
   for (const pick of picks ?? []) {
     const isCorrect = settlePickOutcome(pick, gameById.get(pick.game_id));
+    const isSingleBet = pick.is_single_bet !== false;
     const stake = Number(pick.stake);
     const odds = Number(pick.odds_used);
-    const pnl = isCorrect === null ? 0 : isCorrect ? stake * (odds - 1) : -stake;
+    const pnl = !isSingleBet || isCorrect === null ? 0 : isCorrect ? stake * (odds - 1) : -stake;
 
     if (
       pick.stake === null ||
@@ -195,7 +197,8 @@ export async function settlePicks() {
 
     if (data?.length) {
       picksSettled += 1;
-      if (isCorrect) wins += 1;
+      if (!isSingleBet) comboOnlySettled += 1;
+      else if (isCorrect) wins += 1;
       else if (isCorrect === false) losses += 1;
       else pushes += 1;
     }
@@ -207,6 +210,7 @@ export async function settlePicks() {
     wins,
     losses,
     pushes,
+    combo_only_picks_settled: comboOnlySettled,
   };
 }
 
@@ -287,10 +291,14 @@ export async function refreshAiAssets() {
     throw new Error(`Failed to fetch AI assets: ${assetsError.message}`);
   }
 
-  const { data: picks, error: picksError } = await supabase
+  let { data: picks, error: picksError } = await supabase
     .from("picks")
-    .select("ai_model,is_correct,pnl")
+    .select("ai_model,is_correct,pnl,is_single_bet")
     .not("settled_at", "is", null);
+
+  if (picksError?.message?.includes("schema cache")) {
+    ({ data: picks, error: picksError } = await supabase.from("picks").select("ai_model,is_correct,pnl").not("settled_at", "is", null));
+  }
 
   if (picksError) {
     throw new Error(`Failed to fetch settled picks: ${picksError.message}`);
@@ -313,6 +321,7 @@ export async function refreshAiAssets() {
   const totals = new Map();
 
   for (const pick of picks ?? []) {
+    if (pick.is_single_bet === false) continue;
     const current = totals.get(pick.ai_model) ?? { total_picks: 0, wins: 0, losses: 0, pnl: 0 };
     current.total_picks += 1;
     current.wins += pick.is_correct === true ? 1 : 0;

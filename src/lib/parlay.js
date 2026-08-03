@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 const MIN_LEGS = 2;
+const MAX_PARLAYS_PER_AI_PER_DAY = 4;
 
 function validPick(pick) {
   const confidence = Number(pick.confidence);
@@ -13,16 +14,20 @@ function validPick(pick) {
   );
 }
 
-function uniqueCombinations(picks) {
+function uniqueCombinations(picks, favorCombinations) {
   const sorted = [...picks].filter(validPick).sort((a, b) => Number(b.confidence) - Number(a.confidence));
   if (sorted.length < MIN_LEGS) return [];
 
   const strong = sorted.filter((pick) => Number(pick.confidence) >= 70);
-  const qualified = sorted.filter((pick) => Number(pick.confidence) >= 60);
-  const candidates = [
-    strong.length >= 2 ? strong.slice(0, 3) : [],
-    qualified.length >= 2 ? qualified.slice(0, 3) : [],
-  ];
+  const qualified = sorted.filter((pick) => Number(pick.confidence) >= (favorCombinations ? 50 : 60)).slice(0, 4);
+  const candidates = [];
+  for (let first = 0; first < qualified.length; first += 1) {
+    for (let second = first + 1; second < qualified.length; second += 1) {
+      candidates.push([qualified[first], qualified[second]]);
+    }
+  }
+  if (strong.length >= 3) candidates.unshift(strong.slice(0, 3));
+  else if (favorCombinations && qualified.length >= 3) candidates.unshift(qualified.slice(0, 3));
   const seen = new Set();
 
   return candidates.filter((combination) => {
@@ -31,7 +36,7 @@ function uniqueCombinations(picks) {
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  });
+  }).slice(0, MAX_PARLAYS_PER_AI_PER_DAY);
 }
 
 function totalOdds(picks) {
@@ -110,7 +115,7 @@ function fallbackCandidate(byModel) {
     .sort((a, b) => b.averageConfidence - a.averageConfidence || b.topConfidence - a.topConfidence || a.aiModel.localeCompare(b.aiModel))[0];
 }
 
-export async function generateParlays(supabase, { since = new Date(new Date().setUTCHours(0, 0, 0, 0)) } = {}) {
+export async function generateParlays(supabase, { since = new Date(new Date().setUTCHours(0, 0, 0, 0)), favorCombinations = false } = {}) {
   const { data: picks, error: picksError } = await supabase
     .from("picks")
     .select("game_id,ai_model,confidence,odds_used,market_type,pick_type,line_value,created_at")
@@ -137,9 +142,14 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
 
   const result = { candidates: 0, created: 0, skipped: 0, parlays: [], minimum_guarantee: null };
   const betDate = new Date().toISOString().slice(0, 10);
+  const { data: dailyParlays, error: dailyParlaysError } = await supabase.from("parlays").select("ai_model").eq("bet_date", betDate);
+  if (dailyParlaysError) throw new Error(`Failed to count daily parlays: ${dailyParlaysError.message}`);
+  const dailyParlayCounts = new Map();
+  for (const parlay of dailyParlays ?? []) dailyParlayCounts.set(parlay.ai_model, (dailyParlayCounts.get(parlay.ai_model) ?? 0) + 1);
 
   for (const [aiModel, modelPicks] of byModel) {
-    for (const combination of uniqueCombinations(modelPicks)) {
+    const remainingSlots = Math.max(0, MAX_PARLAYS_PER_AI_PER_DAY - (dailyParlayCounts.get(aiModel) ?? 0));
+    for (const combination of uniqueCombinations(modelPicks, favorCombinations).slice(0, remainingSlots)) {
       result.candidates += 1;
       const created = await createParlay(supabase, aiModel, combination, betDate, false);
       if (created.status === "skipped") {
@@ -147,6 +157,7 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
         continue;
       }
       result.created += 1;
+      dailyParlayCounts.set(aiModel, (dailyParlayCounts.get(aiModel) ?? 0) + 1);
       result.parlays.push(created);
     }
   }
@@ -159,13 +170,13 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
 
   if ((todaysParlayCount ?? 0) > 0) {
     result.minimum_guarantee = { attempted: false, created: false, reason: result.created > 0 ? "autonomous_parlay_created" : "daily_parlay_already_exists" };
-    return result;
+    return { ...result, strategy: { favor_combinations: favorCombinations, max_parlays_per_ai_per_day: MAX_PARLAYS_PER_AI_PER_DAY } };
   }
 
   const fallback = fallbackCandidate(byModel);
   if (!fallback) {
     result.minimum_guarantee = { attempted: true, created: false, reason: "no_ai_with_two_valid_picks" };
-    return result;
+    return { ...result, strategy: { favor_combinations: favorCombinations, max_parlays_per_ai_per_day: MAX_PARLAYS_PER_AI_PER_DAY } };
   }
 
   const forced = await createParlay(supabase, fallback.aiModel, fallback.picks, betDate, true);
@@ -183,5 +194,5 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
     confidences: fallback.picks.map((pick) => Number(pick.confidence)),
   };
 
-  return result;
+  return { ...result, strategy: { favor_combinations: favorCombinations, max_parlays_per_ai_per_day: MAX_PARLAYS_PER_AI_PER_DAY } };
 }

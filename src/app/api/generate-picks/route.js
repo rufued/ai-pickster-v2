@@ -4,6 +4,7 @@ import { AI_MODELS, getPickFromModel } from "@/lib/ai-picks";
 import { generateParlays } from "@/lib/parlay";
 
 const MAX_GAMES_PER_RUN = 5; // 한 번 실행할 때 처리할 경기 수 (API 비용/시간 제한용)
+const MAX_SINGLE_BETS_PER_AI_PER_DAY = 3;
 
 function getSupabaseClient() {
   return createClient(
@@ -36,7 +37,21 @@ async function hasExistingPicks(supabase, gameId) {
   return (count ?? 0) > 0;
 }
 
-async function savePick(supabase, game, modelKey, pick) {
+async function getDailySingleCounts(supabase) {
+  const dayStart = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+  let { data, error } = await supabase.from("picks").select("ai_model,is_single_bet").gte("created_at", dayStart).eq("is_single_bet", true);
+  let supportsSingleFlag = true;
+  if (error?.message?.includes("schema cache")) {
+    supportsSingleFlag = false;
+    ({ data, error } = await supabase.from("picks").select("ai_model").gte("created_at", dayStart));
+  }
+  if (error) throw new Error(`Failed to count daily single bets: ${error.message}`);
+  const counts = new Map();
+  for (const row of data ?? []) counts.set(row.ai_model, (counts.get(row.ai_model) ?? 0) + 1);
+  return { counts, supportsSingleFlag };
+}
+
+async function savePick(supabase, game, modelKey, pick, isSingleBet, supportsSingleFlag) {
   const values = {
     game_id: game.id,
     ai_model: modelKey,
@@ -47,6 +62,7 @@ async function savePick(supabase, game, modelKey, pick) {
     confidence: pick.confidence,
     analysis: pick.analysis,
     odds_used: pick.odds_used,
+    ...(supportsSingleFlag ? { is_single_bet: isSingleBet } : {}),
   };
   let { error } = await supabase.from("picks").insert(values);
 
@@ -70,9 +86,12 @@ export async function GET(request) {
   const startedAt = new Date().toISOString();
   const supabase = getSupabaseClient();
   const results = [];
+  let singleBetsCreated = 0;
+  let comboOnlyPicksCreated = 0;
 
   try {
     const games = await getGamesNeedingPicks(supabase);
+    const { counts: dailySingleCounts, supportsSingleFlag } = await getDailySingleCounts(supabase);
 
     for (const game of games) {
       const alreadyDone = await hasExistingPicks(supabase, game.id);
@@ -81,8 +100,19 @@ export async function GET(request) {
       for (const model of AI_MODELS) {
         try {
           const pick = await getPickFromModel(model.key, game);
-          await savePick(supabase, game, model.key, pick);
-          results.push({ game_id: game.id, model: model.key, status: "ok" });
+          const isSingleBet = (dailySingleCounts.get(model.key) ?? 0) < MAX_SINGLE_BETS_PER_AI_PER_DAY;
+          if (!supportsSingleFlag && !isSingleBet) {
+            results.push({ game_id: game.id, model: model.key, status: "skipped", reason: "single_bet_daily_cap_schema_migration_required" });
+            continue;
+          }
+          await savePick(supabase, game, model.key, pick, isSingleBet, supportsSingleFlag);
+          if (isSingleBet) {
+            dailySingleCounts.set(model.key, (dailySingleCounts.get(model.key) ?? 0) + 1);
+            singleBetsCreated += 1;
+          } else {
+            comboOnlyPicksCreated += 1;
+          }
+          results.push({ game_id: game.id, model: model.key, status: "ok", bet_role: isSingleBet ? "single_and_parlay_candidate" : "parlay_candidate_only" });
         } catch (err) {
           // 한 AI가 실패해도 다른 AI/경기는 계속 진행
           results.push({
@@ -97,7 +127,7 @@ export async function GET(request) {
 
     let parlays;
     try {
-      parlays = await generateParlays(supabase);
+      parlays = await generateParlays(supabase, { favorCombinations: comboOnlyPicksCreated > 0 });
     } catch (err) {
       parlays = { status: "error", error: err.message };
     }
@@ -107,6 +137,13 @@ export async function GET(request) {
       games_processed: games.length,
       results,
       parlays,
+      betting_mix: {
+        single_bet_daily_cap_per_ai: MAX_SINGLE_BETS_PER_AI_PER_DAY,
+        single_bets_created: singleBetsCreated,
+        combo_only_picks_created: comboOnlyPicksCreated,
+        parlay_bets_created: Number(parlays?.created ?? 0),
+        single_to_parlay_ratio: Number(parlays?.created ?? 0) > 0 ? `${singleBetsCreated}:${parlays.created}` : `${singleBetsCreated}:0`,
+      },
       started_at: startedAt,
       finished_at: new Date().toISOString(),
     });
