@@ -177,6 +177,28 @@ function bookmakerRank(bookmaker) {
   return index === -1 ? BOOKMAKER_PRIORITY.length : index;
 }
 
+function bookmakerSlug(bookmaker) {
+  return bookmaker.slug ?? bookmaker.bookmakerSlug ?? bookmaker.bookmakerKey ?? bookmaker.key ?? null;
+}
+
+function preferredBookmakers(bookmakers) {
+  const available = bookmakers.map(bookmakerSlug).filter(Boolean);
+  const selected = BOOKMAKER_PRIORITY.flatMap((preferred) =>
+    available.filter((slug) => normalize(slug).includes(normalize(preferred))),
+  );
+  return [...new Set([process.env.ODDSPAPI_BOOKMAKER, ...selected, "pinnacle"].filter(Boolean))].slice(0, 6);
+}
+
+function mergeOddsFixtures(fixtures) {
+  const merged = new Map();
+  for (const fixture of fixtures) {
+    const key = String(fixture.fixtureId);
+    const current = merged.get(key);
+    merged.set(key, current ? { ...current, ...fixture, bookmakerOdds: { ...(current.bookmakerOdds ?? {}), ...(fixture.bookmakerOdds ?? {}) } } : fixture);
+  }
+  return [...merged.values()];
+}
+
 export async function fetchOddsPapiEsportsGames() {
   const discovered = await getOddsPapiEsportsSports();
   const supported = discovered.filter((entry) => entry.sport);
@@ -191,8 +213,12 @@ export async function fetchOddsPapiEsportsGames() {
     tournamentSets.push({ ...entry, tournaments, active });
   }
 
-  const marketsResponse = await request("/markets", { language: "en" });
+  const [marketsResponse, bookmakersResponse] = await Promise.all([
+    request("/markets", { language: "en" }),
+    request("/bookmakers", { language: "en" }),
+  ]);
   const allMarkets = asArray(marketsResponse);
+  const bookmakers = preferredBookmakers(asArray(bookmakersResponse));
   const games = [];
   const diagnostics = [];
   let oddsRequestIndex = 0;
@@ -216,25 +242,33 @@ export async function fetchOddsPapiEsportsGames() {
     const oddsFixtures = [];
     let emptyOddsBatches = 0;
     for (const batch of tournamentBatches) {
-      if (oddsRequestIndex > 0) await delay(1100);
-      oddsRequestIndex += 1;
-      try {
-        const response = await request("/odds-by-tournaments", {
-          tournamentIds: batch.join(","),
-          ...(process.env.ODDSPAPI_BOOKMAKER ? { bookmakers: process.env.ODDSPAPI_BOOKMAKER } : {}),
-          language: "en",
-          verbosity: "3",
-          oddsFormat: "decimal",
-        });
-        oddsFixtures.push(...asArray(response));
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND")) emptyOddsBatches += 1;
-        else throw error;
+      const targetIds = new Set(scheduledFixtures.filter((fixture) => batch.includes(fixture.tournamentId)).map((fixture) => String(fixture.fixtureId)));
+      const foundIds = new Set();
+      for (const bookmaker of bookmakers) {
+        if (oddsRequestIndex > 0) await delay(1100);
+        oddsRequestIndex += 1;
+        try {
+          const response = await request("/odds-by-tournaments", {
+            tournamentIds: batch.join(","),
+            bookmaker,
+            language: "en",
+            verbosity: "3",
+            oddsFormat: "decimal",
+          });
+          const fixtures = asArray(response);
+          oddsFixtures.push(...fixtures);
+          for (const fixture of fixtures) if (targetIds.has(String(fixture.fixtureId))) foundIds.add(String(fixture.fixtureId));
+          if ([...targetIds].every((id) => foundIds.has(id))) break;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND")) emptyOddsBatches += 1;
+          else throw error;
+        }
       }
     }
+    const mergedOddsFixtures = mergeOddsFixtures(oddsFixtures);
     const markets = allMarkets.filter((market) => Number(market.sportId) === Number(entry.sport.sportId));
-    const oddsByFixtureId = new Map(oddsFixtures.map((fixture) => [String(fixture.fixtureId), fixture]));
+    const oddsByFixtureId = new Map(mergedOddsFixtures.map((fixture) => [String(fixture.fixtureId), fixture]));
     const sportGames = scheduledFixtures.map((fixture) => {
       const oddsFixture = oddsByFixtureId.get(String(fixture.fixtureId));
       return {
@@ -256,7 +290,7 @@ export async function fetchOddsPapiEsportsGames() {
       supported_tournaments: entry.tournaments.map(tournamentSummary),
       active_tournaments: entry.active.map(tournamentSummary),
       scheduled_fixtures: scheduledFixtures.map((fixture) => ({ fixtureId: fixture.fixtureId, tournamentId: fixture.tournamentId, tournamentName: fixture.tournamentName, homeTeam: fixture.participant1Name, awayTeam: fixture.participant2Name, startTime: fixture.startTime, hasOdds: fixture.hasOdds })),
-      fixtures_with_odds: oddsFixtures.length,
+      fixtures_with_odds: mergedOddsFixtures.length,
       games_in_window: sportGames.length,
       games_with_parsed_odds: gamesWithOdds,
       schedule_only_games: sportGames.length - gamesWithOdds,
@@ -274,8 +308,8 @@ export async function fetchOddsPapiEsportsGames() {
       }),
       feeds: diagnostics,
       games_in_window: games.length,
-      api_requests: 2 + supported.length + fixtureRequestIndex + oddsRequestIndex,
-      bookmaker: process.env.ODDSPAPI_BOOKMAKER || "all_available_with_priority_selection",
+      api_requests: 3 + supported.length + fixtureRequestIndex + oddsRequestIndex,
+      bookmakers,
     },
   };
 }
