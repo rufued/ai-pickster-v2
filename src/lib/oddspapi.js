@@ -1,6 +1,5 @@
 const API_BASE_URL = "https://api.oddspapi.io/v4";
 const DEFAULT_BOOKMAKER = "pinnacle";
-const MAJOR_LOL_LEAGUES = ["lck", "lpl", "lec"];
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
 
 function requireApiKey() {
@@ -40,14 +39,17 @@ export async function getLolSport() {
 }
 
 function activeLolTournaments(tournaments) {
-  const active = tournaments.filter((item) =>
+  return tournaments.filter((item) =>
     Number(item.futureFixtures ?? 0) + Number(item.upcomingFixtures ?? 0) + Number(item.liveFixtures ?? 0) > 0,
   );
-  const major = active.filter((item) => {
-    const name = normalize(`${item.tournamentSlug} ${item.tournamentName}`);
-    return MAJOR_LOL_LEAGUES.some((league) => name.includes(league));
-  });
-  return major.length ? major : active;
+}
+
+function tournamentSummary(item) {
+  return {
+    tournamentId: item.tournamentId,
+    tournamentName: item.tournamentName,
+    tournamentSlug: item.tournamentSlug,
+  };
 }
 
 function marketMetadata(markets) {
@@ -145,7 +147,15 @@ export async function fetchOddsPapiLolGames() {
   const sport = await getLolSport();
   const tournaments = asArray(await request("/tournaments", { sportId: String(sport.sportId), language: "en" }));
   const selected = activeLolTournaments(tournaments);
-  if (!selected.length) return { games: [], diagnostics: { sport, tournaments: [], reason: "no_active_lol_tournaments" } };
+  if (!selected.length) return {
+    games: [],
+    diagnostics: {
+      sport,
+      supported_tournaments: tournaments.map(tournamentSummary),
+      active_tournaments: [],
+      reason: "no_active_lol_tournaments",
+    },
+  };
 
   const [marketsResponse, oddsResponse] = await Promise.all([
     request("/markets", { language: "en" }),
@@ -177,7 +187,8 @@ export async function fetchOddsPapiLolGames() {
     games,
     diagnostics: {
       sport: { sportId: sport.sportId, slug: sport.slug, sportName: sport.sportName },
-      tournaments: selected.map((item) => ({ tournamentId: item.tournamentId, tournamentName: item.tournamentName, tournamentSlug: item.tournamentSlug })),
+      supported_tournaments: tournaments.map(tournamentSummary),
+      active_tournaments: selected.map(tournamentSummary),
       fixtures_with_odds: asArray(oddsResponse).length,
       games_in_window: games.length,
       bookmaker: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
