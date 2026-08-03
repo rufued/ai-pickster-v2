@@ -7,7 +7,6 @@ import type { AiProfile } from "@/data/ai";
 import type { AiRanking } from "@/data/rankings";
 import type { AiBet, BetStatus } from "@/data/bets";
 import type { Game, GameStatus, SportName } from "@/data/games";
-import type { AICompetitor } from "@/lib/types";
 
 const STARTING_BALANCE = 100000;
 
@@ -71,7 +70,6 @@ function configFor(model: string) {
 export type LiveData = {
   ais: AiProfile[];
   rankings: AiRanking[];
-  competitors: AICompetitor[];
   games: Game[];
   bets: AiBet[];
 };
@@ -261,12 +259,11 @@ export async function getLiveData(): Promise<LiveData> {
 
   const bets = [...singleBets, ...parlayBets].sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
 
-  const competitors = rankings.map((ranking) => toCompetitor(ranking, ais.find((ai) => ai.id === ranking.aiId)));
-  return { ais, rankings, competitors, games, bets };
+  return { ais, rankings, games, bets };
 }
 
 function isMissingParlayTable(error: { code?: string; message?: string }) {
-  return error.code === "42P01" || error.code === "PGRST205" || Boolean(error.message?.includes("schema cache"));
+  return error.code === "42P01" || error.code === "42501" || error.code === "PGRST205" || Boolean(error.message?.includes("schema cache")) || Boolean(error.message?.includes("permission denied"));
 }
 
 function getCurrentStreak(settled: Row[]) {
@@ -277,46 +274,4 @@ function getCurrentStreak(settled: Row[]) {
     streak += 1;
   }
   return streak;
-}
-
-function toCompetitor(ranking: AiRanking, profile?: AiProfile): AICompetitor {
-  const wins = Math.round((ranking.winRate / 100) * ranking.totalBets);
-  const losses = Math.max(ranking.totalBets - wins, 0);
-  return {
-    id: ranking.aiId,
-    name: profile?.name ?? ranking.aiId,
-    initials: profile?.initials ?? ranking.aiId.slice(0, 2).toUpperCase(),
-    reliabilityGrade: "C",
-    startingBankroll: STARTING_BALANCE,
-    currentBankroll: ranking.currentBankroll,
-    startingBalance: STARTING_BALANCE,
-    currentBalance: ranking.currentBankroll,
-    roi: ranking.roi,
-    winRate: ranking.winRate,
-    accuracy: ranking.winRate,
-    totalBets: ranking.totalBets,
-    totalPicks: ranking.totalBets,
-    totalProfit: ranking.totalProfit,
-    bettingStyle: profile?.style ?? "",
-    performanceHistory: [],
-    recent30DayRoi: 0,
-    recent30DayAccuracy: 0,
-    recent30DayWins: 0,
-    recent30DayLosses: 0,
-    recent10Results: [],
-    recentResults: [],
-    recentRoiTrend: [],
-    analysisStyle: profile?.style ?? "",
-    investmentPhilosophy: "",
-    signatureTraits: [],
-    strategy: "",
-    strategyDescription: "",
-    bestHitCombination: "-",
-    bestHitOdds: 0,
-    wins,
-    losses,
-    battleWins: wins,
-    battleLosses: losses,
-    sportStats: [],
-  };
 }

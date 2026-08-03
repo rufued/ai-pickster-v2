@@ -9,7 +9,7 @@ const SPORTS = SPORT_CONFIGS.filter((sport) => sport.enabled).map((sport) => spo
 let adminClient;
 
 function isMissingParlayTable(error) {
-  return error?.code === "42P01" || error?.code === "PGRST205" || error?.message?.includes("schema cache");
+  return error?.code === "42P01" || error?.code === "42501" || error?.code === "PGRST205" || error?.message?.includes("schema cache") || error?.message?.includes("permission denied");
 }
 
 function getAdminClient() {

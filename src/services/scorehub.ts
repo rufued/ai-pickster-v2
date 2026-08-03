@@ -1,5 +1,4 @@
 import { ads, type AdPlacement } from "@/data/ads";
-import { communityPosts } from "@/data/community";
 import { aiConfigs } from "@/lib/aiConfig";
 
 export function getAi(aiId: string) {
@@ -12,14 +11,6 @@ export function getAi(aiId: string) {
     initials: config.name.slice(0, 2).toUpperCase(),
     color: config.colorHex,
   };
-}
-
-export function getCommunityPosts() {
-  return communityPosts;
-}
-
-export function getCommunityPost(id: string) {
-  return communityPosts.find((post) => post.id === id);
 }
 
 export function getAdForPlacement(placement: AdPlacement) {

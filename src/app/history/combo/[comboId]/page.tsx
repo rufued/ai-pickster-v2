@@ -1,2 +1,5 @@
-import { redirect } from "next/navigation";
-export default async function LegacyComboPage({ params }: { params: Promise<{ comboId: string }> }) { const { comboId } = await params; redirect(`/picks/${comboId}`); }
+import { permanentRedirect } from "next/navigation";
+
+export default function LegacyComboPage() {
+  permanentRedirect("/records");
+}

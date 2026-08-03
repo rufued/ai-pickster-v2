@@ -1,1 +1,6 @@
-export { default, dynamic } from "@/app/analysis/[id]/page";
+import { permanentRedirect } from "next/navigation";
+
+export default async function BattleDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  permanentRedirect(`/games/${id}`);
+}

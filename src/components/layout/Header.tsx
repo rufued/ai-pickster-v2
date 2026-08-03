@@ -10,7 +10,7 @@ import { SCOREHUB } from "@/lib/brand";
 const navItems = [
   { href: "/", label: "홈" },
   { href: "/picks", label: "AI 픽 조합" },
-  { href: "/records", label: "AI 배팅 내역" },
+  { href: "/records", label: "AI 베팅 내역" },
   { href: "/games", label: "경기·배당" },
   { href: "/community", label: "커뮤니티" },
 ];
