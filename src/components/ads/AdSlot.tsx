@@ -2,6 +2,21 @@ import Link from "next/link";
 import { getAdForPlacement } from "@/services/scorehub";
 import type { Ad, AdPlacement } from "@/data/ads";
 
+export function AdPlaceholder({ placement, className = "" }: { placement: AdPlacement; className?: string }) {
+  return (
+    <aside
+      className={`flex min-h-20 w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-5 text-center ${className}`}
+      aria-label="광고 영역"
+      data-ad-placement={placement}
+    >
+      <div>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Advertisement</span>
+        <p className="mt-1 text-xs font-bold text-slate-400">광고 영역</p>
+      </div>
+    </aside>
+  );
+}
+
 export function AdSlot({ placement }: { placement: AdPlacement }) {
   const ad = getAdForPlacement(placement);
 

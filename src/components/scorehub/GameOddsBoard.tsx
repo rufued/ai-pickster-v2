@@ -2,12 +2,13 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { Game, GameStatus, SportName } from "@/data/games";
 import { getAiName } from "@/services/scorehub";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { TeamLogo } from "@/components/sports/SportsBrand";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
+import { AdPlaceholder } from "@/components/ads/AdSlot";
 
 const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
@@ -74,8 +75,9 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
         </div>
       </section>
 
-      {Object.entries(grouped).map(([league, leagueGames]) => (
-        <section key={league} className="space-y-3">
+      {Object.entries(grouped).map(([league, leagueGames], index) => (
+        <Fragment key={league}>
+        <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-black text-slate-950">{league}</h2>
             <span className="text-xs font-black text-slate-500">{leagueGames.length} games</span>
@@ -86,6 +88,8 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
             ))}
           </div>
         </section>
+        {index === 0 ? <AdPlaceholder placement="games_inline" className="min-h-24" /> : null}
+        </Fragment>
       ))}
 
       {filteredGames.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm font-bold text-slate-500">선택한 조건에 해당하는 경기가 없습니다.</div> : null}

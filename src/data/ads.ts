@@ -1,4 +1,5 @@
 export const adPlacements = [
+  "global_header", "home_between", "games_inline",
   "home_top", "home_middle", "home_sidebar", "picks_top", "picks_inline",
   "records_top", "games_top", "community_top", "community_inline",
 ] as const;

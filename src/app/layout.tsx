@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { SCOREHUB } from "@/lib/brand";
+import { AdPlaceholder } from "@/components/ads/AdSlot";
 
 export const metadata: Metadata = {
   title: SCOREHUB.name,
@@ -22,6 +23,9 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <Header />
+        <div className="container-shell py-3">
+          <AdPlaceholder placement="global_header" />
+        </div>
         <main>{children}</main>
         <Footer />
       </body>
