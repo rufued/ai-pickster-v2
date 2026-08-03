@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { AI_MODELS, getPickFromModel } from "@/lib/ai-picks";
 import { generateParlays } from "@/lib/parlay";
+import { confidenceStake, getAiBalances, DEFAULT_AI_BALANCE } from "@/lib/stake";
 
 const MAX_GAMES_PER_RUN = 5; // 한 번 실행할 때 처리할 경기 수 (API 비용/시간 제한용)
 const MAX_SINGLE_BETS_PER_AI_PER_DAY = 3;
@@ -56,7 +57,7 @@ async function getDailySingleCounts(supabase) {
   return { counts, supportsSingleFlag };
 }
 
-async function savePick(supabase, game, modelKey, pick, isSingleBet, supportsSingleFlag) {
+async function savePick(supabase, game, modelKey, pick, stake, isSingleBet, supportsSingleFlag) {
   const values = {
     game_id: game.id,
     ai_model: modelKey,
@@ -67,6 +68,7 @@ async function savePick(supabase, game, modelKey, pick, isSingleBet, supportsSin
     confidence: pick.confidence,
     analysis: pick.analysis,
     odds_used: pick.odds_used,
+    stake,
     ...(supportsSingleFlag ? { is_single_bet: isSingleBet } : {}),
   };
   let { error } = await supabase.from("picks").insert(values);
@@ -93,10 +95,12 @@ export async function GET(request) {
   const results = [];
   let singleBetsCreated = 0;
   let comboOnlyPicksCreated = 0;
+  const singleStakesCreated = [];
 
   try {
     const games = await getGamesNeedingPicks(supabase);
     const { counts: dailySingleCounts, supportsSingleFlag } = await getDailySingleCounts(supabase);
+    const aiBalances = await getAiBalances(supabase);
 
     for (const game of games) {
       let existingModels;
@@ -133,14 +137,19 @@ export async function GET(request) {
             results.push({ game_id: game.id, model: model.key, status: "skipped", reason: "single_bet_daily_cap_schema_migration_required" });
             continue;
           }
-          await savePick(supabase, game, model.key, pick, isSingleBet, supportsSingleFlag);
+          const stake = confidenceStake(pick.confidence, {
+            balance: aiBalances.get(model.key) ?? DEFAULT_AI_BALANCE,
+            seed: `${game.id}:${model.key}:${pick.market_type}:${pick.pick_type}`,
+          });
+          await savePick(supabase, game, model.key, pick, stake, isSingleBet, supportsSingleFlag);
           if (isSingleBet) {
             dailySingleCounts.set(model.key, (dailySingleCounts.get(model.key) ?? 0) + 1);
             singleBetsCreated += 1;
+            singleStakesCreated.push({ ai_model: model.key, confidence: pick.confidence, stake });
           } else {
             comboOnlyPicksCreated += 1;
           }
-          results.push({ game_id: game.id, model: model.key, status: "ok", bet_role: isSingleBet ? "single_and_parlay_candidate" : "parlay_candidate_only" });
+          results.push({ game_id: game.id, model: model.key, status: "ok", bet_role: isSingleBet ? "single_and_parlay_candidate" : "parlay_candidate_only", confidence: pick.confidence, stake });
         } catch (err) {
           // 한 AI가 실패해도 다른 AI/경기는 계속 진행
           results.push({
@@ -156,7 +165,7 @@ export async function GET(request) {
 
     let parlays;
     try {
-      parlays = await generateParlays(supabase, { favorCombinations: comboOnlyPicksCreated > 0 });
+      parlays = await generateParlays(supabase, { favorCombinations: comboOnlyPicksCreated > 0, aiBalances });
     } catch (err) {
       parlays = { status: "error", error: err.message };
     }
@@ -172,6 +181,11 @@ export async function GET(request) {
         combo_only_picks_created: comboOnlyPicksCreated,
         parlay_bets_created: Number(parlays?.created ?? 0),
         single_to_parlay_ratio: Number(parlays?.created ?? 0) > 0 ? `${singleBetsCreated}:${parlays.created}` : `${singleBetsCreated}:0`,
+      },
+      stake_summary: {
+        policy: { target_min: 1000, hard_min: 500, max: 10000, max_balance_fraction: 0.1, variation: "±12%" },
+        singles: singleStakesCreated,
+        parlays: (parlays?.parlays ?? []).map((parlay) => ({ ai_model: parlay.ai_model, average_confidence: parlay.average_confidence, stake: parlay.stake })),
       },
       started_at: startedAt,
       finished_at: new Date().toISOString(),
