@@ -5,24 +5,26 @@ import { getLiveData } from "@/lib/live-data";
 
 export default async function RecordsPage() {
   const { ais, bets, rankings } = await getLiveData();
-  const totalBets = rankings.reduce((sum, item) => sum + item.totalBets, 0);
+  const settled = bets.filter((bet) => bet.status === "won" || bet.status === "lost");
+  const wins = settled.filter((bet) => bet.status === "won").length;
   const averageRoi = rankings.length ? rankings.reduce((sum, item) => sum + item.roi, 0) / rankings.length : 0;
-  const best = rankings[0];
-  const worst = [...rankings].sort((a, b) => a.totalProfit - b.totalProfit)[0];
+  const profits = settled.map((bet) => bet.profit);
 
   return (
-    <DashboardShell title="AI 베팅내역" eyebrow="Ledger" description="AI별 가상 베팅 기록과 결과를 카드형 장부로 확인합니다. 실제 베팅, 충전, 환전 기능은 없습니다.">
+    <DashboardShell
+      title="AI 베팅내역"
+      eyebrow="Betting ledger"
+      description="AI의 단일 픽과 여러 경기를 묶은 조합 베팅을 실제 정산 데이터 기준으로 확인합니다."
+    >
       <AdSlot placement="records_top" />
-      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Metric label="현재 자산" value={currency(rankings.reduce((sum, item) => sum + item.currentBankroll, 0))} />
-        <Metric label="ROI" value={percent(averageRoi)} tone={averageRoi >= 0 ? "positive" : "negative"} />
-        <Metric label="평균 적중률" value={`${(rankings.reduce((sum, item) => sum + item.winRate, 0) / rankings.length).toFixed(1)}%`} />
-        <Metric label="총 베팅" value={`${totalBets}`} />
-        <Metric label="연속 적중" value={`${best?.streak ?? 0}`} />
-        <Metric label="최고수익" value={signedCurrency(best?.bestProfit ?? 0)} tone="positive" />
-        <Metric label="최대손실" value={signedCurrency(worst?.worstLoss ?? 0)} tone="negative" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Metric label="전체 AI 자산" value={currency(rankings.reduce((sum, item) => sum + item.currentBankroll, 0))} />
+        <Metric label="평균 ROI" value={percent(averageRoi)} tone={averageRoi >= 0 ? "positive" : "negative"} />
+        <Metric label="정산 적중률" value={`${settled.length ? ((wins / settled.length) * 100).toFixed(1) : "0.0"}%`} />
+        <Metric label="전체 베팅" value={`${bets.length}`} />
+        <Metric label="최고 단일 손익" value={profits.length ? signedCurrency(Math.max(...profits)) : "$0"} tone={profits.length && Math.max(...profits) < 0 ? "negative" : "positive"} />
       </div>
-      {bets.length ? <BettingRecordBoard bets={bets} ais={ais} /> : <div className="panel p-8 text-center text-sm font-bold text-slate-500">아직 생성된 픽이 없습니다.</div>}
+      <BettingRecordBoard bets={bets} ais={ais} />
     </DashboardShell>
   );
 }

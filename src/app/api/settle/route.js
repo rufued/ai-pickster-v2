@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   refreshAiAssets,
+  settleParlays,
   settlePicks,
   updateGameResults,
 } from "@/lib/settlement";
@@ -22,12 +23,14 @@ export async function GET(request) {
   try {
     const gameResults = await updateGameResults();
     const pickResults = await settlePicks();
+    const parlayResults = await settleParlays();
     const assetResults = await refreshAiAssets();
 
     return NextResponse.json({
       success: true,
       games: gameResults,
       picks: pickResults,
+      parlays: parlayResults,
       ai_assets: assetResults,
       started_at: startedAt.toISOString(),
       finished_at: new Date().toISOString(),

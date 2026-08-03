@@ -29,6 +29,10 @@ function text(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 
+function idText(value: unknown, fallback = "") {
+  return typeof value === "string" || typeof value === "number" || typeof value === "bigint" ? String(value) : fallback;
+}
+
 function gameStatus(value: unknown): GameStatus {
   if (value === "finished") return "final";
   if (value === "live") return "live";
@@ -75,19 +79,25 @@ export type LiveData = {
 export async function getLiveData(): Promise<LiveData> {
   noStore();
   const supabase = getSupabase();
-  const [assetsResult, gamesResult, picksResult] = await Promise.all([
+  const [assetsResult, gamesResult, picksResult, parlaysResult, parlayLegsResult] = await Promise.all([
     supabase.from("ai_assets").select("*").order("balance", { ascending: false }),
     supabase.from("games").select("*").order("commence_time", { ascending: true }),
     supabase.from("picks").select("*").order("created_at", { ascending: false }),
+    supabase.from("parlays").select("*").order("created_at", { ascending: false }),
+    supabase.from("parlay_legs").select("*").order("leg_order", { ascending: true }),
   ]);
 
   if (assetsResult.error) throw new Error(`Failed to fetch ai_assets: ${assetsResult.error.message}`);
   if (gamesResult.error) throw new Error(`Failed to fetch games: ${gamesResult.error.message}`);
   if (picksResult.error) throw new Error(`Failed to fetch picks: ${picksResult.error.message}`);
+  if (parlaysResult.error && !isMissingParlayTable(parlaysResult.error)) throw new Error(`Failed to fetch parlays: ${parlaysResult.error.message}`);
+  if (parlayLegsResult.error && !isMissingParlayTable(parlayLegsResult.error)) throw new Error(`Failed to fetch parlay legs: ${parlayLegsResult.error.message}`);
 
   const assets = (assetsResult.data ?? []) as Row[];
   const gameRows = (gamesResult.data ?? []) as Row[];
   const pickRows = (picksResult.data ?? []) as Row[];
+  const parlayRows = (parlaysResult.data ?? []) as Row[];
+  const parlayLegRows = (parlayLegsResult.data ?? []) as Row[];
   const gameById = new Map(gameRows.map((game) => [text(game.id), game]));
   const picksByGame = new Map<string, Row[]>();
   for (const pick of pickRows) {
@@ -114,8 +124,11 @@ export async function getLiveData(): Promise<LiveData> {
     const model = text(asset.ai_model);
     const modelPicks = pickRows.filter((pick) => text(pick.ai_model) === model);
     const settled = modelPicks.filter((pick) => Boolean(pick.settled_at));
-    const pnlValues = settled.map((pick) => number(pick.pnl));
-    const wins = settled.filter((pick) => pick.is_correct === true).length;
+    const modelParlays = parlayRows.filter((parlay) => text(parlay.ai_model) === model);
+    const settledParlays = modelParlays.filter((parlay) => Boolean(parlay.settled_at));
+    const pnlValues = [...settled.map((pick) => number(pick.pnl)), ...settledParlays.map((parlay) => number(parlay.pnl))];
+    const wins = settled.filter((pick) => pick.is_correct === true).length + settledParlays.filter((parlay) => parlay.status === "won").length;
+    const settledBets = settled.length + settledParlays.length;
     const totalProfit = pnlValues.reduce((sum, pnl) => sum + pnl, 0);
     return {
       aiId: model,
@@ -123,9 +136,9 @@ export async function getLiveData(): Promise<LiveData> {
       currentBankroll: number(asset.balance, STARTING_BALANCE),
       totalProfit,
       roi: number(asset.roi),
-      winRate: settled.length ? (wins / settled.length) * 100 : 0,
-      totalBets: number(asset.total_picks),
-      streak: getCurrentStreak(settled),
+      winRate: settledBets ? (wins / settledBets) * 100 : 0,
+      totalBets: modelPicks.length + modelParlays.length,
+      streak: getCurrentStreak([...settled, ...settledParlays].sort((a, b) => new Date(text(b.settled_at)).getTime() - new Date(text(a.settled_at)).getTime())),
       bestProfit: pnlValues.length ? Math.max(...pnlValues) : 0,
       worstLoss: pnlValues.length ? Math.min(...pnlValues) : 0,
       roiHistory: [],
@@ -163,9 +176,9 @@ export async function getLiveData(): Promise<LiveData> {
     };
   });
 
-  const bets: AiBet[] = pickRows.map((pick) => {
+  const singleBets: AiBet[] = pickRows.map((pick) => {
     const game = gameById.get(text(pick.game_id));
-    const pickId = text(pick.id) || text(pick.pick_id) || `${text(pick.game_id)}-${text(pick.ai_model)}`;
+    const pickId = idText(pick.id) || idText(pick.pick_id) || `${text(pick.game_id)}-${text(pick.ai_model)}`;
     const stake = number(pick.stake);
     const odds = number(pick.odds_used);
     const profit = number(pick.pnl);
@@ -200,14 +213,67 @@ export async function getLiveData(): Promise<LiveData> {
     };
   });
 
+  const pickByModelGame = new Map(pickRows.map((pick) => [`${text(pick.ai_model)}:${text(pick.game_id)}`, pick]));
+  const parlayBets: AiBet[] = parlayRows.map((parlay) => {
+    const parlayId = idText(parlay.id);
+    const legs = parlayLegRows
+      .filter((leg) => idText(leg.parlay_id) === parlayId)
+      .sort((a, b) => number(a.leg_order) - number(b.leg_order))
+      .map((leg) => {
+        const pick = pickByModelGame.get(`${text(leg.ai_model)}:${text(leg.game_id)}`);
+        const game = gameById.get(text(leg.game_id));
+        return {
+          gameId: text(leg.game_id),
+          sport: sportGroup(game?.sport),
+          league: text(game?.sport_label, text(game?.sport)),
+          homeTeam: text(game?.home_team),
+          awayTeam: text(game?.away_team),
+          selection: text(pick?.pick_label),
+          selectedSide: selectedSide(pick?.pick_type),
+          market: "Moneyline",
+          odds: number(pick?.odds_used),
+          finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
+          result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : "lost" as const) : "pending" as const,
+        };
+      });
+    const status: BetStatus = parlay.status === "won" ? "won" : parlay.status === "lost" ? "lost" : "scheduled";
+    const stake = number(parlay.stake);
+    const odds = number(parlay.total_odds);
+    const profit = number(parlay.pnl);
+    const startTimes = legs.map((leg) => gameById.get(leg.gameId)?.commence_time).filter(Boolean).map((value) => text(value));
+    return {
+      id: parlayId,
+      aiId: text(parlay.ai_model) as AiProfile["id"],
+      kind: "combo",
+      status,
+      stake,
+      totalOdds: odds,
+      potentialProfit: stake * Math.max(odds - 1, 0),
+      returnAmount: status === "won" ? stake + profit : 0,
+      profit,
+      bankrollAfter: 0,
+      registeredAt: text(parlay.created_at),
+      startsAt: startTimes.sort()[0] ?? "",
+      reason: "AI가 당일 고신뢰 픽을 조합한 폴더 베팅",
+      legs,
+    };
+  });
+
+  const bets = [...singleBets, ...parlayBets].sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
+
   const competitors = rankings.map((ranking) => toCompetitor(ranking, ais.find((ai) => ai.id === ranking.aiId)));
   return { ais, rankings, competitors, games, bets };
+}
+
+function isMissingParlayTable(error: { code?: string; message?: string }) {
+  return error.code === "42P01" || error.code === "PGRST205" || Boolean(error.message?.includes("schema cache"));
 }
 
 function getCurrentStreak(settled: Row[]) {
   let streak = 0;
   for (const pick of settled) {
-    if (pick.is_correct !== true) break;
+    const won = pick.is_correct === true || pick.status === "won";
+    if (!won) break;
     streak += 1;
   }
   return streak;

@@ -1,6 +1,7 @@
 // app/api/generate-picks/route.js
 import { createClient } from "@supabase/supabase-js";
 import { AI_MODELS, getPickFromModel } from "@/lib/ai-picks";
+import { generateParlays } from "@/lib/parlay";
 
 const MAX_GAMES_PER_RUN = 5; // 한 번 실행할 때 처리할 경기 수 (API 비용/시간 제한용)
 
@@ -90,10 +91,18 @@ export async function GET(request) {
       }
     }
 
+    let parlays;
+    try {
+      parlays = await generateParlays(supabase);
+    } catch (err) {
+      parlays = { status: "error", error: err.message };
+    }
+
     return Response.json({
       success: true,
       games_processed: games.length,
       results,
+      parlays,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
     });

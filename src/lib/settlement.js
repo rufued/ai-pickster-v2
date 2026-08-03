@@ -8,6 +8,10 @@ const SPORTS = SPORT_CONFIGS.filter((sport) => sport.enabled).map((sport) => spo
 
 let adminClient;
 
+function isMissingParlayTable(error) {
+  return error?.code === "42P01" || error?.code === "PGRST205" || error?.message?.includes("schema cache");
+}
+
 function getAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -126,7 +130,7 @@ export async function settlePicks() {
   const resultByGame = new Map(finishedGames.map((game) => [game.id, game.result]));
   const { data: picks, error: picksError } = await supabase
     .from("picks")
-    .select("id,game_id,pick_type,stake,odds_used")
+    .select("*")
     .in("game_id", finishedGames.map((game) => game.id))
     .is("settled_at", null);
 
@@ -153,12 +157,14 @@ export async function settlePicks() {
       throw new Error(`Pick ${pick.id} has an invalid stake or odds_used`);
     }
 
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from("picks")
       .update({ is_correct: isCorrect, pnl, settled_at: settledAt })
-      .eq("id", pick.id)
-      .is("settled_at", null)
-      .select("id");
+      .is("settled_at", null);
+    updateQuery = pick.id != null
+      ? updateQuery.eq("id", pick.id)
+      : updateQuery.eq("game_id", pick.game_id).eq("ai_model", pick.ai_model);
+    const { data, error } = await updateQuery.select("game_id");
 
     if (error) {
       throw new Error(`Failed to settle pick ${pick.id}: ${error.message}`);
@@ -177,6 +183,70 @@ export async function settlePicks() {
     wins,
     losses,
   };
+}
+
+export async function settleParlays() {
+  const supabase = getAdminClient();
+  const { data: parlays, error: parlaysError } = await supabase
+    .from("parlays")
+    .select("id,ai_model,stake,total_odds")
+    .eq("status", "pending");
+
+  if (parlaysError) {
+    if (isMissingParlayTable(parlaysError)) return { pending_parlays: 0, parlays_settled: 0, wins: 0, losses: 0, schema_missing: true };
+    throw new Error(`Failed to fetch pending parlays: ${parlaysError.message}`);
+  }
+  if (!parlays?.length) return { pending_parlays: 0, parlays_settled: 0, wins: 0, losses: 0 };
+
+  const parlayIds = parlays.map((parlay) => parlay.id);
+  const { data: legs, error: legsError } = await supabase
+    .from("parlay_legs")
+    .select("parlay_id,game_id,ai_model")
+    .in("parlay_id", parlayIds);
+
+  if (legsError) throw new Error(`Failed to fetch parlay legs: ${legsError.message}`);
+  const gameIds = [...new Set((legs ?? []).map((leg) => leg.game_id))];
+  const { data: picks, error: picksError } = gameIds.length
+    ? await supabase.from("picks").select("game_id,ai_model,is_correct,settled_at").in("game_id", gameIds)
+    : { data: [], error: null };
+
+  if (picksError) throw new Error(`Failed to fetch parlay picks: ${picksError.message}`);
+  const pickByKey = new Map((picks ?? []).map((pick) => [`${pick.ai_model}:${pick.game_id}`, pick]));
+  const settledAt = new Date().toISOString();
+  let settled = 0;
+  let wins = 0;
+  let losses = 0;
+
+  for (const parlay of parlays) {
+    const parlayLegs = (legs ?? []).filter((leg) => leg.parlay_id === parlay.id);
+    const legPicks = parlayLegs.map((leg) => pickByKey.get(`${leg.ai_model}:${leg.game_id}`));
+    const hasLost = legPicks.some((pick) => pick?.settled_at && pick.is_correct === false);
+    const allWon = legPicks.length >= 2 && legPicks.every((pick) => pick?.settled_at && pick.is_correct === true);
+    if (!hasLost && !allWon) continue;
+
+    const won = allWon;
+    const stake = Number(parlay.stake);
+    const totalOdds = Number(parlay.total_odds);
+    if (!Number.isFinite(stake) || !Number.isFinite(totalOdds)) {
+      throw new Error(`Parlay ${parlay.id} has an invalid stake or total_odds`);
+    }
+    const pnl = won ? stake * (totalOdds - 1) : -stake;
+    const { data, error } = await supabase
+      .from("parlays")
+      .update({ status: won ? "won" : "lost", pnl, settled_at: settledAt })
+      .eq("id", parlay.id)
+      .eq("status", "pending")
+      .select("id");
+
+    if (error) throw new Error(`Failed to settle parlay ${parlay.id}: ${error.message}`);
+    if (data?.length) {
+      settled += 1;
+      if (won) wins += 1;
+      else losses += 1;
+    }
+  }
+
+  return { pending_parlays: parlays.length, parlays_settled: settled, wins, losses };
 }
 
 export async function refreshAiAssets() {
@@ -198,6 +268,20 @@ export async function refreshAiAssets() {
     throw new Error(`Failed to fetch settled picks: ${picksError.message}`);
   }
 
+  const { data: parlays, error: parlaysError } = await supabase
+    .from("parlays")
+    .select("ai_model,pnl")
+    .not("settled_at", "is", null);
+
+  if (parlaysError && !isMissingParlayTable(parlaysError)) {
+    throw new Error(`Failed to fetch settled parlays: ${parlaysError.message}`);
+  }
+
+  const parlayPnl = new Map();
+  for (const parlay of parlays ?? []) {
+    parlayPnl.set(parlay.ai_model, (parlayPnl.get(parlay.ai_model) ?? 0) + (Number(parlay.pnl) || 0));
+  }
+
   const totals = new Map();
 
   for (const pick of picks ?? []) {
@@ -217,8 +301,8 @@ export async function refreshAiAssets() {
       total_picks: total.total_picks,
       wins: total.wins,
       losses: total.losses,
-      balance: STARTING_BALANCE + total.pnl,
-      roi: (total.pnl / STARTING_BALANCE) * 100,
+      balance: STARTING_BALANCE + total.pnl + (parlayPnl.get(asset.ai_model) ?? 0),
+      roi: ((total.pnl + (parlayPnl.get(asset.ai_model) ?? 0)) / STARTING_BALANCE) * 100,
     };
     const { error } = await supabase
       .from("ai_assets")
