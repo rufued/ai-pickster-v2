@@ -1,7 +1,35 @@
 const API_BASE_URL = "https://api.oddspapi.io/v4";
 const BOOKMAKER_PRIORITY = ["pinnacle", "bet365", "betfair", "ggbet", "thunderpick", "betway"];
-const DIRECT_FIXTURE_LEAGUES = {
-  esports_lol: new Set(["lck", "lpl", "lec", "lcs", "lckcl"]),
+// Keep this list deliberately small: every fixture/odds request consumes the
+// account's monthly quota. Tournament names are resolved to OddsPapi IDs once
+// per sync; only the resolved IDs below are queried afterwards.
+export const ODDSPAPI_MAJOR_TOURNAMENTS = {
+  esports_lol: [
+    { name: "LCK", normalizedNames: ["lck"], tournamentId: 2454 },
+    { name: "LPL", normalizedNames: ["lpl"] },
+    { name: "LEC", normalizedNames: ["lec"] },
+    { name: "LCS", normalizedNames: ["lcs"] },
+    { name: "LCK CL", normalizedNames: ["lckcl", "lckchallengersleague"] },
+  ],
+  esports_dota2: [
+    { name: "The International", includes: ["theinternational"] },
+    { name: "DreamLeague", includes: ["dreamleague"] },
+    { name: "ESL One", includes: ["eslone"] },
+    { name: "PGL Wallachia", includes: ["pglwallachia"] },
+    { name: "Riyadh Masters", includes: ["riyadhmasters"] },
+  ],
+  esports_cs2: [
+    { name: "ESL Pro League", includes: ["eslproleague"] },
+    { name: "BLAST Premier", includes: ["blastpremier"] },
+    { name: "Intel Extreme Masters", includes: ["intelextrememasters", "iem"] },
+    { name: "PGL Major", includes: ["pglmajor"] },
+    { name: "StarLadder Major", includes: ["starladdermajor"] },
+  ],
+  esports_valorant: [
+    { name: "VCT", includes: ["valorantchampionstour", "vct"] },
+    { name: "Valorant Masters", includes: ["valorantmasters", "masters"] },
+    { name: "Valorant Champions", includes: ["valorantchampions", "champions"] },
+  ],
 };
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
 export const ODDSPAPI_ESPORTS = [
@@ -25,6 +53,19 @@ async function request(path, parameters = {}) {
     throw new Error(`OddsPapi request failed for ${path} (${response.status}): ${details}`);
   }
   return response.json();
+}
+
+export async function getOddsPapiAccountUsage() {
+  const account = await request("/account");
+  const subscription = asArray(account?.subscriptions).find((item) => item.is_active) ?? asArray(account?.subscriptions)[0];
+  return {
+    request_limit: subscription?.request_limit ?? null,
+    request_count: subscription?.request_count ?? null,
+    valid_from: subscription?.valid_from ?? null,
+    valid_until: subscription?.valid_until ?? null,
+    auto_renew: subscription?.auto_renew ?? null,
+    last_request: subscription?.last_request ?? null,
+  };
 }
 
 function normalize(value) {
@@ -67,6 +108,18 @@ function tournamentSummary(item) {
     tournamentName: item.tournamentName,
     tournamentSlug: item.tournamentSlug,
   };
+}
+
+function matchesMajorTournament(tournament, rule) {
+  if (rule.tournamentId != null && Number(tournament.tournamentId) === Number(rule.tournamentId)) return true;
+  const value = normalize(`${tournament.tournamentName ?? ""} ${tournament.tournamentSlug ?? ""}`);
+  if (rule.normalizedNames?.includes(normalize(tournament.tournamentName))) return true;
+  return (rule.includes ?? []).some((fragment) => value.includes(normalize(fragment)));
+}
+
+function majorTournamentsFor(entry) {
+  const rules = ODDSPAPI_MAJOR_TOURNAMENTS[entry.config.key] ?? [];
+  return entry.active.filter((tournament) => rules.some((rule) => matchesMajorTournament(tournament, rule)));
 }
 
 function chunks(items, size) {
@@ -213,7 +266,7 @@ export async function fetchOddsPapiEsportsGames() {
     if (index > 0) await delay(1100);
     const tournaments = asArray(await request("/tournaments", { sportId: String(entry.sport.sportId), language: "en" }));
     const active = activeTournaments(tournaments);
-    tournamentSets.push({ ...entry, tournaments, active });
+    tournamentSets.push({ ...entry, tournaments, active, selected: majorTournamentsFor({ ...entry, active }) });
   }
 
   const [marketsResponse, bookmakersResponse] = await Promise.all([
@@ -228,24 +281,9 @@ export async function fetchOddsPapiEsportsGames() {
   let fixtureRequestIndex = 0;
 
   for (const entry of tournamentSets) {
-    if (fixtureRequestIndex > 0) await delay(2100);
-    fixtureRequestIndex += 1;
     let fixturesResponse = [];
-    try {
-      fixturesResponse = asArray(await request("/fixtures", {
-        sportId: String(entry.sport.sportId),
-        from: from.toISOString().replace(".000", ""),
-        to: to.toISOString().replace(".000", ""),
-        statusId: "0",
-        language: "en",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!(message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND"))) throw error;
-    }
-    const directLeagues = DIRECT_FIXTURE_LEAGUES[entry.config.key] ?? new Set();
-    for (const tournament of entry.active.filter((item) => directLeagues.has(normalize(item.tournamentName)))) {
-      await delay(2100);
+    for (const tournament of entry.selected) {
+      if (fixtureRequestIndex > 0) await delay(2100);
       fixtureRequestIndex += 1;
       try {
         fixturesResponse.push(...asArray(await request("/fixtures", {
@@ -317,6 +355,7 @@ export async function fetchOddsPapiEsportsGames() {
       sport: { sportId: entry.sport.sportId, slug: entry.sport.slug, sportName: entry.sport.sportName },
       supported_tournaments: entry.tournaments.map(tournamentSummary),
       active_tournaments: entry.active.map(tournamentSummary),
+      collected_tournaments: entry.selected.map(tournamentSummary),
       scheduled_fixtures: scheduledFixtures.map((fixture) => ({ fixtureId: fixture.fixtureId, tournamentId: fixture.tournamentId, tournamentName: fixture.tournamentName, homeTeam: fixture.participant1Name, awayTeam: fixture.participant2Name, startTime: fixture.startTime, hasOdds: fixture.hasOdds })),
       fixtures_with_odds: mergedOddsFixtures.length,
       games_in_window: sportGames.length,
@@ -335,6 +374,8 @@ export async function fetchOddsPapiEsportsGames() {
         return { key: config.key, label: config.label, supported: Boolean(entry?.sport), sport: entry?.sport ?? null };
       }),
       feeds: diagnostics,
+      collection_policy: "major_tournaments_only",
+      configured_major_tournaments: ODDSPAPI_MAJOR_TOURNAMENTS,
       games_in_window: games.length,
       api_requests: 3 + supported.length + fixtureRequestIndex + oddsRequestIndex,
       bookmakers,

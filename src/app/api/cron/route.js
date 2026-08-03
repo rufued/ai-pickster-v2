@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { fetchAllGames, LOOKAHEAD_HOURS, SPORTS } from "@/lib/odds-api";
-import { fetchOddsPapiEsportsGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
+import { fetchOddsPapiEsportsGames, getOddsPapiAccountUsage, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,17 @@ export async function GET(request) {
     request.headers.get("authorization") !== `Bearer ${cronSecret}`
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (new URL(request.url).searchParams.get("account") === "1") {
+    try {
+      return NextResponse.json({ success: true, account: await getOddsPapiAccountUsage() });
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+        { status: 502 },
+      );
+    }
   }
 
   try {
