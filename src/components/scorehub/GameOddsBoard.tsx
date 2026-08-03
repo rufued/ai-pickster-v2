@@ -11,6 +11,7 @@ import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { isEsportsSport, isMajorEsportsLeague, MAJOR_ESPORTS_LEAGUES } from "@/lib/esports-leagues";
+import { gameDetailHref } from "@/lib/route-id";
 
 const sports = ["all", "soccer", "baseball", "basketball", "esports"] as const;
 type SportFilter = (typeof sports)[number];
@@ -227,7 +228,7 @@ function GameCard({ game }: { game: Game }) {
         </div>
       </details>
 
-      <Link href={`/games/${game.id}`} className="mt-3 inline-flex rounded-md border border-blue-200 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-600 hover:text-white">
+      <Link href={gameDetailHref(game.id)} className="mt-3 inline-flex rounded-md border border-blue-200 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-600 hover:text-white">
         {t("games.detail")}
       </Link>
     </article>

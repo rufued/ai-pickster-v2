@@ -5,11 +5,13 @@ import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getLiveData } from "@/lib/live-data";
 import { getLocale, getTranslations } from "@/i18n/server";
 import { localizeSport } from "@/i18n/config";
+import { decodeRouteId } from "@/lib/route-id";
 
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getTranslations();
   const locale = await getLocale();
-  const { id } = await params;
+  const { id: routeId } = await params;
+  const id = decodeRouteId(routeId);
   const { games } = await getLiveData();
   const game = games.find((item) => item.id === id);
   if (!game) notFound();

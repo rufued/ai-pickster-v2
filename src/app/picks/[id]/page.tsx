@@ -6,6 +6,7 @@ import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getLiveData } from "@/lib/live-data";
 import { getLocale, getTranslations } from "@/i18n/server";
 import { localizeMarket, localizeSport } from "@/i18n/config";
+import { gameDetailHref } from "@/lib/route-id";
 
 export default async function PickDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getTranslations();
@@ -37,7 +38,7 @@ export default async function PickDetailPage({ params }: { params: Promise<{ id:
         <div className="border-b border-slate-100 px-4 py-3 text-base font-black text-slate-950">{t("picks.allGames")}</div>
         <div className="divide-y divide-slate-100">
           {bet.legs.map((leg) => (
-            <Link key={`${bet.id}-${leg.gameId}`} href={`/games/${leg.gameId}`} className="grid gap-2 p-4 hover:bg-slate-50 md:grid-cols-[1fr_140px_120px_100px] md:items-center">
+            <Link key={`${bet.id}-${leg.gameId}`} href={gameDetailHref(leg.gameId)} className="grid gap-2 p-4 hover:bg-slate-50 md:grid-cols-[1fr_140px_120px_100px] md:items-center">
               <div>
                 <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-500"><span>{localizeSport(locale, leg.sport)} · {leg.league}</span><span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-700">{localizeMarket(locale, leg.market)}</span></p>
               <p className="mt-1 font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></p>
