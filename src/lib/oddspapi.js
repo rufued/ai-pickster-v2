@@ -250,9 +250,6 @@ export async function fetchOddsPapiEsportsGames() {
       try {
         fixturesResponse.push(...asArray(await request("/fixtures", {
           tournamentId: String(tournament.tournamentId),
-          from: from.toISOString().replace(".000", ""),
-          to: to.toISOString().replace(".000", ""),
-          statusId: "0",
           language: "en",
         })));
       } catch (error) {
@@ -263,7 +260,7 @@ export async function fetchOddsPapiEsportsGames() {
     const uniqueFixtures = [...new Map(fixturesResponse.map((fixture) => [String(fixture.fixtureId), fixture])).values()];
     const scheduledFixtures = uniqueFixtures.filter((fixture) => {
       const start = new Date(fixture.startTime).getTime();
-      return start >= from.getTime() && start <= to.getTime();
+      return Number(fixture.statusId) === 0 && start >= from.getTime() && start <= to.getTime();
     });
     const relevantTournamentIds = [...new Set(scheduledFixtures.map((fixture) => fixture.tournamentId).filter(Boolean))];
     const tournamentBatches = chunks(relevantTournamentIds, 5);
