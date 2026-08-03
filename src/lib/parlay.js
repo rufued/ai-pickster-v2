@@ -144,7 +144,7 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
   const byModel = new Map();
   for (const pick of eligible) byModel.set(pick.ai_model, [...(byModel.get(pick.ai_model) ?? []), pick]);
 
-  const result = { candidates: 0, created: 0, skipped: 0, parlays: [], minimum_guarantee: null };
+  const result = { candidates: 0, created: 0, skipped: 0, parlays: [], minimum_guarantee: null, candidate_diagnostics: [] };
   const betDate = new Date().toISOString().slice(0, 10);
   const { data: dailyParlays, error: dailyParlaysError } = await supabase.from("parlays").select("ai_model").eq("bet_date", betDate);
   if (dailyParlaysError) throw new Error(`Failed to count daily parlays: ${dailyParlaysError.message}`);
@@ -153,7 +153,16 @@ export async function generateParlays(supabase, { since = new Date(new Date().se
 
   for (const [aiModel, modelPicks] of byModel) {
     const remainingSlots = Math.max(0, MAX_PARLAYS_PER_AI_PER_DAY - (dailyParlayCounts.get(aiModel) ?? 0));
-    for (const combination of uniqueCombinations(modelPicks, favorCombinations).slice(0, remainingSlots)) {
+    const combinations = uniqueCombinations(modelPicks, favorCombinations);
+    result.candidate_diagnostics.push({
+      ai_model: aiModel,
+      eligible_picks: modelPicks.length,
+      distinct_games: new Set(modelPicks.map((pick) => pick.game_id)).size,
+      existing_parlays_today: dailyParlayCounts.get(aiModel) ?? 0,
+      remaining_parlay_slots: remainingSlots,
+      valid_combinations: combinations.length,
+    });
+    for (const combination of combinations.slice(0, remainingSlots)) {
       result.candidates += 1;
       const created = await createParlay(supabase, aiModel, combination, betDate, false, balances.get(aiModel) ?? DEFAULT_AI_BALANCE);
       if (created.status === "skipped") {

@@ -87,16 +87,72 @@ async function savePick(supabase, game, modelKey, pick, stake, isSingleBet, supp
     stake,
     ...(supportsSingleFlag ? { is_single_bet: isSingleBet } : {}),
   };
-  let { error } = await supabase.from("picks").insert(values);
+  let { data, error } = await supabase.from("picks").insert(values).select("id").single();
 
   // Keep legacy moneyline generation available until the migration is applied.
   if ((isMissingColumn(error, "market_type") || isMissingColumn(error, "line_value")) && pick.market_type === "moneyline") {
     const { market_type, line_value, ...legacyValues } = values;
     void market_type; void line_value;
-    ({ error } = await supabase.from("picks").insert(legacyValues));
+    ({ data, error } = await supabase.from("picks").insert(legacyValues).select("id").single());
   }
 
   if (error) throw new Error(`Failed to save pick: ${error.message}`);
+  return data;
+}
+
+async function promoteUnusedParlayCandidates(supabase, candidates) {
+  if (!candidates.length) return { linked: [], promoted: [] };
+
+  const gameIds = [...new Set(candidates.map((candidate) => candidate.gameId))];
+  const { data: legs, error: legsError } = await supabase
+    .from("parlay_legs")
+    .select("game_id,ai_model")
+    .in("game_id", gameIds);
+  if (legsError) throw new Error(`Failed to reconcile parlay candidates: ${legsError.message}`);
+
+  const linkedKeys = new Set((legs ?? []).map((leg) => `${leg.game_id}:${leg.ai_model}`));
+  const linked = candidates.filter((candidate) => linkedKeys.has(`${candidate.gameId}:${candidate.model}`));
+  const promoted = candidates.filter((candidate) => !linkedKeys.has(`${candidate.gameId}:${candidate.model}`));
+
+  if (promoted.length) {
+    const { error: promoteError } = await supabase
+      .from("picks")
+      .update({ is_single_bet: true })
+      .in("id", promoted.map((candidate) => candidate.id));
+    if (promoteError) throw new Error(`Failed to promote unused parlay candidates: ${promoteError.message}`);
+  }
+
+  return { linked, promoted };
+}
+
+async function getTodaysPendingParlayOnlyCandidates(supabase, since) {
+  const { data: picks, error: picksError } = await supabase
+    .from("picks")
+    .select("id,game_id,ai_model,confidence,stake")
+    .eq("is_single_bet", false)
+    .is("settled_at", null)
+    .gte("created_at", since);
+  if (picksError) throw new Error(`Failed to fetch pending parlay-only picks: ${picksError.message}`);
+  if (!picks?.length) return [];
+
+  const { data: games, error: gamesError } = await supabase
+    .from("games")
+    .select("id")
+    .in("id", [...new Set(picks.map((pick) => pick.game_id))])
+    .eq("status", "upcoming")
+    .gte("commence_time", new Date().toISOString());
+  if (gamesError) throw new Error(`Failed to validate pending parlay-only picks: ${gamesError.message}`);
+
+  const upcomingIds = new Set((games ?? []).map((game) => game.id));
+  return picks
+    .filter((pick) => upcomingIds.has(pick.game_id))
+    .map((pick) => ({
+      id: pick.id,
+      gameId: pick.game_id,
+      model: pick.ai_model,
+      confidence: pick.confidence,
+      stake: pick.stake,
+    }));
 }
 
 export async function GET(request) {
@@ -112,6 +168,7 @@ export async function GET(request) {
   let singleBetsCreated = 0;
   let comboOnlyPicksCreated = 0;
   const singleStakesCreated = [];
+  const newParlayOnlyCandidates = [];
 
   try {
     const games = await getGamesNeedingPicks(supabase);
@@ -158,7 +215,7 @@ export async function GET(request) {
             seed: `${game.id}:${model.key}:${pick.market_type}:${pick.pick_type}`,
             aiModel: model.key,
           });
-          await savePick(supabase, game, model.key, pick, stake, isSingleBet, supportsSingleFlag);
+          const savedPick = await savePick(supabase, game, model.key, pick, stake, isSingleBet, supportsSingleFlag);
           if (isSingleBet) {
             dailySingleCounts.set(model.key, (dailySingleCounts.get(model.key) ?? 0) + 1);
             singleBetsCreated += 1;
@@ -166,7 +223,11 @@ export async function GET(request) {
           } else {
             comboOnlyPicksCreated += 1;
           }
-          results.push({ game_id: game.id, model: model.key, status: "ok", bet_role: isSingleBet ? "single_and_parlay_candidate" : "parlay_candidate_only", confidence: pick.confidence, stake });
+          const result = { game_id: game.id, model: model.key, status: "ok", bet_role: isSingleBet ? "single_and_parlay_candidate" : "parlay_candidate_only", confidence: pick.confidence, stake };
+          results.push(result);
+          if (!isSingleBet) {
+            newParlayOnlyCandidates.push({ id: savedPick.id, gameId: game.id, model: model.key, confidence: pick.confidence, stake, result });
+          }
         } catch (err) {
           // 한 AI가 실패해도 다른 AI/경기는 계속 진행
           results.push({
@@ -187,6 +248,38 @@ export async function GET(request) {
       parlays = { status: "error", error: err.message };
     }
 
+    let candidateReconciliation = { checked: 0, linked: 0, promoted_to_single: 0, promoted_from_current_run: 0 };
+    try {
+      const dayStart = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+      const pendingCandidates = await getTodaysPendingParlayOnlyCandidates(supabase, dayStart);
+      const resultById = new Map(newParlayOnlyCandidates.map((candidate) => [candidate.id, candidate.result]));
+      const newIds = new Set(newParlayOnlyCandidates.map((candidate) => candidate.id));
+      const reconciled = await promoteUnusedParlayCandidates(supabase, pendingCandidates);
+      for (const candidate of reconciled.linked) {
+        const result = resultById.get(candidate.id);
+        if (result) result.bet_role = "parlay_leg";
+      }
+      const promotedFromCurrentRun = reconciled.promoted.filter((candidate) => newIds.has(candidate.id));
+      for (const candidate of promotedFromCurrentRun) {
+        const result = resultById.get(candidate.id);
+        if (result) {
+          result.bet_role = "single_fallback_after_unused_parlay_candidate";
+          result.fallback_reason = "not_linked_to_any_parlay";
+        }
+        singleStakesCreated.push({ ai_model: candidate.model, confidence: candidate.confidence, stake: candidate.stake, fallback: true });
+      }
+      singleBetsCreated += promotedFromCurrentRun.length;
+      comboOnlyPicksCreated -= promotedFromCurrentRun.length;
+      candidateReconciliation = {
+        checked: pendingCandidates.length,
+        linked: reconciled.linked.length,
+        promoted_to_single: reconciled.promoted.length,
+        promoted_from_current_run: promotedFromCurrentRun.length,
+      };
+    } catch (err) {
+      candidateReconciliation = { checked: 0, linked: 0, promoted_to_single: 0, promoted_from_current_run: 0, status: "error", error: err instanceof Error ? err.message : String(err) };
+    }
+
     return Response.json({
       success: true,
       games_processed: games.length,
@@ -198,6 +291,7 @@ export async function GET(request) {
         combo_only_picks_created: comboOnlyPicksCreated,
         parlay_bets_created: Number(parlays?.created ?? 0),
         single_to_parlay_ratio: Number(parlays?.created ?? 0) > 0 ? `${singleBetsCreated}:${parlays.created}` : `${singleBetsCreated}:0`,
+        candidate_reconciliation: candidateReconciliation,
       },
       stake_summary: {
         policy: {
