@@ -146,8 +146,8 @@ export async function updateGameResults() {
     const since = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const { data: pendingGames, error: pendingError } = await supabase
       .from("games")
-      .select("id")
-      .eq("sport", "esports_lol")
+      .select("id,sport")
+      .like("sport", "esports_%")
       .eq("status", "upcoming")
       .like("id", "oddspapi:%")
       .gte("commence_time", since.toISOString())

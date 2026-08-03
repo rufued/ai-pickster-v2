@@ -26,8 +26,15 @@ export default async function GamesPage() {
   const recentLeagueCounts = games.reduce<Record<string, number>>((counts, game) => {
     const startTime = new Date(game.startTime).getTime();
     if (Number.isFinite(startTime) && startTime >= activityCutoff) {
-      const key = `${game.sportKey}:${game.league}`;
+      const key = `${game.sportKey}:${game.sportCode}:${game.league}`;
       counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, {});
+  const recentGameCounts = games.reduce<Record<string, number>>((counts, game) => {
+    const startTime = new Date(game.startTime).getTime();
+    if (Number.isFinite(startTime) && startTime >= activityCutoff && game.sportKey === "esports") {
+      counts[game.sportCode] = (counts[game.sportCode] ?? 0) + 1;
     }
     return counts;
   }, {});
@@ -52,7 +59,7 @@ export default async function GamesPage() {
       description={t("games.description")}
     >
       <AdSlot placement="games_top" />
-      <GameOddsBoard games={upcomingGames} recentSportCounts={recentSportCounts} recentLeagueCounts={recentLeagueCounts} activityDays={SEASON_ACTIVITY_DAYS} unavailableSportGroups={unavailableSportGroups} />
+      <GameOddsBoard games={upcomingGames} recentSportCounts={recentSportCounts} recentGameCounts={recentGameCounts} recentLeagueCounts={recentLeagueCounts} activityDays={SEASON_ACTIVITY_DAYS} unavailableSportGroups={unavailableSportGroups} />
     </DashboardShell>
   );
 }

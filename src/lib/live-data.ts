@@ -188,6 +188,7 @@ export async function getLiveData(): Promise<LiveData> {
       id,
       sport: sportGroup(game.sport),
       sportKey: sportKey(game.sport),
+      sportCode: text(game.sport),
       league: text(game.sport_label, text(game.sport)),
       homeTeam: text(game.home_team),
       awayTeam: text(game.away_team),

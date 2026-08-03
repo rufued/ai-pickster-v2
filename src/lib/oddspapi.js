@@ -1,6 +1,12 @@
 const API_BASE_URL = "https://api.oddspapi.io/v4";
 const DEFAULT_BOOKMAKER = "pinnacle";
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
+export const ODDSPAPI_ESPORTS = [
+  { key: "esports_lol", label: "League of Legends", aliases: ["leagueoflegends"] },
+  { key: "esports_dota2", label: "Dota 2", aliases: ["dota2", "dota"] },
+  { key: "esports_cs2", label: "Counter-Strike 2", aliases: ["counterstrike2", "counterstrike", "csgo"] },
+  { key: "esports_valorant", label: "Valorant", aliases: ["valorant"] },
+];
 
 function requireApiKey() {
   const apiKey = process.env.ODDSPAPI_API_KEY;
@@ -28,17 +34,25 @@ function asArray(value) {
   return value && typeof value === "object" && value.fixtureId ? [value] : [];
 }
 
-export async function getLolSport() {
-  const sports = asArray(await request("/sports", { language: "en" }));
-  const sport = sports.find((item) => {
-    const values = [item.slug, item.sportName].map(normalize);
-    return values.some((value) => value === "lol" || value.includes("leagueoflegends"));
+function matchSport(sports, config) {
+  return sports.find((item) => {
+    const value = normalize(`${item.slug} ${item.sportName}`);
+    return config.aliases.some((alias) => value.includes(alias));
   });
-  if (!sport) throw new Error("OddsPapi did not return a League of Legends sport");
-  return sport;
 }
 
-function activeLolTournaments(tournaments) {
+export async function getOddsPapiEsportsSports() {
+  const sports = asArray(await request("/sports", { language: "en" }));
+  return ODDSPAPI_ESPORTS.map((config) => ({ config, sport: matchSport(sports, config) ?? null }));
+}
+
+export async function getLolSport() {
+  const entry = (await getOddsPapiEsportsSports()).find(({ config }) => config.key === "esports_lol");
+  if (!entry?.sport) throw new Error("OddsPapi did not return a League of Legends sport");
+  return entry.sport;
+}
+
+function activeTournaments(tournaments) {
   return tournaments.filter((item) =>
     Number(item.futureFixtures ?? 0) + Number(item.upcomingFixtures ?? 0) + Number(item.liveFixtures ?? 0) > 0,
   );
@@ -155,81 +169,115 @@ function parseOdds(fixture, markets) {
   return parsed;
 }
 
-export async function fetchOddsPapiLolGames() {
-  const sport = await getLolSport();
-  const tournaments = asArray(await request("/tournaments", { sportId: String(sport.sportId), language: "en" }));
-  const selected = activeLolTournaments(tournaments);
-  if (!selected.length) return {
-    games: [],
-    diagnostics: {
-      sport,
-      supported_tournaments: tournaments.map(tournamentSummary),
-      active_tournaments: [],
-      reason: "no_active_lol_tournaments",
-    },
-  };
+export async function fetchOddsPapiEsportsGames() {
+  const discovered = await getOddsPapiEsportsSports();
+  const supported = discovered.filter((entry) => entry.sport);
+  const tournamentSets = [];
 
-  const tournamentBatches = chunks(selected, 5);
-  const marketsResponse = await request("/markets", { language: "en" });
-  const oddsResponses = [];
-  for (const [index, batch] of tournamentBatches.entries()) {
+  for (const [index, entry] of supported.entries()) {
     if (index > 0) await delay(1100);
-    oddsResponses.push(await request("/odds-by-tournaments", {
-      tournamentIds: batch.map((item) => item.tournamentId).join(","),
-      bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
-      language: "en",
-      verbosity: "3",
-      oddsFormat: "decimal",
-    }));
+    const tournaments = asArray(await request("/tournaments", { sportId: String(entry.sport.sportId), language: "en" }));
+    const active = activeTournaments(tournaments);
+    tournamentSets.push({ ...entry, tournaments, active, batches: chunks(active, 5) });
   }
-  const oddsFixtures = oddsResponses.flatMap(asArray);
-  const markets = asArray(marketsResponse).filter((market) => Number(market.sportId) === Number(sport.sportId));
+
+  const marketsResponse = await request("/markets", { language: "en" });
+  const allMarkets = asArray(marketsResponse);
+  const games = [];
+  const diagnostics = [];
   const now = Date.now();
   const until = now + ODDSPAPI_LOOKAHEAD_HOURS * 60 * 60 * 1000;
-  const games = oddsFixtures.filter((fixture) => {
-    const start = new Date(fixture.startTime).getTime();
-    return Number(fixture.statusId) === 0 && fixture.hasOdds !== false && start >= now && start <= until;
-  }).map((fixture) => ({
-    id: `oddspapi:${fixture.fixtureId}`,
-    sport: "esports_lol",
-    sport_label: fixture.tournamentName || "League of Legends",
-    home_team: fixture.participant1Name,
-    away_team: fixture.participant2Name,
-    commence_time: fixture.startTime,
-    ...parseOdds(fixture, markets),
-  })).filter((game) => game.home_team && game.away_team && game.home_odds && game.away_odds);
+  let oddsRequestIndex = 0;
+
+  for (const entry of tournamentSets) {
+    const oddsFixtures = [];
+    for (const batch of entry.batches) {
+      if (oddsRequestIndex > 0) await delay(1100);
+      oddsRequestIndex += 1;
+      const response = await request("/odds-by-tournaments", {
+        tournamentIds: batch.map((item) => item.tournamentId).join(","),
+        bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
+        language: "en",
+        verbosity: "3",
+        oddsFormat: "decimal",
+      });
+      oddsFixtures.push(...asArray(response));
+    }
+    const markets = allMarkets.filter((market) => Number(market.sportId) === Number(entry.sport.sportId));
+    const sportGames = oddsFixtures.filter((fixture) => {
+      const start = new Date(fixture.startTime).getTime();
+      return Number(fixture.statusId) === 0 && fixture.hasOdds !== false && start >= now && start <= until;
+    }).map((fixture) => ({
+      id: `oddspapi:${fixture.fixtureId}`,
+      sport: entry.config.key,
+      sport_label: fixture.tournamentName || entry.config.label,
+      home_team: fixture.participant1Name,
+      away_team: fixture.participant2Name,
+      commence_time: fixture.startTime,
+      ...parseOdds(fixture, markets),
+    })).filter((game) => game.home_team && game.away_team && game.home_odds && game.away_odds);
+    games.push(...sportGames);
+    diagnostics.push({
+      key: entry.config.key,
+      label: entry.config.label,
+      sport: { sportId: entry.sport.sportId, slug: entry.sport.slug, sportName: entry.sport.sportName },
+      supported_tournaments: entry.tournaments.map(tournamentSummary),
+      active_tournaments: entry.active.map(tournamentSummary),
+      fixtures_with_odds: oddsFixtures.length,
+      games_in_window: sportGames.length,
+      odds_request_batches: entry.batches.length,
+    });
+  }
 
   return {
-    games,
+    games: games.sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime()),
     diagnostics: {
-      sport: { sportId: sport.sportId, slug: sport.slug, sportName: sport.sportName },
-      supported_tournaments: tournaments.map(tournamentSummary),
-      active_tournaments: selected.map(tournamentSummary),
-      fixtures_with_odds: oddsFixtures.length,
+      sports: ODDSPAPI_ESPORTS.map((config) => {
+        const entry = discovered.find((item) => item.config.key === config.key);
+        return { key: config.key, label: config.label, supported: Boolean(entry?.sport), sport: entry?.sport ?? null };
+      }),
+      feeds: diagnostics,
       games_in_window: games.length,
-      odds_request_batches: tournamentBatches.length,
-      api_requests: 3 + tournamentBatches.length,
+      api_requests: 2 + supported.length + oddsRequestIndex,
       bookmaker: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
     },
   };
 }
 
+export const fetchOddsPapiLolGames = fetchOddsPapiEsportsGames;
+
 export async function fetchOddsPapiCompletedGames(pendingGames) {
   if (!pendingGames.length) return { games: [], requests: 0 };
-  const sport = await getLolSport();
+  const discovered = await getOddsPapiEsportsSports();
+  const bySport = new Map();
+  for (const game of pendingGames) bySport.set(game.sport, [...(bySport.get(game.sport) ?? []), game]);
   const from = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().replace(".000", "");
   const to = new Date().toISOString().replace(".000", "");
-  const fixtures = asArray(await request("/fixtures", { sportId: String(sport.sportId), from, to, statusId: "2", language: "en" }));
-  const pendingIds = new Set(pendingGames.map((game) => String(game.id).replace(/^oddspapi:/, "")));
-  const completed = fixtures.filter((fixture) => pendingIds.has(String(fixture.fixtureId)));
   const games = [];
-  for (const fixture of completed) {
-    const scoreResponse = await request("/scores", { fixtureId: fixture.fixtureId });
-    const fullTime = scoreResponse?.scores?.["0"];
-    const homeScore = Number(fullTime?.participant1Score);
-    const awayScore = Number(fullTime?.participant2Score);
-    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) continue;
-    games.push({ id: `oddspapi:${fixture.fixtureId}`, home_score: homeScore, away_score: awayScore });
+  let requests = 1;
+  let fixtureRequestIndex = 0;
+  let scoreRequestIndex = 0;
+
+  for (const [sportKey, sportGames] of bySport) {
+    const sport = discovered.find((entry) => entry.config.key === sportKey)?.sport;
+    if (!sport) continue;
+    if (fixtureRequestIndex > 0) await delay(1100);
+    fixtureRequestIndex += 1;
+    requests += 1;
+    const fixtures = asArray(await request("/fixtures", { sportId: String(sport.sportId), from, to, statusId: "2", language: "en" }));
+    const pendingIds = new Set(sportGames.map((game) => String(game.id).replace(/^oddspapi:/, "")));
+    const completed = fixtures.filter((fixture) => pendingIds.has(String(fixture.fixtureId)));
+    for (const fixture of completed) {
+      if (scoreRequestIndex > 0) await delay(1100);
+      scoreRequestIndex += 1;
+      requests += 1;
+      const scoreResponse = await request("/scores", { fixtureId: fixture.fixtureId });
+      const fullTime = scoreResponse?.scores?.["0"];
+      const homeScore = Number(fullTime?.participant1Score);
+      const awayScore = Number(fullTime?.participant2Score);
+      if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) continue;
+      games.push({ id: `oddspapi:${fixture.fixtureId}`, home_score: homeScore, away_score: awayScore });
+    }
   }
-  return { games, requests: 2 + completed.length };
+  return { games, requests };
 }

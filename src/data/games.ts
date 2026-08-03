@@ -8,6 +8,7 @@ export type Game = {
   id: string;
   sport: SportName;
   sportKey: "soccer" | "baseball" | "basketball" | "esports" | "volleyball" | "hockey" | "american-football" | "other";
+  sportCode: string;
   league: string;
   homeTeam: string;
   awayTeam: string;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { fetchAllGames, LOOKAHEAD_HOURS, SPORTS } from "@/lib/odds-api";
-import { fetchOddsPapiLolGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
+import { fetchOddsPapiEsportsGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function GET(request) {
     const sources = {};
     const [theOddsResult, oddsPapiResult] = await Promise.allSettled([
       fetchAllGames(),
-      fetchOddsPapiLolGames(),
+      fetchOddsPapiEsportsGames(),
     ]);
     const games = [];
     if (theOddsResult.status === "fulfilled") {

@@ -176,6 +176,22 @@ export function LeagueBadge({ league, className }: { league: string; className?:
   );
 }
 
+const esportsGameTones: Record<string, LogoTone> = {
+  esports_lol: { label: "LoL", bg: "#0B253A", fg: "#C89B3C", ring: "#785A28" },
+  esports_dota2: { label: "D2", bg: "#8A1F17", fg: "#FFFFFF", ring: "#D77B72" },
+  esports_cs2: { label: "CS2", bg: "#D97706", fg: "#FFFFFF", ring: "#F6C36A" },
+  esports_valorant: { label: "VAL", bg: "#FF4655", fg: "#FFFFFF", ring: "#FF9BA3" },
+};
+
+export function EsportsGameLogo({ game }: { game: string }) {
+  const logo = esportsGameTones[game] ?? fallbackLogo(game);
+  return (
+    <span className="inline-flex h-5 min-w-7 shrink-0 items-center justify-center rounded-md border px-1 text-[8px] font-black leading-none" style={{ backgroundColor: logo.bg, borderColor: logo.ring, color: logo.fg }} aria-hidden="true">
+      {logo.label}
+    </span>
+  );
+}
+
 function fallbackLogo(name: string): LogoTone {
   const initials = name
     .split(/\s+/)

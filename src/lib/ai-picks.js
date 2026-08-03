@@ -23,7 +23,8 @@ const PICK_PROMPT_TEMPLATE = (game) => `
 You are a sports betting analyst AI competing against other AIs.
 Analyze this upcoming match and make your pick.
 
-Sport: ${game.sport_label}
+Sport/game: ${game.sport}
+League/tournament: ${game.sport_label}
 Home team: ${game.home_team}
 Away team: ${game.away_team}
 Kickoff: ${game.commence_time}
