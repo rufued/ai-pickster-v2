@@ -32,6 +32,7 @@ export const ODDSPAPI_MAJOR_TOURNAMENTS = {
   ],
 };
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
+export const ODDSPAPI_SYNC_REQUEST_BUDGET = 15;
 export const ODDSPAPI_ESPORTS = [
   { key: "esports_lol", label: "League of Legends", aliases: ["leagueoflegends"] },
   { key: "esports_dota2", label: "Dota 2", aliases: ["dota2", "dota"] },
@@ -85,8 +86,8 @@ function matchSport(sports, config) {
   });
 }
 
-export async function getOddsPapiEsportsSports() {
-  const sports = asArray(await request("/sports", { language: "en" }));
+export async function getOddsPapiEsportsSports(requestFn = request) {
+  const sports = asArray(await requestFn("/sports", { language: "en" }));
   return ODDSPAPI_ESPORTS.map((config) => ({ config, sport: matchSport(sports, config) ?? null }));
 }
 
@@ -256,7 +257,15 @@ function mergeOddsFixtures(fixtures) {
 }
 
 export async function fetchOddsPapiEsportsGames() {
-  const discovered = await getOddsPapiEsportsSports();
+  let apiRequests = 0;
+  const meteredRequest = async (path, parameters) => {
+    if (apiRequests >= ODDSPAPI_SYNC_REQUEST_BUDGET) {
+      throw new Error(`OddsPapi sync request budget reached (${ODDSPAPI_SYNC_REQUEST_BUDGET})`);
+    }
+    apiRequests += 1;
+    return request(path, parameters);
+  };
+  const discovered = await getOddsPapiEsportsSports(meteredRequest);
   const supported = discovered.filter((entry) => entry.sport);
   const tournamentSets = [];
   const from = new Date();
@@ -264,14 +273,14 @@ export async function fetchOddsPapiEsportsGames() {
 
   for (const [index, entry] of supported.entries()) {
     if (index > 0) await delay(1100);
-    const tournaments = asArray(await request("/tournaments", { sportId: String(entry.sport.sportId), language: "en" }));
+    const tournaments = asArray(await meteredRequest("/tournaments", { sportId: String(entry.sport.sportId), language: "en" }));
     const active = activeTournaments(tournaments);
     tournamentSets.push({ ...entry, tournaments, active, selected: majorTournamentsFor({ ...entry, active }) });
   }
 
   const [marketsResponse, bookmakersResponse] = await Promise.all([
-    request("/markets", { language: "en" }),
-    request("/bookmakers", { language: "en" }),
+    meteredRequest("/markets", { language: "en" }),
+    meteredRequest("/bookmakers", { language: "en" }),
   ]);
   const allMarkets = asArray(marketsResponse);
   const bookmakers = preferredBookmakers(asArray(bookmakersResponse));
@@ -283,10 +292,11 @@ export async function fetchOddsPapiEsportsGames() {
   for (const entry of tournamentSets) {
     let fixturesResponse = [];
     for (const tournament of entry.selected) {
+      if (apiRequests >= ODDSPAPI_SYNC_REQUEST_BUDGET) break;
       if (fixtureRequestIndex > 0) await delay(2100);
       fixtureRequestIndex += 1;
       try {
-        fixturesResponse.push(...asArray(await request("/fixtures", {
+        fixturesResponse.push(...asArray(await meteredRequest("/fixtures", {
           tournamentId: String(tournament.tournamentId),
           language: "en",
         })));
@@ -308,10 +318,11 @@ export async function fetchOddsPapiEsportsGames() {
       const targetIds = new Set(scheduledFixtures.filter((fixture) => batch.includes(fixture.tournamentId)).map((fixture) => String(fixture.fixtureId)));
       const foundIds = new Set();
       for (const bookmaker of bookmakers) {
+        if (apiRequests >= ODDSPAPI_SYNC_REQUEST_BUDGET) break;
         if (oddsRequestIndex > 0) await delay(1100);
         oddsRequestIndex += 1;
         try {
-          const response = await request("/odds-by-tournaments", {
+          const response = await meteredRequest("/odds-by-tournaments", {
             tournamentIds: batch.join(","),
             bookmaker,
             language: "en",
@@ -377,7 +388,8 @@ export async function fetchOddsPapiEsportsGames() {
       collection_policy: "major_tournaments_only",
       configured_major_tournaments: ODDSPAPI_MAJOR_TOURNAMENTS,
       games_in_window: games.length,
-      api_requests: 3 + supported.length + fixtureRequestIndex + oddsRequestIndex,
+      api_requests: apiRequests,
+      request_budget: ODDSPAPI_SYNC_REQUEST_BUDGET,
       bookmakers,
     },
   };
