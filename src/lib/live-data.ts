@@ -262,6 +262,18 @@ export async function getLiveData(): Promise<LiveData> {
   return { ais, rankings, games, bets };
 }
 
+export function getPendingPicks(bets: AiBet[]) {
+  return bets
+    .filter((bet) => bet.status === "scheduled" || bet.status === "live")
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+}
+
+export function getSettledRecords(bets: AiBet[]) {
+  return bets
+    .filter((bet) => bet.status === "won" || bet.status === "lost" || bet.status === "void")
+    .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
+}
+
 function isMissingParlayTable(error: { code?: string; message?: string }) {
   return error.code === "42P01" || error.code === "42501" || error.code === "PGRST205" || Boolean(error.message?.includes("schema cache")) || Boolean(error.message?.includes("permission denied"));
 }

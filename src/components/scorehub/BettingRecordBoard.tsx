@@ -9,26 +9,18 @@ import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import type { AiProfile } from "@/data/ai";
 import type { AiBet, BetLeg } from "@/data/bets";
 
-type SettlementTab = "pending" | "settled";
-
 export function BettingRecordBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfile[] }) {
   const [selectedAi, setSelectedAi] = useState("all");
-  const [tab, setTab] = useState<SettlementTab>("pending");
   const filtered = useMemo(
-    () => bets.filter((bet) => (selectedAi === "all" || bet.aiId === selectedAi) && (tab === "pending" ? isPending(bet) : !isPending(bet))),
-    [bets, selectedAi, tab],
+    () => bets.filter((bet) => selectedAi === "all" || bet.aiId === selectedAi),
+    [bets, selectedAi],
   );
-  const pendingCount = bets.filter(isPending).length;
-  const settledCount = bets.length - pendingCount;
 
   return (
     <div className="space-y-4">
       <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
-          <TabButton active={tab === "pending"} onClick={() => setTab("pending")} icon={<Clock3 size={15} />} label="정산 대기" count={pendingCount} />
-          <TabButton active={tab === "settled"} onClick={() => setTab("settled")} icon={<CheckCircle2 size={15} />} label="정산 완료" count={settledCount} />
-        </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">정산 완료 기록 · AI 필터</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <button type="button" onClick={() => setSelectedAi("all")} className={filterClass(selectedAi === "all")}>전체 AI</button>
           {ais.map((ai) => (
             <button key={ai.id} type="button" onClick={() => setSelectedAi(ai.id)} className={filterClass(selectedAi === ai.id)}>
@@ -45,18 +37,10 @@ export function BettingRecordBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfil
       {!filtered.length ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <p className="font-black text-slate-700">표시할 베팅 내역이 없습니다.</p>
-          <p className="mt-1 text-sm font-medium text-slate-500">AI 또는 정산 상태 필터를 변경해 보세요.</p>
+          <p className="mt-1 text-sm font-medium text-slate-500">선택한 AI의 정산 완료 기록이 아직 없습니다.</p>
         </div>
       ) : null}
     </div>
-  );
-}
-
-function TabButton({ active, onClick, icon, label, count }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; count: number }) {
-  return (
-    <button type="button" onClick={onClick} className={clsx("inline-flex items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-black transition", active ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-900")}>
-      {icon}{label}<span className={clsx("rounded-full px-2 py-0.5 text-[11px]", active ? "bg-blue-50" : "bg-slate-200")}>{count}</span>
-    </button>
   );
 }
 
