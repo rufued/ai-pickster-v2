@@ -1,6 +1,6 @@
 const ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 const REQUEST_DELAY_MS = 500;
-const LOOKAHEAD_HOURS = 36;
+export const LOOKAHEAD_HOURS = 72;
 
 export const SPORTS = [
   { key: "soccer_epl", label: "Premier League", sportGroup: "soccer", enabled: true },

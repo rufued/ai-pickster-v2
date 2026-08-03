@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllGames } from "@/lib/odds-api";
+import { fetchAllGames, LOOKAHEAD_HOURS } from "@/lib/odds-api";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,10 @@ export async function GET(request) {
     }
 
     const games = await fetchAllGames();
+    const bySport = games.reduce((counts, game) => {
+      counts[game.sport] = (counts[game.sport] ?? 0) + 1;
+      return counts;
+    }, {});
     const { error } = await supabaseAdmin
       .from("games")
       .upsert(games, { onConflict: "id" });
@@ -34,6 +38,8 @@ export async function GET(request) {
       success: true,
       fetched: games.length,
       upserted: games.length,
+      lookahead_hours: LOOKAHEAD_HOURS,
+      by_sport: bySport,
       started_at: startedAt.toISOString(),
       finished_at: new Date().toISOString(),
     });
