@@ -3,12 +3,13 @@ import { CircleDollarSign, TrendingUp, Wallet } from "lucide-react";
 import { AiIdentity } from "@/components/ai/AiIdentity";
 import { SCOREHUB } from "@/lib/brand";
 import { getAiColorHex } from "@/lib/aiConfig";
-import { aiCompetitors } from "@/lib/data";
+import { getLiveData } from "@/lib/live-data";
 import { formatCurrency, formatPercent, formatSignedCurrency } from "@/lib/format";
 import type { AICompetitor } from "@/lib/types";
 
-export default function RankingPage() {
-  const rankings = [...aiCompetitors].sort((a, b) => b.currentBankroll - a.currentBankroll || b.roi - a.roi);
+export default async function RankingPage() {
+  const { competitors } = await getLiveData();
+  const rankings = [...competitors].sort((a, b) => b.currentBankroll - a.currentBankroll || b.roi - a.roi);
   const leader = rankings[0];
 
   return (
@@ -22,11 +23,11 @@ export default function RankingPage() {
         <p className="mt-1 text-xs font-bold text-slate-500">모든 금액은 가상머니 기준입니다.</p>
       </div>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      {leader ? <div className="mb-6 grid gap-4 md:grid-cols-3">
         <MetricCard icon={<TrendingUp size={18} />} label="현재 1위" value={leader.name} helper={formatPercent(leader.roi)} />
         <MetricCard icon={<Wallet size={18} />} label="1위 현재 자산" value={formatCurrency(leader.currentBankroll)} helper={`초기 ${SCOREHUB.startingAsset}`} />
         <MetricCard icon={<CircleDollarSign size={18} />} label="1위 누적 수익" value={formatSignedCurrency(leader.totalProfit)} helper={`${leader.totalBets}회 배팅`} />
-      </div>
+      </div> : <div className="panel mb-6 p-8 text-center text-sm font-bold text-slate-500">AI 자산 데이터가 없습니다.</div>}
 
       <div className="space-y-3">
         {rankings.map((ai, index) => (

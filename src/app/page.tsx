@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, CalendarDays, Check, ChevronRight, Radio, Sparkles, Trophy, TrendingUp } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ai/AiIdentity";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
-import { getAis, getGames, getRankings, getSeasonInfo, getSettledBets } from "@/services/scorehub";
+import { seasonInfo } from "@/data/ai";
+import type { LiveData } from "@/lib/live-data";
 
 type Range = "7d" | "30d" | "season";
 
@@ -18,16 +19,32 @@ const formByAi: Record<string, Array<"W" | "L">> = {
 
 export default function Home() {
   const [range, setRange] = useState<Range>("season");
-  const season = getSeasonInfo();
-  const rankings = getRankings();
-  const games = getGames();
-  const ais = getAis();
+  const [liveData, setLiveData] = useState<LiveData | null>(null);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/live-data", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("실시간 데이터를 불러오지 못했습니다.");
+        return response.json();
+      })
+      .then(setLiveData)
+      .catch((error) => setLoadError(error instanceof Error ? error.message : "데이터 조회 오류"));
+  }, []);
+
+  if (loadError) return <EmptyPage message={loadError} />;
+  if (!liveData) return <EmptyPage message="실시간 데이터를 불러오는 중입니다." />;
+
+  const season = seasonInfo;
+  const { rankings, games, ais, bets } = liveData;
   const activeAiIds = new Set(ais.filter((ai) => ai.total_picks > 0).map((ai) => ai.id));
-  const recentHits = getSettledBets()
+  const recentHits = bets
     .filter((bet) => bet.status === "won" && activeAiIds.has(bet.aiId))
     .slice(0, 3);
-  const leader = rankings[0];
+  const leader = rankings[0] ?? { aiId: "-", roi: 0 };
   const featuredGame = games[0];
+
+  if (!featuredGame) return <EmptyPage message="현재 표시할 경기 데이터가 없습니다." />;
 
   return (
     <div className="min-h-screen bg-[#f4f7fb]">
@@ -80,7 +97,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-x-4 gap-y-2">{ais.map((ai) => <span key={ai.id} className="flex items-center gap-1.5 text-xs font-bold text-slate-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ai.color }} />{ai.name}{ai.total_picks === 0 ? <ComingSoonBadge /> : null}</span>)}</div>
             <div className="flex rounded-lg border border-slate-200 bg-white p-1">{(["7d", "30d", "season"] as const).map((item) => <button key={item} onClick={() => setRange(item)} className={range === item ? "rounded-md bg-slate-900 px-3 py-1.5 text-xs font-black text-white" : "rounded-md px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-900"}>{item === "7d" ? "7일" : item === "30d" ? "30일" : "시즌"}</button>)}</div>
           </div>
-          <div className="p-4 sm:p-6"><RoiChart range={range} /></div>
+          <div className="p-4 sm:p-6"><RoiChart range={range} rankings={rankings} ais={ais} /></div>
         </DashboardSection>
 
         <DashboardSection eyebrow="TODAY'S AI PICKS" title="오늘 AI 추천 경기" description="같은 경기를 바라보는 5개 AI의 선택을 한눈에 비교합니다." action="AI 픽 전체보기" href="/picks">
@@ -99,6 +116,7 @@ export default function Home() {
 
         <DashboardSection eyebrow="RECENT WINS" title="최근 AI 적중" description="최근 정산이 완료된 AI의 적중 기록" action="전체 기록" href="/records">
           <div className="grid gap-3 p-4 sm:p-5 lg:grid-cols-3">{recentHits.map((bet) => { const leg = bet.legs[0]; return <article key={bet.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between"><AiPill aiId={bet.aiId} compact /><span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700"><Check size={12} strokeWidth={3} /> 적중</span></div><p className="mt-4 text-xs font-bold text-slate-500">{leg.league} · {leg.finalScore}</p><h3 className="mt-1 truncate text-sm font-black text-slate-950">{leg.homeTeam} vs {leg.awayTeam}</h3><div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-3"><div><p className="text-[11px] font-bold text-slate-400">AI PICK</p><p className="mt-1 text-sm font-black text-blue-700">{leg.selection}</p></div><p className="text-lg font-black text-emerald-600">{signedCurrency(bet.profit)}</p></div></article>; })}</div>
+          {recentHits.length === 0 ? <div className="border-t border-slate-100 p-8 text-center text-sm font-bold text-slate-500">아직 정산된 적중 기록이 없습니다.</div> : null}
         </DashboardSection>
       </main>
     </div>
@@ -113,8 +131,13 @@ function FormDots({ results }: { results?: Array<"W" | "L"> }) { return <div cla
 
 function TeamRow({ name, odds }: { name: string; odds?: number }) { return <div className="flex items-center justify-between gap-3"><span className="truncate text-sm font-black text-slate-900">{name}</span><span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700">{odds?.toFixed(2) ?? "-"}</span></div>; }
 
-function RoiChart({ range }: { range: Range }) {
-  const rankings = getRankings(); const ais = getAis(); const width = 960; const height = 320; const pad = { left: 48, right: 72, top: 24, bottom: 40 };
+function EmptyPage({ message }: { message: string }) { return <div className="min-h-screen bg-[#f4f7fb]"><main className="container-shell py-8"><div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm font-bold text-slate-500 shadow-sm">{message}</div></main></div>; }
+
+function RoiChart({ range, rankings, ais }: { range: Range; rankings: LiveData["rankings"]; ais: LiveData["ais"] }) {
+  if (!rankings.some((row) => row.roiHistory.length > 0)) {
+    return <div className="flex h-[240px] items-center justify-center text-sm font-bold text-slate-500">정산된 ROI 히스토리가 없습니다.</div>;
+  }
+  const width = 960; const height = 320; const pad = { left: 48, right: 72, top: 24, bottom: 40 };
   const rows = rankings.map((row) => ({ ...row, roiHistory: range === "7d" ? row.roiHistory.slice(-3) : range === "30d" ? row.roiHistory.slice(-5) : row.roiHistory }));
   const values = rows.flatMap((row) => row.roiHistory.map((point) => point.roi)); const min = Math.floor(Math.min(...values, -5) / 5) * 5; const max = Math.ceil(Math.max(...values, 10) / 5) * 5;
   const x = (index: number, count: number) => pad.left + index * ((width - pad.left - pad.right) / Math.max(count - 1, 1)); const y = (value: number) => pad.top + (max - value) * ((height - pad.top - pad.bottom) / (max - min));

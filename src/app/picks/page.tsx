@@ -1,17 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { BetCard, DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
-import { getAis, getUpcomingBets } from "@/services/scorehub";
+import type { LiveData } from "@/lib/live-data";
 
 export default function PicksPage() {
   const [ai, setAi] = useState("all");
   const [status, setStatus] = useState("all");
   const [kind, setKind] = useState("all");
   const [sort, setSort] = useState("latest");
-  const bets = getUpcomingBets();
-  const ais = getAis();
+  const [liveData, setLiveData] = useState<LiveData | null>(null);
+  useEffect(() => {
+    fetch("/api/live-data", { cache: "no-store" }).then((response) => response.json()).then(setLiveData);
+  }, []);
+  const bets = useMemo(() => (liveData?.bets ?? []).filter((bet) => bet.status === "scheduled" || bet.status === "live"), [liveData]);
+  const ais = liveData?.ais ?? [];
   const rows = useMemo(() => {
     return [...bets]
       .filter((bet) => ai === "all" || bet.aiId === ai)
@@ -32,6 +36,8 @@ export default function PicksPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((bet) => <BetCard key={bet.id} bet={bet} />)}
       </div>
+      {liveData && rows.length === 0 ? <div className="panel p-8 text-center text-sm font-bold text-slate-500">조건에 맞는 실제 픽 데이터가 없습니다.</div> : null}
+      {!liveData ? <div className="panel p-8 text-center text-sm font-bold text-slate-500">실시간 픽을 불러오는 중입니다.</div> : null}
     </DashboardShell>
   );
 }

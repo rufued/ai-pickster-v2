@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiPill, DashboardShell, Metric, StatusBadge, currency, shortDateTime, signedCurrency, timeUntil } from "@/components/scorehub/ScorehubPrimitives";
-import { getBet, getBets } from "@/services/scorehub";
-
-export function generateStaticParams() {
-  return getBets().map((bet) => ({ id: bet.id }));
-}
+import { getLiveData } from "@/lib/live-data";
 
 export default async function PickDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const bet = getBet(id);
+  const { bets } = await getLiveData();
+  const bet = bets.find((item) => item.id === id);
   if (!bet) notFound();
 
   return (

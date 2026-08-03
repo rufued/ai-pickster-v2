@@ -1,14 +1,11 @@
 import { notFound } from "next/navigation";
 import { AiPill, DashboardShell, Metric, shortDateTime } from "@/components/scorehub/ScorehubPrimitives";
-import { getGame, getGames } from "@/services/scorehub";
-
-export function generateStaticParams() {
-  return getGames().map((game) => ({ id: game.id }));
-}
+import { getLiveData } from "@/lib/live-data";
 
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const game = getGame(id);
+  const { games } = await getLiveData();
+  const game = games.find((item) => item.id === id);
   if (!game) notFound();
 
   return (

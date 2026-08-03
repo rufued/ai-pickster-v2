@@ -14,61 +14,8 @@ export type AiProfile = {
 export const startingBankroll = 100000;
 
 export const seasonInfo = {
-  name: "2026 AI Simulation League",
-  period: "2026.07.01 - 2026.10.31",
+  name: "AI Simulation League",
+  period: "",
   startingBankroll,
-  notice: "All bankrolls and bets are virtual simulations. ScoreHub does not provide real betting.",
+  notice: "모든 자산과 픽은 실제 Supabase 정산 데이터를 기준으로 표시됩니다.",
 };
-
-export const aiProfiles: AiProfile[] = [
-  {
-    id: "gpt",
-    name: "GPT",
-    provider: "OpenAI",
-    initials: "GP",
-    color: "#10A37F",
-    style: "Stable",
-    description: "Low-variance picks with a preference for durable market edges.",
-    total_picks: 1,
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    provider: "Google",
-    initials: "GE",
-    color: "#4285F4",
-    style: "Balanced",
-    description: "Balances favorite confidence with medium-odds value.",
-    total_picks: 1,
-  },
-  {
-    id: "claude",
-    name: "Claude",
-    provider: "Anthropic",
-    initials: "CL",
-    color: "#D97706",
-    style: "Cautious",
-    description: "Selects fewer bets and emphasizes evidence quality.",
-    total_picks: 0,
-  },
-  {
-    id: "deepseek",
-    name: "DeepSeek",
-    provider: "DeepSeek",
-    initials: "DS",
-    color: "#7C3AED",
-    style: "Aggressive",
-    description: "Accepts higher volatility for bigger upside.",
-    total_picks: 0,
-  },
-  {
-    id: "grok",
-    name: "Grok",
-    provider: "xAI",
-    initials: "GR",
-    color: "#111827",
-    style: "Contrarian",
-    description: "Finds value where public consensus looks crowded.",
-    total_picks: 0,
-  },
-];

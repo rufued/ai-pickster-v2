@@ -1,37 +1,10 @@
-import { AiIdentity } from "@/components/ai/AiIdentity";
-import { BattleSportsView } from "@/components/battle/BattleSportsView";
-import { aiConfigs } from "@/lib/aiConfig";
-import { aiCompetitors, analysisMatches } from "@/lib/data";
-import { normalizeSportCategoryId } from "@/lib/sports";
+import Link from "next/link";
+import { getLiveData } from "@/lib/live-data";
 
-type BattlePageProps = {
-  searchParams?: Promise<{
-    sport?: string | string[];
-  }>;
-};
+export const dynamic = "force-dynamic";
 
-export default async function BattlePage({ searchParams }: BattlePageProps) {
-  const params = await searchParams;
-  const initialSport = normalizeSportCategoryId(params?.sport);
-
-  return (
-    <section className="container-shell py-8">
-      <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-bold text-blue-600">오늘의 AI 배틀</p>
-        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">AI 배틀</h1>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-base leading-7 text-slate-600">
-          <span>같은 경기에서</span>
-          {aiConfigs.map((ai, index) => (
-            <span key={ai.id} className="inline-flex items-center gap-1">
-              <AiIdentity name={ai.name} showBadge={false} nameClassName="text-base" />
-              {index < aiConfigs.length - 1 ? <span>,</span> : null}
-            </span>
-          ))}
-          <span>의 예측이 어떻게 갈리는지 비교합니다.</span>
-        </p>
-      </div>
-
-      <BattleSportsView ais={aiCompetitors} matches={analysisMatches} initialSport={initialSport} />
-    </section>
-  );
+export default async function BattlePage() {
+  const { games } = await getLiveData();
+  const rows = games.filter((game) => game.predictions.length >= 2);
+  return <main className="container-shell py-8"><h1 className="text-3xl font-black text-slate-950">AI 배틀</h1><p className="mt-2 text-sm text-slate-600">같은 경기에 실제 픽을 생성한 AI만 비교합니다.</p><div className="mt-6 grid gap-4 md:grid-cols-2">{rows.map((game) => <Link key={game.id} href={`/battle/${game.id}`} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-xs font-black text-blue-700">{game.league}</p><h2 className="mt-2 text-lg font-black text-slate-950">{game.homeTeam} vs {game.awayTeam}</h2><p className="mt-3 text-sm font-bold text-slate-500">참여 AI {game.predictions.length}</p></Link>)}</div>{rows.length === 0 ? <div className="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center text-sm font-bold text-slate-500">비교 가능한 실제 픽이 없습니다.</div> : null}</main>;
 }

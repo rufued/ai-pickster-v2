@@ -1,12 +1,12 @@
 import { AdSlot } from "@/components/ads/AdSlot";
 import { BettingRecordBoard } from "@/components/scorehub/BettingRecordBoard";
 import { DashboardShell, Metric, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
-import { getAis, getBets, getRankings } from "@/services/scorehub";
+import { getLiveData } from "@/lib/live-data";
 
-export default function RecordsPage() {
-  const rankings = getRankings();
+export default async function RecordsPage() {
+  const { ais, bets, rankings } = await getLiveData();
   const totalBets = rankings.reduce((sum, item) => sum + item.totalBets, 0);
-  const averageRoi = rankings.reduce((sum, item) => sum + item.roi, 0) / rankings.length;
+  const averageRoi = rankings.length ? rankings.reduce((sum, item) => sum + item.roi, 0) / rankings.length : 0;
   const best = rankings[0];
   const worst = [...rankings].sort((a, b) => a.totalProfit - b.totalProfit)[0];
 
@@ -18,11 +18,11 @@ export default function RecordsPage() {
         <Metric label="ROI" value={percent(averageRoi)} tone={averageRoi >= 0 ? "positive" : "negative"} />
         <Metric label="평균 적중률" value={`${(rankings.reduce((sum, item) => sum + item.winRate, 0) / rankings.length).toFixed(1)}%`} />
         <Metric label="총 베팅" value={`${totalBets}`} />
-        <Metric label="연속 적중" value={`${best.streak}`} />
-        <Metric label="최고수익" value={signedCurrency(best.bestProfit)} tone="positive" />
-        <Metric label="최대손실" value={signedCurrency(worst.worstLoss)} tone="negative" />
+        <Metric label="연속 적중" value={`${best?.streak ?? 0}`} />
+        <Metric label="최고수익" value={signedCurrency(best?.bestProfit ?? 0)} tone="positive" />
+        <Metric label="최대손실" value={signedCurrency(worst?.worstLoss ?? 0)} tone="negative" />
       </div>
-      <BettingRecordBoard bets={getBets().sort((a, b) => b.registeredAt.localeCompare(a.registeredAt))} ais={getAis()} />
+      {bets.length ? <BettingRecordBoard bets={bets} ais={ais} /> : <div className="panel p-8 text-center text-sm font-bold text-slate-500">아직 생성된 픽이 없습니다.</div>}
     </DashboardShell>
   );
 }

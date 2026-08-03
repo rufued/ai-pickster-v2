@@ -1,5 +1,6 @@
-import { matches as fallbackMatches } from "@/lib/data";
 import type { Match, MatchStatus, Sport } from "@/lib/types";
+
+const fallbackMatches: Match[] = [];
 
 const THE_ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 
