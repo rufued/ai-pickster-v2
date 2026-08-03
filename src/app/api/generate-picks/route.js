@@ -32,14 +32,14 @@ async function getGamesNeedingPicks(supabase) {
   return games ?? [];
 }
 
-async function hasExistingPicks(supabase, gameId) {
-  const { count, error } = await supabase
+async function getExistingPickModels(supabase, gameId) {
+  const { data, error } = await supabase
     .from("picks")
-    .select("id", { count: "exact", head: true })
+    .select("ai_model")
     .eq("game_id", gameId);
 
   if (error) throw new Error(`Failed to check picks: ${error.message}`);
-  return (count ?? 0) > 0;
+  return new Set((data ?? []).map((pick) => pick.ai_model));
 }
 
 async function getDailySingleCounts(supabase) {
@@ -99,10 +99,33 @@ export async function GET(request) {
     const { counts: dailySingleCounts, supportsSingleFlag } = await getDailySingleCounts(supabase);
 
     for (const game of games) {
-      const alreadyDone = await hasExistingPicks(supabase, game.id);
-      if (alreadyDone) continue;
+      let existingModels;
+      try {
+        existingModels = await getExistingPickModels(supabase, game.id);
+      } catch (err) {
+        for (const model of AI_MODELS) {
+          results.push({
+            game_id: game.id,
+            model: model.key,
+            status: "error",
+            stage: "existing_pick_check",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+        continue;
+      }
 
       for (const model of AI_MODELS) {
+        if (existingModels.has(model.key)) {
+          results.push({
+            game_id: game.id,
+            model: model.key,
+            status: "skipped",
+            reason: "pick_already_exists_for_game_and_model",
+          });
+          continue;
+        }
+
         try {
           const pick = await getPickFromModel(model.key, game);
           const isSingleBet = (dailySingleCounts.get(model.key) ?? 0) < MAX_SINGLE_BETS_PER_AI_PER_DAY;
@@ -124,7 +147,8 @@ export async function GET(request) {
             game_id: game.id,
             model: model.key,
             status: "error",
-            error: err.message,
+            stage: "generate_or_save_pick",
+            error: err instanceof Error ? err.message : String(err),
           });
         }
       }
