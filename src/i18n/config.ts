@@ -16,7 +16,7 @@ import id from "../../messages/id.json";
 
 export const locales = ["ko", "en", "zh", "ja", "de", "fr", "pt", "es", "vi", "ar", "ru", "tr", "it", "hi", "id"] as const;
 export type Locale = (typeof locales)[number];
-export type Messages = typeof ko;
+export type Messages = Record<string, unknown>;
 
 export const defaultLocale: Locale = "en";
 export const messages: Record<Locale, Messages> = { ko, en, zh, ja, de, fr, pt, es, vi, ar, ru, tr, it, hi, id };

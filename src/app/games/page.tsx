@@ -4,6 +4,8 @@ import { DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
 import { getLiveData } from "@/lib/live-data";
 import { getTranslations } from "@/i18n/server";
 
+const SEASON_ACTIVITY_DAYS = 14;
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
@@ -12,6 +14,14 @@ export default async function GamesPage() {
   const t = await getTranslations();
   const { games } = await getLiveData();
   const now = Date.now();
+  const activityCutoff = now - SEASON_ACTIVITY_DAYS * 24 * 60 * 60 * 1000;
+  const recentSportCounts = games.reduce<Record<string, number>>((counts, game) => {
+    const startTime = new Date(game.startTime).getTime();
+    if (Number.isFinite(startTime) && startTime >= activityCutoff) {
+      counts[game.sport] = (counts[game.sport] ?? 0) + 1;
+    }
+    return counts;
+  }, {});
   const upcomingGames = games
     .filter((game) => {
       const startTime = new Date(game.startTime).getTime();
@@ -25,7 +35,7 @@ export default async function GamesPage() {
       description={t("games.description")}
     >
       <AdSlot placement="games_top" />
-      {upcomingGames.length ? <GameOddsBoard games={upcomingGames} /> : <div className="panel p-8 text-center text-sm font-bold text-slate-500">{t("games.empty")}</div>}
+      <GameOddsBoard games={upcomingGames} recentSportCounts={recentSportCounts} activityDays={SEASON_ACTIVITY_DAYS} />
     </DashboardShell>
   );
 }

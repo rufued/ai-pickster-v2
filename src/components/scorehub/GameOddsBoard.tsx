@@ -14,7 +14,7 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
 
-export function GameOddsBoard({ games }: { games: Game[] }) {
+export function GameOddsBoard({ games, recentSportCounts, activityDays }: { games: Game[]; recentSportCounts: Record<string, number>; activityDays: number }) {
   const { t } = useI18n();
   const [sport, setSport] = useState<(typeof sports)[number]>("전체");
   const [date, setDate] = useState("");
@@ -50,10 +50,12 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
                 sport === item ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50",
               )}
             >
-              {sportLabel(item, t)}
+              <span>{sportLabel(item, t)}</span>
+              {item !== "?꾩껜" && (recentSportCounts[item] ?? 0) === 0 ? <span className={clsx("ms-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-black", sport === item ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>{t("games.offSeason")}</span> : null}
             </button>
           ))}
         </div>
+        <p className="mt-2 text-[11px] font-bold text-slate-500">{t("games.seasonBasis", { days: activityDays })}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-[180px_1fr]">
           <label className="grid gap-1 text-xs font-black uppercase text-slate-500">
             {t("games.date")}
@@ -95,6 +97,10 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
       ))}
 
       {filteredGames.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm font-bold text-slate-500">{t("games.noMatch")}</div> : null}
+
+      <aside className="rounded-lg border border-blue-100 bg-blue-50/60 p-4 text-sm font-bold text-slate-600">
+        {t("games.requestLeague")} <Link href="/community" className="font-black text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">{t("games.contactCommunity")}</Link>
+      </aside>
     </div>
   );
 }
