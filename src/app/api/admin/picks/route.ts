@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const { data: games, error } = await admin.from("games").select("*").in("id", ids).eq("status", "upcoming").gte("commence_time", new Date().toISOString());
   if (error || games?.length !== ids.length) return NextResponse.json({ error: "유효한 예정 경기가 아닙니다." }, { status: 400 });
   const gameMap = new Map(games.map((game) => [String(game.id), game]));
-  const picks = legs.map((leg) => { const game = gameMap.get(String(leg.game_id)); const selected = game && option(game, String(leg.pick_type)); return selected ? { game_id: game.id, ai_model: "human", pick_type: String(leg.pick_type), confidence, analysis: "운영자 직접 선택", stake, ...selected, is_single_bet: legs.length === 1 } : null; });
+  const picks = legs.map((leg) => { const game = gameMap.get(String(leg.game_id)); const selected = game && option(game, String(leg.pick_type)); return selected ? { game_id: game.id, ai_model: "human", pick_type: String(leg.pick_type), confidence, analysis: "SHadmin 직접 선택", stake, ...selected, is_single_bet: legs.length === 1 } : null; });
   if (picks.some((pick) => !pick)) return NextResponse.json({ error: "선택한 마켓의 배당이 없습니다." }, { status: 400 });
   const validPicks = picks.filter((pick): pick is NonNullable<typeof pick> => Boolean(pick));
   const { error: pickError } = await admin.from("picks").insert(validPicks);

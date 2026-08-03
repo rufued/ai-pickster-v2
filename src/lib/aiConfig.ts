@@ -50,7 +50,7 @@ export const aiConfigs: AiConfig[] = [
     colorHex: "#D97706",
     chipClass: "ai-chip-claude",
   },
-  { id: "human", name: "운영자", provider: "Human", color: "dark", colorHex: "#475569", chipClass: "border-slate-300 bg-slate-100 text-slate-800" },
+  { id: "human", name: "SHadmin", provider: "ScoreHub", color: "dark", colorHex: "#0F4FE8", chipClass: "border-blue-200 bg-blue-50 text-slate-900" },
 ];
 
 export const battleAiOrder = aiConfigs.map((ai) => ai.name);

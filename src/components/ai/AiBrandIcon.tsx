@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import Image from "next/image";
 import { siAnthropic, siDeepseek, siGooglegemini } from "simple-icons";
 import { aiConfigs } from "@/lib/aiConfig";
 
@@ -43,6 +44,7 @@ export function AiBrandIcon({
     (item) => item.id === normalized || item.name.toLowerCase() === normalized || item.provider.toLowerCase() === normalized,
   );
   const icon = config ? icons[config.id] : undefined;
+  const isScoreHub = config?.id === "human";
   const fallback = (config?.name ?? ai).slice(0, 2).toUpperCase();
 
   return (
@@ -56,7 +58,15 @@ export function AiBrandIcon({
       title={icon?.title ?? config?.provider ?? ai}
       aria-label={`${config?.provider ?? ai} logo`}
     >
-      {icon ? (
+      {isScoreHub ? (
+        <Image
+          src="/icon.png"
+          alt="ScoreHub SH logo"
+          width={128}
+          height={128}
+          className="h-full w-full scale-[2.15] object-cover object-[50%_42%]"
+        />
+      ) : icon ? (
         <svg role="img" viewBox="0 0 24 24" aria-hidden="true" className="h-[58%] w-[58%] fill-current">
           <path d={icon.path} />
         </svg>

@@ -1,6 +1,6 @@
 alter table public.ai_assets add column if not exists display_name text;
 insert into public.ai_assets (ai_model, display_name, balance, total_picks, wins, losses, roi)
-values ('human', '운영자', 100000, 0, 0, 0, 0)
+values ('human', 'SHadmin', 100000, 0, 0, 0, 0)
 on conflict (ai_model) do update set display_name = excluded.display_name;
 
 create table if not exists public.cron_runs (
