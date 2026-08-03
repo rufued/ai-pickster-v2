@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { aiConfigs } from "@/lib/aiConfig";
 import type { AiProfile } from "@/data/ai";
 import type { AiRanking } from "@/data/rankings";
-import type { AiBet, BetStatus } from "@/data/bets";
+import type { AiBet, BetOddsOption, BetStatus } from "@/data/bets";
 import type { Game, GameStatus, SportName } from "@/data/games";
 
 const STARTING_BALANCE = 100000;
@@ -74,6 +74,21 @@ function marketLabel(value: unknown) {
 
 function configFor(model: string) {
   return aiConfigs.find((ai) => ai.id === model || ai.name.toLowerCase() === model.toLowerCase());
+}
+
+function oddsOptions(game: Row | undefined, pick: Row): BetOddsOption[] {
+  if (!game) return [];
+  const market = text(pick.market_type, "moneyline");
+  const option = (type: BetOddsOption["type"], odds: unknown, point?: unknown): BetOddsOption | undefined => {
+    if (odds == null || !Number.isFinite(Number(odds))) return undefined;
+    return { type, odds: number(odds), ...(point == null ? {} : { point: number(point) }) };
+  };
+  const options = market === "total"
+    ? [option("over", game.over_odds, game.total_point), option("under", game.under_odds, game.total_point)]
+    : market === "spread"
+      ? [option("home", game.home_spread_odds, game.home_spread_point), option("away", game.away_spread_odds, game.away_spread_point)]
+      : [option("home", game.home_odds), option("draw", game.draw_odds), option("away", game.away_odds)];
+  return options.filter((item): item is BetOddsOption => Boolean(item));
 }
 
 export type LiveData = {
@@ -215,7 +230,9 @@ export async function getLiveData(): Promise<LiveData> {
         selection: text(pick.pick_label),
         selectedSide: selectedSide(pick.pick_type),
         market: marketLabel(pick.market_type),
+        pickType: text(pick.pick_type),
         odds,
+        oddsOptions: oddsOptions(game, pick),
         finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
         result: status === "won" ? "won" : status === "lost" ? "lost" : status === "void" ? "void" : "pending",
       }],
@@ -240,7 +257,9 @@ export async function getLiveData(): Promise<LiveData> {
           selection: text(pick?.pick_label),
           selectedSide: selectedSide(pick?.pick_type),
           market: marketLabel(pick?.market_type),
+          pickType: text(pick?.pick_type),
           odds: number(pick?.odds_used),
+          oddsOptions: oddsOptions(game, pick ?? {}),
           finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
           result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : pick.is_correct === false ? "lost" as const : "void" as const) : "pending" as const,
         };

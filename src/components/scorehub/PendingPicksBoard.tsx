@@ -10,6 +10,7 @@ import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import type { AiProfile } from "@/data/ai";
 import type { AiBet, BetLeg } from "@/data/bets";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { LegMarketOdds } from "@/components/scorehub/LegMarketOdds";
 
 export function PendingPicksBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfile[] }) {
   const { t } = useI18n();
@@ -106,6 +107,7 @@ function LegMatchup({ leg }: { leg?: BetLeg }) {
     <div className="min-w-0">
       <p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><span>{leg.league}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{marketLabel(leg.market, t)}</span></p>
       <p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></p>
+      <LegMarketOdds leg={leg} />
       <p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">{t("common.pick")}: {leg.selection}</p>
     </div>
   );
