@@ -84,6 +84,22 @@ function marketLabel(value: unknown) {
   return "승무패";
 }
 
+function pickAnalysis(value: unknown, model: string) {
+  const analysis = text(value).trim();
+  if (analysis) return analysis;
+  return model === "human"
+    ? "SHadmin이 별도 설명을 남기지 않았습니다."
+    : "이 선택에 대한 개별 분석이 기록되지 않았습니다.";
+}
+
+function parlayReason(legs: AiBet["legs"], model: string) {
+  const uniqueAnalyses = [...new Set(legs.map((leg) => leg.analysis?.trim()).filter(Boolean))];
+  if (model === "human" && uniqueAnalyses.length === 1) return uniqueAnalyses[0] as string;
+  const selections = legs.map((leg) => leg.selection).filter(Boolean).join(", ");
+  if (!selections) return model === "human" ? "SHadmin이 별도 설명을 남기지 않았습니다." : "조합 선택 근거가 기록되지 않았습니다.";
+  return `${selections} 선택을 하나의 조합으로 구성했습니다. 각 경기의 선택 근거와 시장별 판단은 아래 경기별 분석에서 확인할 수 있습니다.`;
+}
+
 function configFor(model: string) {
   return aiConfigs.find((ai) => ai.id === model || ai.name.toLowerCase() === model.toLowerCase());
 }
@@ -279,7 +295,7 @@ export async function getLiveData(): Promise<LiveData> {
       bankrollAfter: 0,
       registeredAt: text(pick.created_at),
       startsAt: text(game?.commence_time),
-      reason: text(pick.analysis),
+      reason: pickAnalysis(pick.analysis, text(pick.ai_model)),
       legs: [{
         gameId: text(pick.game_id),
         sport: sportGroup(game?.sport),
@@ -292,6 +308,7 @@ export async function getLiveData(): Promise<LiveData> {
         pickType: text(pick.pick_type),
         odds,
         oddsOptions: oddsOptions(game, pick),
+        analysis: pickAnalysis(pick.analysis, text(pick.ai_model)),
         finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
         result: status === "won" ? "won" : status === "lost" ? "lost" : status === "void" ? "void" : "pending",
       }],
@@ -319,6 +336,7 @@ export async function getLiveData(): Promise<LiveData> {
           pickType: text(pick?.pick_type),
           odds: number(pick?.odds_used),
           oddsOptions: oddsOptions(game, pick ?? {}),
+          analysis: pickAnalysis(pick?.analysis, text(parlay.ai_model)),
           finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
           result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : pick.is_correct === false ? "lost" as const : "void" as const) : "pending" as const,
         };
@@ -341,7 +359,7 @@ export async function getLiveData(): Promise<LiveData> {
       bankrollAfter: 0,
       registeredAt: text(parlay.created_at),
       startsAt: startTimes.sort()[0] ?? "",
-      reason: "AI가 당일 고신뢰 픽을 조합한 폴더 베팅",
+      reason: parlayReason(legs, text(parlay.ai_model)),
       legs,
     };
   });

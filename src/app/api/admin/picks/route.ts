@@ -19,12 +19,13 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   const body = await request.json(); const legs: Array<{ game_id: string; pick_type: string }> = Array.isArray(body.legs) ? body.legs : [];
   const stake = Number(body.stake); const confidence = Number(body.confidence);
+  const analysis = typeof body.analysis === "string" ? body.analysis.trim().slice(0, 4000) : "";
   if (!legs.length || !Number.isFinite(stake) || stake < 200 || stake > 10000 || !Number.isFinite(confidence) || confidence < 1 || confidence > 100) return NextResponse.json({ error: "입력값을 확인해주세요." }, { status: 400 });
   const ids = [...new Set(legs.map((leg) => String(leg.game_id)))];
   const { data: games, error } = await admin.from("games").select("*").in("id", ids).eq("status", "upcoming").gte("commence_time", new Date().toISOString());
   if (error || games?.length !== ids.length) return NextResponse.json({ error: "유효한 예정 경기가 아닙니다." }, { status: 400 });
   const gameMap = new Map(games.map((game) => [String(game.id), game]));
-  const picks = legs.map((leg) => { const game = gameMap.get(String(leg.game_id)); const selected = game && option(game, String(leg.pick_type)); return selected ? { game_id: game.id, ai_model: "human", pick_type: String(leg.pick_type), confidence, analysis: "SHadmin 직접 선택", stake, ...selected, is_single_bet: legs.length === 1 } : null; });
+  const picks = legs.map((leg) => { const game = gameMap.get(String(leg.game_id)); const selected = game && option(game, String(leg.pick_type)); return selected ? { game_id: game.id, ai_model: "human", pick_type: String(leg.pick_type), confidence, analysis: analysis || "SHadmin이 별도 설명을 남기지 않았습니다.", stake, ...selected, is_single_bet: legs.length === 1 } : null; });
   if (picks.some((pick) => !pick)) return NextResponse.json({ error: "선택한 마켓의 배당이 없습니다." }, { status: 400 });
   const validPicks = picks.filter((pick): pick is NonNullable<typeof pick> => Boolean(pick));
   const { error: pickError } = await admin.from("picks").insert(validPicks);
