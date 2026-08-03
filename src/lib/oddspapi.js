@@ -261,7 +261,10 @@ export async function fetchOddsPapiEsportsGames() {
           if ([...targetIds].every((id) => foundIds.has(id))) break;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          if (message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND")) emptyOddsBatches += 1;
+          if (
+            (message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND")) ||
+            (message.includes("(403)") && message.includes("RESTRICTED_ACCESS"))
+          ) emptyOddsBatches += 1;
           else throw error;
         }
       }
