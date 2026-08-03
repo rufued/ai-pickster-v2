@@ -1,7 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { getAiChipClass, getAiColorHex, getAiConfig } from "@/lib/aiConfig";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
+import { getAiChipClass } from "@/lib/aiConfig";
 
 type AiIdentityProps = {
   name: string;
@@ -30,21 +31,13 @@ export function ComingSoonBadge({ className }: { className?: string }) {
 }
 
 export function AiColorDot({ name, className }: { name: string; className?: string }) {
-  return (
-    <span
-      className={clsx("inline-flex h-2.5 w-2.5 shrink-0 rounded-full shadow-[0_0_0_3px_rgba(15,23,42,0.06)]", className)}
-      style={{ backgroundColor: getAiColorHex(name) }}
-      aria-hidden
-    />
-  );
+  return <AiBrandIcon ai={name} size="xs" className={className} />;
 }
 
 export function AiBadge({ name }: { name: string }) {
-  const ai = getAiConfig(name);
-
   return (
     <span className={clsx("inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-black", getAiChipClass(name))}>
-      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ai?.colorHex ?? "#64748B" }} aria-hidden />
+      <AiBrandIcon ai={name} size="xs" />
       {name}
     </span>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, CalendarDays, Check, ChevronRight, Radio, Sparkles, Trophy, TrendingUp } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ai/AiIdentity";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { TeamMatchup, TeamName } from "@/components/sports/SportsBrand";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
@@ -96,7 +97,7 @@ export default function Home() {
 
         <DashboardSection eyebrow="PERFORMANCE" title="AI ROI 그래프" description="시작 자산 대비 AI별 누적 수익률 추이">
           <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-100 bg-slate-50/60 px-5 py-3">
-            <div className="flex flex-wrap gap-x-4 gap-y-2">{ais.map((ai) => <span key={ai.id} className="flex items-center gap-1.5 text-xs font-bold text-slate-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ai.color }} />{ai.name}{ai.total_picks === 0 ? <ComingSoonBadge /> : null}</span>)}</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">{ais.map((ai) => <span key={ai.id} className="flex items-center gap-1.5 text-xs font-bold text-slate-600"><AiBrandIcon ai={ai.id} size="xs" />{ai.name}{ai.total_picks === 0 ? <ComingSoonBadge /> : null}</span>)}</div>
             <div className="flex rounded-lg border border-slate-200 bg-white p-1">{(["7d", "30d", "season"] as const).map((item) => <button key={item} onClick={() => setRange(item)} className={range === item ? "rounded-md bg-slate-900 px-3 py-1.5 text-xs font-black text-white" : "rounded-md px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-900"}>{item === "7d" ? "7일" : item === "30d" ? "30일" : "시즌"}</button>)}</div>
           </div>
           <div className="p-4 sm:p-6"><RoiChart range={range} rankings={rankings} ais={ais} /></div>

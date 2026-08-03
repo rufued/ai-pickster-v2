@@ -7,6 +7,7 @@ import type { Game, GameStatus, SportName } from "@/data/games";
 import { getAiName } from "@/services/scorehub";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { TeamLogo } from "@/components/sports/SportsBrand";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 
 const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
@@ -159,7 +160,7 @@ function TeamOddsCard({ team, odds, picks, side }: { team: string; odds?: number
       {hasPick ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {picks.map((aiId) => (
-            <span key={aiId} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-blue-700 shadow-sm">{getAiName(aiId)} PICK</span>
+            <span key={aiId} className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-[11px] font-black text-blue-700 shadow-sm"><AiBrandIcon ai={aiId} size="xs" />{getAiName(aiId)} PICK</span>
           ))}
         </div>
       ) : null}

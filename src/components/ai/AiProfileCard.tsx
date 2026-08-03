@@ -1,6 +1,7 @@
 "use client";
 
 import { AiIdentity } from "@/components/ai/AiIdentity";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { formatPercent } from "@/lib/format";
 import type { AICompetitor } from "@/lib/types";
 
@@ -12,9 +13,7 @@ export function AiProfileCard({ ai }: AiProfileCardProps) {
   return (
     <article className="panel p-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-sm font-black text-blue-700">
-          {ai.initials}
-        </span>
+        <AiBrandIcon ai={ai.id} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start justify-between gap-3">
             <AiIdentity name={ai.name} nameClassName="text-xl" />

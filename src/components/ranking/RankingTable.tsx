@@ -1,4 +1,5 @@
 import { AiIdentity } from "@/components/ai/AiIdentity";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import type { AICompetitor } from "@/lib/types";
 import { formatCurrency, formatPercent, formatSignedCurrency } from "@/lib/format";
 
@@ -32,9 +33,7 @@ export function RankingTable({ ais }: RankingTableProps) {
                 <td className="px-4 py-4 font-bold text-accent-green">#{index + 1}</td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-xs font-black text-white">
-                      {ai.initials}
-                    </span>
+                    <AiBrandIcon ai={ai.id} size="md" />
                     <AiIdentity name={ai.name} showBadge={false} nameClassName="text-sm text-white" />
                   </div>
                 </td>

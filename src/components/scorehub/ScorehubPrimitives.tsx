@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { TeamMatchup } from "@/components/sports/SportsBrand";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getAi, getAiColor, getAiName } from "@/services/scorehub";
@@ -56,9 +57,7 @@ export function AiPill({ aiId, compact = false }: { aiId: string; compact?: bool
   const ai = getAi(aiId);
   return (
     <span className="inline-flex min-w-0 items-center gap-2 font-black text-slate-950">
-      <span className={clsx("inline-flex shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white", compact ? "h-6 w-6" : "h-8 w-8")} style={{ backgroundColor: getAiColor(aiId) }}>
-        {ai?.initials ?? aiId.slice(0, 2).toUpperCase()}
-      </span>
+      <AiBrandIcon ai={aiId} size={compact ? "sm" : "md"} />
       <span className="truncate">{ai?.name ?? aiId}</span>
     </span>
   );

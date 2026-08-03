@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AiIdentity } from "@/components/ai/AiIdentity";
 import type { AICompetitor } from "@/lib/types";
 import { formatCurrency, formatPercent } from "@/lib/format";
@@ -13,9 +14,7 @@ export function AiRankingCard({ ai, rank }: AiRankingCardProps) {
     <article className="panel p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-black text-accent-green">
-            {ai.initials}
-          </span>
+          <AiBrandIcon ai={ai.id} size="lg" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-slate-500">#{rank} AI League</p>
             <AiIdentity name={ai.name} showBadge={false} nameClassName="text-lg text-white" />
