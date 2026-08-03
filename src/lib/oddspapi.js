@@ -1,5 +1,8 @@
 const API_BASE_URL = "https://api.oddspapi.io/v4";
 const BOOKMAKER_PRIORITY = ["pinnacle", "bet365", "betfair", "ggbet", "thunderpick", "betway"];
+const DIRECT_FIXTURE_LEAGUES = {
+  esports_lol: new Set(["lck", "lpl", "lec", "lcs", "lckcl"]),
+};
 export const ODDSPAPI_LOOKAHEAD_HOURS = 72;
 export const ODDSPAPI_ESPORTS = [
   { key: "esports_lol", label: "League of Legends", aliases: ["leagueoflegends"] },
@@ -240,7 +243,25 @@ export async function fetchOddsPapiEsportsGames() {
       const message = error instanceof Error ? error.message : String(error);
       if (!(message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND"))) throw error;
     }
-    const scheduledFixtures = fixturesResponse.filter((fixture) => {
+    const directLeagues = DIRECT_FIXTURE_LEAGUES[entry.config.key] ?? new Set();
+    for (const tournament of entry.active.filter((item) => directLeagues.has(normalize(item.tournamentName)))) {
+      await delay(2100);
+      fixtureRequestIndex += 1;
+      try {
+        fixturesResponse.push(...asArray(await request("/fixtures", {
+          tournamentId: String(tournament.tournamentId),
+          from: from.toISOString().replace(".000", ""),
+          to: to.toISOString().replace(".000", ""),
+          statusId: "0",
+          language: "en",
+        })));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!(message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND"))) throw error;
+      }
+    }
+    const uniqueFixtures = [...new Map(fixturesResponse.map((fixture) => [String(fixture.fixtureId), fixture])).values()];
+    const scheduledFixtures = uniqueFixtures.filter((fixture) => {
       const start = new Date(fixture.startTime).getTime();
       return start >= from.getTime() && start <= to.getTime();
     });
