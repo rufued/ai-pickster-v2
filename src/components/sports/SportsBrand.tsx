@@ -62,19 +62,19 @@ export function TeamLogo({ team, size = "md" }: { team: string; size?: "sm" | "m
 
 export function TeamName({ team, size = "md", className }: { team: string; size?: "sm" | "md" | "lg"; className?: string }) {
   return (
-    <span className={clsx("inline-flex min-w-0 items-center gap-2", className)}>
+    <span className={clsx("flex min-w-0 max-w-full items-center gap-2", className)}>
       <TeamLogo team={team} size={size === "lg" ? "lg" : size === "sm" ? "sm" : "md"} />
-      <span className="min-w-0 truncate">{team}</span>
+      <span className="min-w-0 whitespace-normal [overflow-wrap:anywhere]">{team}</span>
     </span>
   );
 }
 
 export function TeamMatchup({ homeTeam, awayTeam, compact = false, className }: { homeTeam: string; awayTeam: string; compact?: boolean; className?: string }) {
   return (
-    <span className={clsx("flex min-w-0 items-center gap-2", className)}>
-      <TeamName team={homeTeam} size={compact ? "sm" : "md"} className="min-w-0" />
-      <span className="shrink-0 text-xs font-black text-slate-400">VS</span>
-      <TeamName team={awayTeam} size={compact ? "sm" : "md"} className="min-w-0" />
+    <span className={clsx("flex w-full min-w-0 max-w-full flex-col items-stretch gap-1.5 leading-snug sm:flex-row sm:items-center sm:gap-2", className)}>
+      <TeamName team={homeTeam} size={compact ? "sm" : "md"} className="w-full min-w-0 sm:flex-1" />
+      <span className="shrink-0 self-center text-[10px] font-black text-slate-400 sm:text-xs">VS</span>
+      <TeamName team={awayTeam} size={compact ? "sm" : "md"} className="w-full min-w-0 sm:flex-1" />
     </span>
   );
 }

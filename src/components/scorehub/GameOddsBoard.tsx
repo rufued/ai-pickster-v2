@@ -103,7 +103,7 @@ function GameCard({ game }: { game: Game }) {
   const awayPicks = game.predictions.filter((prediction) => pickSide(prediction.pick, game) === "away");
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-500">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{game.league}</span>
@@ -155,7 +155,7 @@ function TeamOddsCard({ team, odds, picks, side }: { team: string; odds?: number
         <div className="flex min-w-0 items-center gap-3">
           <TeamLogo team={team} size="lg" />
           <div className="min-w-0">
-            <p className="truncate text-lg font-black text-slate-950">{team}</p>
+            <p className="whitespace-normal text-base font-black leading-snug text-slate-950 [overflow-wrap:anywhere] sm:text-lg">{team}</p>
             <p className="text-xs font-bold uppercase text-slate-500">{side}</p>
           </div>
         </div>

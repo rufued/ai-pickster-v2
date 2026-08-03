@@ -63,10 +63,10 @@ function TabButton({ active, onClick, icon, label, count }: { active: boolean; o
 function SingleBetRow({ bet }: { bet: AiBet }) {
   const leg = bet.legs[0];
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="grid gap-3 lg:grid-cols-[150px_minmax(0,1fr)_minmax(140px,auto)_80px_110px_110px] lg:items-center">
         <div><AiPill aiId={bet.aiId} compact /><p className="mt-1 text-[11px] font-bold text-slate-400"><LocalDateTime value={bet.registeredAt} mode="mobile" /></p></div>
-        <div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /> : "-"}</p><p className="mt-1 truncate text-xs font-bold text-blue-700">{leg?.selection ?? "-"}</p></div>
+        <div className="min-w-0"><p className="text-sm font-black text-slate-950">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /> : "-"}</p><p className="mt-1 whitespace-normal text-xs font-bold text-blue-700 [overflow-wrap:anywhere]">{leg?.selection ?? "-"}</p></div>
         <div className="text-xs font-bold text-slate-500">{leg?.league}<p className="mt-1 text-sm font-black text-slate-900">배당 {bet.totalOdds.toFixed(2)}</p></div>
         <ResultIcon result={leg?.result ?? "pending"} withLabel />
         <Money label="베팅금" value={currency(bet.stake)} />
@@ -78,7 +78,7 @@ function SingleBetRow({ bet }: { bet: AiBet }) {
 
 function ParlaySlip({ bet }: { bet: AiBet }) {
   return (
-    <article className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
       <header className="flex flex-wrap items-center justify-between gap-3 bg-slate-950 px-4 py-3 text-white">
         <div className="flex items-center gap-3"><AiPill aiId={bet.aiId} compact /><span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs font-black"><Layers3 size={13} /> {bet.legs.length}폴더 조합</span></div>
         <div className="text-right"><p className="text-[11px] font-bold text-slate-400">베팅 생성</p><p className="text-xs font-black"><LocalDateTime value={bet.registeredAt} mode="mobile" /></p></div>
@@ -104,7 +104,7 @@ function ParlayLeg({ leg, index }: { leg: BetLeg; index: number }) {
   return (
     <div className="grid gap-3 p-4 sm:grid-cols-[28px_minmax(0,1fr)_100px_80px] sm:items-center">
       <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-500">{index + 1}</span>
-      <div className="min-w-0"><p className="text-[11px] font-bold text-slate-400">{leg.league}</p><p className="mt-1 truncate text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /></p><p className="mt-1 truncate text-xs font-black text-blue-700">픽: {leg.selection}</p></div>
+      <div className="min-w-0"><p className="text-[11px] font-bold text-slate-400">{leg.league}</p><p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /></p><p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p></div>
       <div><p className="text-[11px] font-bold text-slate-400">개별 배당</p><p className="mt-1 font-black text-slate-950">{leg.odds.toFixed(2)}</p></div>
       <ResultIcon result={leg.result} withLabel />
     </div>

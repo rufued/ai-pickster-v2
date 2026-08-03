@@ -15,8 +15,8 @@ export const percent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixe
 
 export function DashboardShell({ title, eyebrow, description, children }: { title: string; eyebrow?: string; description?: string; children: ReactNode }) {
   return (
-    <div className="bg-slate-50">
-      <div className="container-shell space-y-5 py-5">
+    <div className="min-w-0 max-w-full overflow-x-clip bg-slate-50">
+      <div className="container-shell min-w-0 space-y-5 py-5">
         <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           {eyebrow ? <p className="text-xs font-black uppercase text-blue-700">{eyebrow}</p> : null}
           <h1 className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{title}</h1>
@@ -79,14 +79,14 @@ export function StatusBadge({ status }: { status: AiBet["status"] }) {
 export function BetCard({ bet }: { bet: AiBet }) {
   const firstLeg = bet.legs[0];
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" style={{ borderLeftColor: getAiColor(bet.aiId), borderLeftWidth: 4 }}>
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm" style={{ borderLeftColor: getAiColor(bet.aiId), borderLeftWidth: 4 }}>
       <div className="flex items-start justify-between gap-3">
         <AiPill aiId={bet.aiId} />
         <StatusBadge status={bet.status} />
       </div>
       <div className="mt-4">
         <p className="text-sm font-bold text-slate-500">{bet.kind === "combo" ? `${bet.legs.length}폴더 조합` : "단폴더"}</p>
-        <h3 className="mt-1 text-lg font-black text-slate-950">{firstLeg ? <TeamMatchup homeTeam={firstLeg.homeTeam} awayTeam={firstLeg.awayTeam} compact /> : "-"}</h3>
+        <h3 className="mt-1 min-w-0 text-base font-black text-slate-950 sm:text-lg">{firstLeg ? <TeamMatchup homeTeam={firstLeg.homeTeam} awayTeam={firstLeg.awayTeam} compact /> : "-"}</h3>
         <p className="mt-2 text-sm font-semibold text-blue-700">{firstLeg?.selection}</p>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
