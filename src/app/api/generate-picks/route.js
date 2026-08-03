@@ -20,17 +20,33 @@ function getSupabaseClient() {
 }
 
 async function getGamesNeedingPicks(supabase) {
-  // upcoming 상태이고, 아직 픽이 하나도 없는 경기들만 가져옴
+  // Fetch a wider upcoming window first so already-covered early games do not
+  // permanently block newer games behind the per-run processing limit.
   const { data: games, error } = await supabase
     .from("games")
     .select("*")
     .eq("status", "upcoming")
     .gte("commence_time", new Date().toISOString())
     .order("commence_time", { ascending: true })
-    .limit(MAX_GAMES_PER_RUN);
+    .limit(50);
 
   if (error) throw new Error(`Failed to fetch games: ${error.message}`);
-  return games ?? [];
+  if (!games?.length) return [];
+
+  const gameIds = games.map((game) => game.id);
+  const { data: existing, error: picksError } = await supabase
+    .from("picks")
+    .select("game_id,ai_model")
+    .in("game_id", gameIds);
+  if (picksError) throw new Error(`Failed to find games needing picks: ${picksError.message}`);
+
+  const covered = new Map();
+  for (const pick of existing ?? []) {
+    covered.set(pick.game_id, new Set([...(covered.get(pick.game_id) ?? []), pick.ai_model]));
+  }
+  return games
+    .filter((game) => AI_MODELS.some((model) => !covered.get(game.id)?.has(model.key)))
+    .slice(0, MAX_GAMES_PER_RUN);
 }
 
 async function getExistingPickModels(supabase, gameId) {
