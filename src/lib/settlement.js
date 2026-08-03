@@ -1,10 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { SPORTS as SPORT_CONFIGS } from "./odds-api.js";
+import { fetchOddsPapiCompletedGames } from "./oddspapi.js";
 
 const ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 const STARTING_BALANCE = 100000;
 
-const SPORTS = SPORT_CONFIGS.filter((sport) => sport.enabled).map((sport) => sport.key);
+const SPORTS = SPORT_CONFIGS.filter(
+  (sport) => sport.enabled && sport.sourceSupported !== false,
+).map((sport) => sport.key);
 
 let adminClient;
 
@@ -96,41 +99,90 @@ async function fetchCompletedScores(sport, apiKey) {
 
 export async function updateGameResults() {
   const supabase = getAdminClient();
-  const apiKey = requireOddsApiKey();
   let scoresFound = 0;
   let gamesUpdated = 0;
+  const sources = {};
 
-  for (const sport of SPORTS) {
-    const events = await fetchCompletedScores(sport, apiKey);
-    scoresFound += events.length;
+  try {
+    const apiKey = requireOddsApiKey();
+    let sourceScores = 0;
+    let sourceUpdated = 0;
+    for (const sport of SPORTS) {
+      const events = await fetchCompletedScores(sport, apiKey);
+      sourceScores += events.length;
 
-    for (const event of events) {
-      const homeScore = getScore(event, event.home_team);
-      const awayScore = getScore(event, event.away_team);
+      for (const event of events) {
+        const homeScore = getScore(event, event.home_team);
+        const awayScore = getScore(event, event.away_team);
 
-      if (homeScore === null || awayScore === null) continue;
+        if (homeScore === null || awayScore === null) continue;
 
+        const { data, error } = await supabase
+          .from("games")
+          .update({
+            home_score: homeScore,
+            away_score: awayScore,
+            result: getResult(homeScore, awayScore),
+            status: "finished",
+          })
+          .eq("id", event.id)
+          .eq("status", "upcoming")
+          .select("id");
+
+        if (error) throw new Error(`Failed to update game ${event.id}: ${error.message}`);
+        sourceUpdated += data?.length ?? 0;
+      }
+    }
+    scoresFound += sourceScores;
+    gamesUpdated += sourceUpdated;
+    sources.the_odds_api = { status: "ok", sports_checked: SPORTS.length, scores_found: sourceScores, games_updated: sourceUpdated };
+  } catch (error) {
+    sources.the_odds_api = { status: "error", error: error instanceof Error ? error.message : String(error) };
+  }
+
+  try {
+    if (!process.env.ODDSPAPI_API_KEY) throw new Error("ODDSPAPI_API_KEY is not configured");
+    const now = new Date();
+    const since = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const { data: pendingGames, error: pendingError } = await supabase
+      .from("games")
+      .select("id")
+      .eq("sport", "esports_lol")
+      .eq("status", "upcoming")
+      .like("id", "oddspapi:%")
+      .gte("commence_time", since.toISOString())
+      .lte("commence_time", now.toISOString());
+    if (pendingError) throw new Error(`Failed to fetch pending OddsPapi games: ${pendingError.message}`);
+
+    const completed = await fetchOddsPapiCompletedGames(pendingGames ?? []);
+    let sourceUpdated = 0;
+    for (const game of completed.games) {
       const { data, error } = await supabase
         .from("games")
         .update({
-          home_score: homeScore,
-          away_score: awayScore,
-          result: getResult(homeScore, awayScore),
+          home_score: game.home_score,
+          away_score: game.away_score,
+          result: getResult(game.home_score, game.away_score),
           status: "finished",
         })
-        .eq("id", event.id)
+        .eq("id", game.id)
         .eq("status", "upcoming")
         .select("id");
-
-      if (error) {
-        throw new Error(`Failed to update game ${event.id}: ${error.message}`);
-      }
-
-      gamesUpdated += data?.length ?? 0;
+      if (error) throw new Error(`Failed to update game ${game.id}: ${error.message}`);
+      sourceUpdated += data?.length ?? 0;
     }
+    scoresFound += completed.games.length;
+    gamesUpdated += sourceUpdated;
+    sources.oddspapi = { status: "ok", pending_checked: pendingGames?.length ?? 0, scores_found: completed.games.length, games_updated: sourceUpdated, api_requests: completed.requests };
+  } catch (error) {
+    sources.oddspapi = { status: "error", error: error instanceof Error ? error.message : String(error) };
   }
 
-  return { sports_checked: SPORTS.length, scores_found: scoresFound, games_updated: gamesUpdated };
+  if (Object.values(sources).every((source) => source.status === "error")) {
+    throw new Error("All score data sources failed");
+  }
+
+  return { sports_checked: SPORTS.length + 1, scores_found: scoresFound, games_updated: gamesUpdated, sources };
 }
 
 export async function settlePicks() {

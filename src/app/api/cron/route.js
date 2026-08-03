@@ -1,9 +1,24 @@
 import { NextResponse } from "next/server";
 
 import { fetchAllGames, LOOKAHEAD_HOURS, SPORTS } from "@/lib/odds-api";
+import { fetchOddsPapiLolGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+
+async function upsertGames(games) {
+  if (!games.length) return 0;
+  let { error } = await supabaseAdmin.from("games").upsert(games, { onConflict: "id" });
+  if (error?.message?.includes("schema cache")) {
+    const legacyGames = games.map(({ home_spread_point, away_spread_point, home_spread_odds, away_spread_odds, total_point, over_odds, under_odds, ...game }) => {
+      void home_spread_point; void away_spread_point; void home_spread_odds; void away_spread_odds; void total_point; void over_odds; void under_odds;
+      return game;
+    });
+    ({ error } = await supabaseAdmin.from("games").upsert(legacyGames, { onConflict: "id" }));
+  }
+  if (error) throw error;
+  return games.length;
+}
 
 export async function GET(request) {
   const startedAt = new Date();
@@ -21,36 +36,50 @@ export async function GET(request) {
       throw new Error("Supabase admin client is unavailable");
     }
 
-    const games = await fetchAllGames();
+    const sources = {};
+    const [theOddsResult, oddsPapiResult] = await Promise.allSettled([
+      fetchAllGames(),
+      fetchOddsPapiLolGames(),
+    ]);
+    const games = [];
+    if (theOddsResult.status === "fulfilled") {
+      try {
+        const upserted = await upsertGames(theOddsResult.value);
+        games.push(...theOddsResult.value);
+        sources.the_odds_api = { status: "ok", fetched: theOddsResult.value.length, upserted, lookahead_hours: LOOKAHEAD_HOURS };
+      } catch (error) {
+        sources.the_odds_api = { status: "error", error: error instanceof Error ? error.message : String(error) };
+      }
+    } else {
+      sources.the_odds_api = { status: "error", error: theOddsResult.reason instanceof Error ? theOddsResult.reason.message : String(theOddsResult.reason) };
+    }
+    if (oddsPapiResult.status === "fulfilled") {
+      try {
+        const upserted = await upsertGames(oddsPapiResult.value.games);
+        games.push(...oddsPapiResult.value.games);
+        sources.oddspapi = { status: "ok", fetched: oddsPapiResult.value.games.length, upserted, lookahead_hours: ODDSPAPI_LOOKAHEAD_HOURS, diagnostics: oddsPapiResult.value.diagnostics };
+      } catch (error) {
+        sources.oddspapi = { status: "error", error: error instanceof Error ? error.message : String(error) };
+      }
+    } else {
+      sources.oddspapi = { status: "error", error: oddsPapiResult.reason instanceof Error ? oddsPapiResult.reason.message : String(oddsPapiResult.reason) };
+    }
+    if (Object.values(sources).every((source) => source.status === "error")) throw new Error("All game data sources failed");
+
     const bySport = games.reduce((counts, game) => {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
-    let { error } = await supabaseAdmin
-      .from("games")
-      .upsert(games, { onConflict: "id" });
-
-    if (error?.message?.includes("schema cache")) {
-      const legacyGames = games.map(({ home_spread_point, away_spread_point, home_spread_odds, away_spread_odds, total_point, over_odds, under_odds, ...game }) => {
-        void home_spread_point; void away_spread_point; void home_spread_odds; void away_spread_odds; void total_point; void over_odds; void under_odds;
-        return game;
-      });
-      ({ error } = await supabaseAdmin.from("games").upsert(legacyGames, { onConflict: "id" }));
-    }
-
-    if (error) {
-      throw error;
-    }
-
     return NextResponse.json({
       success: true,
       fetched: games.length,
       upserted: games.length,
       lookahead_hours: LOOKAHEAD_HOURS,
       by_sport: bySport,
-      unavailable_sources: SPORTS
+      sources,
+      unavailable_sources: sources.oddspapi?.status === "ok" ? [] : SPORTS
         .filter((sport) => sport.enabled && sport.sourceSupported === false)
-        .map((sport) => ({ sport: sport.key, reason: "not_listed_by_the_odds_api" })),
+        .map((sport) => ({ sport: sport.key, reason: "oddspapi_unavailable" })),
       started_at: startedAt.toISOString(),
       finished_at: new Date().toISOString(),
     });

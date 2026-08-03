@@ -24,7 +24,12 @@ export default async function GamesPage() {
     return counts;
   }, {});
   const unavailableSportGroups = [...new Set(
-    SPORTS.filter((sport) => sport.enabled && sport.sourceSupported === false).map((sport) => sport.sportGroup),
+    SPORTS.filter(
+      (sport) =>
+        sport.enabled &&
+        sport.sourceSupported === false &&
+        !process.env.ODDSPAPI_API_KEY,
+    ).map((sport) => sport.sportGroup),
   )];
   const upcomingGames = games
     .filter((game) => {
