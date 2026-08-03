@@ -3,6 +3,7 @@ import { GameOddsBoard } from "@/components/scorehub/GameOddsBoard";
 import { DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
 import { getLiveData } from "@/lib/live-data";
 import { getTranslations } from "@/i18n/server";
+import { SPORTS } from "@/lib/odds-api";
 
 const SEASON_ACTIVITY_DAYS = 14;
 
@@ -22,6 +23,9 @@ export default async function GamesPage() {
     }
     return counts;
   }, {});
+  const unavailableSportGroups = [...new Set(
+    SPORTS.filter((sport) => sport.enabled && sport.sourceSupported === false).map((sport) => sport.sportGroup),
+  )];
   const upcomingGames = games
     .filter((game) => {
       const startTime = new Date(game.startTime).getTime();
@@ -35,7 +39,7 @@ export default async function GamesPage() {
       description={t("games.description")}
     >
       <AdSlot placement="games_top" />
-      <GameOddsBoard games={upcomingGames} recentSportCounts={recentSportCounts} activityDays={SEASON_ACTIVITY_DAYS} />
+      <GameOddsBoard games={upcomingGames} recentSportCounts={recentSportCounts} activityDays={SEASON_ACTIVITY_DAYS} unavailableSportGroups={unavailableSportGroups} />
     </DashboardShell>
   );
 }

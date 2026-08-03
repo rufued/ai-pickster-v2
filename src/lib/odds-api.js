@@ -8,9 +8,9 @@ export const SPORTS = [
   { key: "soccer_spain_la_liga", label: "La Liga", sportGroup: "soccer", enabled: true },
   { key: "basketball_nba", label: "NBA", sportGroup: "basketball", enabled: true },
   { key: "baseball_mlb", label: "MLB", sportGroup: "baseball", enabled: true },
-  { key: "esports_lol", label: "League of Legends", sportGroup: "esports", enabled: true },
-  { key: "esports_dota2", label: "Dota 2", sportGroup: "esports", enabled: true },
-  { key: "esports_csgo", label: "Counter-Strike", sportGroup: "esports", enabled: true },
+  { key: "esports_lol", label: "League of Legends", sportGroup: "esports", enabled: true, sourceSupported: false },
+  { key: "esports_dota2", label: "Dota 2", sportGroup: "esports", enabled: true, sourceSupported: false },
+  { key: "esports_csgo", label: "Counter-Strike", sportGroup: "esports", enabled: true, sourceSupported: false },
   { key: "volleyball_fivb_world_championship", label: "FIVB World Championship", sportGroup: "volleyball", enabled: false },
   { key: "icehockey_nhl", label: "NHL", sportGroup: "hockey", enabled: false },
   { key: "americanfootball_nfl", label: "NFL", sportGroup: "american-football", enabled: false },
@@ -120,7 +120,7 @@ export async function fetchAllGames() {
   from.setMilliseconds(0);
   const to = new Date(from.getTime() + LOOKAHEAD_HOURS * 60 * 60 * 1000);
   const games = [];
-  const enabledSports = SPORTS.filter((sport) => sport.enabled);
+  const enabledSports = SPORTS.filter((sport) => sport.enabled && sport.sourceSupported !== false);
 
   for (const [index, sport] of enabledSports.entries()) {
     games.push(...(await fetchSportGames(sport, apiKey, from, to)));

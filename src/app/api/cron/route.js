@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllGames, LOOKAHEAD_HOURS } from "@/lib/odds-api";
+import { fetchAllGames, LOOKAHEAD_HOURS, SPORTS } from "@/lib/odds-api";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +48,9 @@ export async function GET(request) {
       upserted: games.length,
       lookahead_hours: LOOKAHEAD_HOURS,
       by_sport: bySport,
+      unavailable_sources: SPORTS
+        .filter((sport) => sport.enabled && sport.sourceSupported === false)
+        .map((sport) => ({ sport: sport.key, reason: "not_listed_by_the_odds_api" })),
       started_at: startedAt.toISOString(),
       finished_at: new Date().toISOString(),
     });
