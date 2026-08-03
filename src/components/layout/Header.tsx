@@ -45,10 +45,7 @@ export function Header() {
           })}
         </nav>
 
-        <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-600 md:flex">
-          <Search size={16} className="text-blue-600" />
-          <span>{t("nav.search")}</span>
-        </div>
+        <SearchForm placeholder={t("nav.search")} className="hidden min-w-[220px] md:flex" />
 
         <LanguageSwitcher />
 
@@ -64,6 +61,7 @@ export function Header() {
 
       {isOpen ? (
         <nav className="container-shell grid gap-1 border-t border-slate-200 py-3 lg:hidden">
+          <SearchForm placeholder={t("nav.search")} className="mb-2 flex md:hidden" onSubmit={() => setIsOpen(false)} />
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
@@ -84,4 +82,8 @@ export function Header() {
       ) : null}
     </header>
   );
+}
+
+function SearchForm({ placeholder, className, onSubmit }: { placeholder: string; className?: string; onSubmit?: () => void }) {
+  return <form action="/search" method="get" onSubmit={onSubmit} className={clsx("h-10 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100", className)}><input name="q" type="search" required aria-label={placeholder} placeholder={placeholder} className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-900 outline-none placeholder:text-slate-500" /><button type="submit" aria-label={placeholder} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-blue-600 hover:bg-blue-100"><Search size={16} /></button></form>;
 }
