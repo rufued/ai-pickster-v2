@@ -1,6 +1,5 @@
 "use client";
 
-import { Languages } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { isLocale } from "@/i18n/config";
@@ -10,7 +9,7 @@ export function LanguageSwitcher() {
   const router = useRouter();
   return (
     <label className="inline-flex h-10 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 text-sm font-bold text-slate-700">
-      <Languages size={15} className="text-blue-600" />
+      <span aria-hidden="true" className="text-sm leading-none">🌐</span>
       <span className="sr-only">{t("language.label")}</span>
       <select
         aria-label={t("language.label")}
@@ -23,21 +22,21 @@ export function LanguageSwitcher() {
           router.refresh();
         }}
       >
-        <option value="ko">🇰🇷 한국어</option>
-        <option value="en">🇺🇸 English</option>
-        <option value="zh">🇨🇳 中文</option>
-        <option value="ja">🇯🇵 日本語</option>
-        <option value="de">🇩🇪 Deutsch</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="pt">🇵🇹 Português</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="vi">🇻🇳 Tiếng Việt</option>
-        <option value="ar">🇸🇦 العربية</option>
-        <option value="ru">🇷🇺 Русский</option>
-        <option value="tr">🇹🇷 Türkçe</option>
-        <option value="it">🇮🇹 Italiano</option>
-        <option value="hi">🇮🇳 हिन्दी</option>
-        <option value="id">🇮🇩 Bahasa Indonesia</option>
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="ja">日本語</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="pt">Português</option>
+        <option value="es">Español</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="ar">العربية</option>
+        <option value="ru">Русский</option>
+        <option value="tr">Türkçe</option>
+        <option value="it">Italiano</option>
+        <option value="hi">हिन्दी</option>
+        <option value="id">Bahasa Indonesia</option>
       </select>
     </label>
   );
