@@ -4,6 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { SCOREHUB } from "@/lib/brand";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
+import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { getLocale } from "@/i18n/server";
 
 export const metadata: Metadata = {
   title: SCOREHUB.name,
@@ -14,20 +16,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
-    <html lang="ko">
+    <html lang={locale}>
       <body>
-        <Header />
-        <div className="container-shell py-3">
-          <AdPlaceholder placement="global_header" />
-        </div>
-        <main>{children}</main>
-        <Footer />
+        <I18nProvider locale={locale}>
+          <Header />
+          <div className="container-shell py-3"><AdPlaceholder placement="global_header" /></div>
+          <main>{children}</main>
+          <Footer />
+        </I18nProvider>
       </body>
     </html>
   );

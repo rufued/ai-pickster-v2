@@ -9,11 +9,13 @@ import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { TeamLogo } from "@/components/sports/SportsBrand";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
 
 export function GameOddsBoard({ games }: { games: Game[] }) {
+  const { t } = useI18n();
   const [sport, setSport] = useState<(typeof sports)[number]>("전체");
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
@@ -48,17 +50,17 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
                 sport === item ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50",
               )}
             >
-              {item}
+              {sportLabel(item, t)}
             </button>
           ))}
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-[180px_1fr]">
           <label className="grid gap-1 text-xs font-black uppercase text-slate-500">
-            날짜
+            {t("games.date")}
             <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="h-10 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-400" />
           </label>
           <div className="grid gap-1 text-xs font-black uppercase text-slate-500">
-            경기 상태
+            {t("games.status")}
             <div className="flex flex-wrap gap-2">
               {statuses.map((item) => (
                 <button
@@ -67,7 +69,7 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
                   onClick={() => setStatus(item)}
                   className={clsx("h-10 rounded-md border px-3 text-sm font-black", status === item ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-slate-50 text-slate-700")}
                 >
-                  {statusLabel(item)}
+                  {statusLabel(item, t)}
                 </button>
               ))}
             </div>
@@ -80,7 +82,7 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-black text-slate-950">{league}</h2>
-            <span className="text-xs font-black text-slate-500">{leagueGames.length} games</span>
+            <span className="text-xs font-black text-slate-500">{t("common.gamesCount", { count: leagueGames.length })}</span>
           </div>
           <div className="grid gap-3">
             {leagueGames.map((game) => (
@@ -92,12 +94,13 @@ export function GameOddsBoard({ games }: { games: Game[] }) {
         </Fragment>
       ))}
 
-      {filteredGames.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm font-bold text-slate-500">선택한 조건에 해당하는 경기가 없습니다.</div> : null}
+      {filteredGames.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm font-bold text-slate-500">{t("games.noMatch")}</div> : null}
     </div>
   );
 }
 
 function GameCard({ game }: { game: Game }) {
+  const { t } = useI18n();
   const homePicks = game.predictions.filter((prediction) => pickSide(prediction.pick, game) === "home");
   const drawPicks = game.predictions.filter((prediction) => pickSide(prediction.pick, game) === "draw");
   const awayPicks = game.predictions.filter((prediction) => pickSide(prediction.pick, game) === "away");
@@ -108,10 +111,10 @@ function GameCard({ game }: { game: Game }) {
         <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-500">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{game.league}</span>
           <LocalDateTime value={game.startTime} mode="mobile" />
-          <span>{game.sport}</span>
+          <span>{sportLabel(game.sport, t)}</span>
         </div>
         <span className={clsx("rounded-full px-2.5 py-1 text-xs font-black", game.status === "live" ? "bg-amber-50 text-amber-700" : game.status === "final" ? "bg-slate-100 text-slate-700" : "bg-blue-50 text-blue-700")}>
-          {statusLabel(game.status)}
+          {statusLabel(game.status, t)}
         </span>
       </div>
 
@@ -125,29 +128,30 @@ function GameCard({ game }: { game: Game }) {
         <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-black uppercase text-slate-500">1X2 odds</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            <CompactOdd label="홈승" value={game.odds.home} active={homePicks.length > 0} />
-            <CompactOdd label="무승부" value={game.odds.draw} active={drawPicks.length > 0} />
-            <CompactOdd label="원정승" value={game.odds.away} active={awayPicks.length > 0} />
+            <CompactOdd label={t("markets.homeWin")} value={game.odds.home} active={homePicks.length > 0} />
+            <CompactOdd label={t("markets.draw")} value={game.odds.draw} active={drawPicks.length > 0} />
+            <CompactOdd label={t("markets.awayWin")} value={game.odds.away} active={awayPicks.length > 0} />
           </div>
         </div>
       ) : null}
 
       <details className="mt-3 rounded-md border border-slate-200 bg-white">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-black text-slate-700">핸디캡 / 오버언더 보기</summary>
+        <summary className="cursor-pointer px-3 py-2 text-sm font-black text-slate-700">{t("markets.showMore")}</summary>
         <div className="grid gap-2 border-t border-slate-100 p-3 sm:grid-cols-2">
-          <CompactOdd label="핸디캡" value={game.odds.handicap} />
-          <CompactOdd label="언더오버" value={game.odds.overUnder} />
+          <CompactOdd label={t("markets.spread")} value={game.odds.handicap} />
+          <CompactOdd label={t("markets.total")} value={game.odds.overUnder} />
         </div>
       </details>
 
       <Link href={`/games/${game.id}`} className="mt-3 inline-flex rounded-md border border-blue-200 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-600 hover:text-white">
-        경기 상세
+        {t("games.detail")}
       </Link>
     </article>
   );
 }
 
 function TeamOddsCard({ team, odds, picks, side }: { team: string; odds?: number; picks: string[]; side: "home" | "away" }) {
+  const { t } = useI18n();
   const hasPick = picks.length > 0;
   return (
     <div className={clsx("rounded-lg border p-4", hasPick ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white")}>
@@ -156,7 +160,7 @@ function TeamOddsCard({ team, odds, picks, side }: { team: string; odds?: number
           <TeamLogo team={team} size="lg" />
           <div className="min-w-0">
             <p className="whitespace-normal text-base font-black leading-snug text-slate-950 [overflow-wrap:anywhere] sm:text-lg">{team}</p>
-            <p className="text-xs font-bold uppercase text-slate-500">{side}</p>
+            <p className="text-xs font-bold uppercase text-slate-500">{t(`games.${side}`)}</p>
           </div>
         </div>
         <span className="rounded-md bg-white px-3 py-2 text-lg font-black text-slate-950 shadow-sm">{odds?.toFixed(2) ?? "-"}</span>
@@ -176,8 +180,17 @@ function CompactOdd({ label, value, active }: { label: string; value?: number | 
   return <div className={clsx("rounded-md px-3 py-2 text-sm", active ? "bg-blue-100 text-blue-800" : "bg-white text-slate-700")}><span className="font-bold text-slate-500">{label}</span><span className="ml-2 font-black">{typeof value === "number" ? value.toFixed(2) : value ?? "-"}</span></div>;
 }
 
-function statusLabel(status: "all" | GameStatus) {
-  return status === "all" ? "전체" : status === "scheduled" ? "예정" : status === "live" ? "진행중" : "종료";
+function statusLabel(status: "all" | GameStatus, t: (key: string) => string) {
+  return status === "all" ? t("common.all") : status === "scheduled" ? t("common.scheduled") : status === "live" ? t("common.live") : t("common.finished");
+}
+
+function sportLabel(sport: string, t: (key: string) => string) {
+  if (sport === "전체") return t("common.all");
+  if (sport === "축구") return t("sports.soccer");
+  if (sport === "야구") return t("sports.baseball");
+  if (sport === "농구") return t("sports.basketball");
+  if (sport.toLowerCase().includes("스포츠")) return t("sports.esports");
+  return sport;
 }
 
 function pickSide(pick: string, game: Game): "home" | "draw" | "away" | "other" {

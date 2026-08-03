@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 type LocalDateTimeProps = {
   value: string;
@@ -8,6 +9,7 @@ type LocalDateTimeProps = {
 };
 
 export function LocalDateTime({ value, mode = "desktop" }: LocalDateTimeProps) {
+  const { locale } = useI18n();
   const [label, setLabel] = useState("--");
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export function LocalDateTime({ value, mode = "desktop" }: LocalDateTimeProps) {
         ? { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }
         : { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false };
 
-    setLabel(new Intl.DateTimeFormat("ko-KR", options).format(date));
-  }, [mode, value]);
+    setLabel(new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", options).format(date));
+  }, [locale, mode, value]);
 
   return <time dateTime={value} suppressHydrationWarning>{label}</time>;
 }

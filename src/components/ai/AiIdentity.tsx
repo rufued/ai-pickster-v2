@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { getAiChipClass } from "@/lib/aiConfig";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 type AiIdentityProps = {
   name: string;
@@ -23,9 +24,10 @@ export function AiIdentity({ name, showBadge = true, className, nameClassName, m
 }
 
 export function ComingSoonBadge({ className }: { className?: string }) {
+  const { t } = useI18n();
   return (
     <span className={clsx("inline-flex shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-700", className)}>
-      준비중
+      {t("common.comingSoon")}
     </span>
   );
 }

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { getAi, getAiName } from "@/services/scorehub";
 import type { AiBet } from "@/data/bets";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 export const currency = (value: number) =>
   `${value < 0 ? "-" : ""}$${Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
@@ -62,7 +63,8 @@ export function AiPill({ aiId, compact = false }: { aiId: string; compact?: bool
 }
 
 export function StatusBadge({ status }: { status: AiBet["status"] }) {
-  const label = status === "scheduled" ? "예정" : status === "live" ? "진행 중" : status === "won" ? "적중" : status === "lost" ? "미적중" : "무효";
+  const { t } = useI18n();
+  const label = status === "scheduled" ? t("common.scheduled") : status === "live" ? t("common.live") : status === "won" ? t("common.won") : status === "lost" ? t("common.lost") : t("common.void");
   const tone =
     status === "won"
       ? "bg-emerald-50 text-emerald-700"
@@ -80,13 +82,13 @@ export function shortDateTime(value: string) {
   return `${date.getMonth() + 1}.${date.getDate()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
-export function timeUntil(value: string) {
+export function timeUntil(value: string, t?: (key: string, values?: Record<string, string | number>) => string) {
   const diff = new Date(value).getTime() - Date.now();
   if (Number.isNaN(diff)) return "-";
-  if (diff <= 0) return "진행 중";
+  if (diff <= 0) return t ? t("time.inProgress") : "In progress";
   const hours = Math.floor(diff / 1000 / 60 / 60);
   const minutes = Math.floor((diff / 1000 / 60) % 60);
-  return `${hours}시간 ${minutes}분 후`;
+  return t ? t("time.remaining", { hours, minutes }) : `${hours}h ${minutes}m remaining`;
 }
 
 export function aiNames(ids: string[]) {

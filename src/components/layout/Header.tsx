@@ -6,18 +6,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SCOREHUB } from "@/lib/brand";
-
-const navItems = [
-  { href: "/", label: "홈" },
-  { href: "/picks", label: "AI 픽 조합" },
-  { href: "/records", label: "AI 베팅 내역" },
-  { href: "/games", label: "경기·배당" },
-  { href: "/community", label: "커뮤니티" },
-];
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 export function Header() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const navItems = [
+    { href: "/", label: t("nav.home") }, { href: "/picks", label: t("nav.picks") },
+    { href: "/records", label: t("nav.records") }, { href: "/games", label: t("nav.games") },
+    { href: "/community", label: t("nav.community") },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -47,12 +47,14 @@ export function Header() {
 
         <div className="hidden h-10 min-w-[220px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-600 md:flex">
           <Search size={16} className="text-blue-600" />
-          <span>AI, 경기, 픽 검색</span>
+          <span>{t("nav.search")}</span>
         </div>
+
+        <LanguageSwitcher />
 
         <button
           type="button"
-          aria-label="메뉴"
+          aria-label={t("nav.menu")}
           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:hidden"
           onClick={() => setIsOpen((current) => !current)}
         >
