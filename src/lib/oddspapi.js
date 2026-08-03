@@ -60,6 +60,10 @@ function chunks(items, size) {
   return result;
 }
 
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 function marketMetadata(markets) {
   return new Map(markets.map((market) => [String(market.marketId), market]));
 }
@@ -166,16 +170,18 @@ export async function fetchOddsPapiLolGames() {
   };
 
   const tournamentBatches = chunks(selected, 5);
-  const [marketsResponse, ...oddsResponses] = await Promise.all([
-    request("/markets", { language: "en" }),
-    ...tournamentBatches.map((batch) => request("/odds-by-tournaments", {
+  const marketsResponse = await request("/markets", { language: "en" });
+  const oddsResponses = [];
+  for (const [index, batch] of tournamentBatches.entries()) {
+    if (index > 0) await delay(1100);
+    oddsResponses.push(await request("/odds-by-tournaments", {
       tournamentIds: batch.map((item) => item.tournamentId).join(","),
       bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
       language: "en",
       verbosity: "3",
       oddsFormat: "decimal",
-    })),
-  ]);
+    }));
+  }
   const oddsFixtures = oddsResponses.flatMap(asArray);
   const markets = asArray(marketsResponse).filter((market) => Number(market.sportId) === Number(sport.sportId));
   const now = Date.now();
