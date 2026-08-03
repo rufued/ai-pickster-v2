@@ -35,6 +35,18 @@ function gameStatus(value: unknown): GameStatus {
   return "scheduled";
 }
 
+function sportGroup(value: unknown): SportName {
+  const sport = text(value);
+  if (sport.startsWith("soccer_")) return "축구";
+  if (sport.startsWith("baseball_")) return "야구";
+  if (sport.startsWith("basketball_")) return "농구";
+  if (sport.startsWith("esports_")) return "E스포츠";
+  if (sport.startsWith("volleyball_")) return "배구";
+  if (sport.startsWith("icehockey_")) return "아이스하키";
+  if (sport.startsWith("americanfootball_")) return "미식축구";
+  return text(value) as SportName;
+}
+
 function pickStatus(pick: Row, game?: Row): BetStatus {
   if (pick.settled_at) return pick.is_correct === true ? "won" : "lost";
   if (game?.status === "live") return "live";
@@ -127,7 +139,7 @@ export async function getLiveData(): Promise<LiveData> {
     const awayScore = game.away_score;
     return {
       id,
-      sport: text(game.sport_label, text(game.sport)) as SportName,
+      sport: sportGroup(game.sport),
       league: text(game.sport_label, text(game.sport)),
       homeTeam: text(game.home_team),
       awayTeam: text(game.away_team),
@@ -174,7 +186,7 @@ export async function getLiveData(): Promise<LiveData> {
       reason: text(pick.analysis),
       legs: [{
         gameId: text(pick.game_id),
-        sport: text(game?.sport_label, text(game?.sport)) as SportName,
+        sport: sportGroup(game?.sport),
         league: text(game?.sport_label, text(game?.sport)),
         homeTeam: text(game?.home_team),
         awayTeam: text(game?.away_team),

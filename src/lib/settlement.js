@@ -1,17 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { SPORTS as SPORT_CONFIGS } from "./odds-api.js";
 
 const ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 const STARTING_BALANCE = 100000;
 
-const SPORTS = [
-  "soccer_epl",
-  "soccer_uefa_champs_league",
-  "soccer_spain_la_liga",
-  "basketball_nba",
-  "americanfootball_nfl",
-  "baseball_mlb",
-  "icehockey_nhl",
-];
+const SPORTS = SPORT_CONFIGS.filter((sport) => sport.enabled).map((sport) => sport.key);
 
 let adminClient;
 
@@ -58,6 +51,11 @@ async function fetchCompletedScores(sport, apiKey) {
     `${ODDS_API_BASE_URL}/sports/${sport}/scores/?${params.toString()}`,
     { cache: "no-store" },
   );
+
+  if (response.status === 404) {
+    console.warn(`Odds API scores are currently unavailable for: ${sport}`);
+    return [];
+  }
 
   if (!response.ok) {
     const details = await response.text();

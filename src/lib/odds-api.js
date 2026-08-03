@@ -2,14 +2,18 @@ const ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4";
 const REQUEST_DELAY_MS = 500;
 const LOOKAHEAD_HOURS = 36;
 
-const SPORTS = [
-  { key: "soccer_epl", label: "Premier League" },
-  { key: "soccer_uefa_champs_league", label: "UEFA Champions League" },
-  { key: "soccer_spain_la_liga", label: "La Liga" },
-  { key: "basketball_nba", label: "NBA" },
-  { key: "americanfootball_nfl", label: "NFL" },
-  { key: "baseball_mlb", label: "MLB" },
-  { key: "icehockey_nhl", label: "NHL" },
+export const SPORTS = [
+  { key: "soccer_epl", label: "Premier League", sportGroup: "soccer", enabled: true },
+  { key: "soccer_uefa_champs_league", label: "UEFA Champions League", sportGroup: "soccer", enabled: true },
+  { key: "soccer_spain_la_liga", label: "La Liga", sportGroup: "soccer", enabled: true },
+  { key: "basketball_nba", label: "NBA", sportGroup: "basketball", enabled: true },
+  { key: "baseball_mlb", label: "MLB", sportGroup: "baseball", enabled: true },
+  { key: "esports_lol", label: "League of Legends", sportGroup: "esports", enabled: true },
+  { key: "esports_dota2", label: "Dota 2", sportGroup: "esports", enabled: true },
+  { key: "esports_csgo", label: "Counter-Strike", sportGroup: "esports", enabled: true },
+  { key: "volleyball_fivb_world_championship", label: "FIVB World Championship", sportGroup: "volleyball", enabled: false },
+  { key: "icehockey_nhl", label: "NHL", sportGroup: "hockey", enabled: false },
+  { key: "americanfootball_nfl", label: "NFL", sportGroup: "american-football", enabled: false },
 ];
 
 const delay = (milliseconds) =>
@@ -49,6 +53,13 @@ async function fetchSportGames(sport, apiKey, from, to) {
     { cache: "no-store" },
   );
 
+  // Some configured esports leagues are not exposed for every API plan/season.
+  // Keep the switch enabled so they start collecting automatically when available.
+  if (response.status === 404) {
+    console.warn(`Odds API sport is currently unavailable: ${sport.key}`);
+    return [];
+  }
+
   if (!response.ok) {
     const details = await response.text();
     throw new Error(
@@ -85,11 +96,12 @@ export async function fetchAllGames() {
   from.setMilliseconds(0);
   const to = new Date(from.getTime() + LOOKAHEAD_HOURS * 60 * 60 * 1000);
   const games = [];
+  const enabledSports = SPORTS.filter((sport) => sport.enabled);
 
-  for (const [index, sport] of SPORTS.entries()) {
+  for (const [index, sport] of enabledSports.entries()) {
     games.push(...(await fetchSportGames(sport, apiKey, from, to)));
 
-    if (index < SPORTS.length - 1) {
+    if (index < enabledSports.length - 1) {
       await delay(REQUEST_DELAY_MS);
     }
   }

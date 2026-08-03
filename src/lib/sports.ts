@@ -10,11 +10,10 @@ export type SportCategory = {
 
 export const sportCategories: SportCategory[] = [
   { id: "all", label: "전체", icon: "🏆" },
-  { id: "football", label: "축구", icon: "⚽", sport: "축구" },
+  { id: "soccer", label: "축구", icon: "⚽", sport: "축구" },
   { id: "baseball", label: "야구", icon: "⚾", sport: "야구" },
   { id: "basketball", label: "농구", icon: "🏀", sport: "농구" },
-  { id: "volleyball", label: "배구", icon: "🏐", sport: "배구" },
-  { id: "esports", label: "e스포츠", icon: "🎮", sport: "e스포츠", isNew: true },
+  { id: "esports", label: "E스포츠", icon: "🎮", sport: "E스포츠", isNew: true },
 ];
 
 export function getSportFromParam(value?: string): Sport | undefined {

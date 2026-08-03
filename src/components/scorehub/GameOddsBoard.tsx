@@ -8,19 +8,19 @@ import { getAiName } from "@/services/scorehub";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { TeamLogo } from "@/components/sports/SportsBrand";
 
-const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "배구", "하키", "e스포츠"];
+const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
 
 export function GameOddsBoard({ games }: { games: Game[] }) {
   const [sport, setSport] = useState<(typeof sports)[number]>("전체");
-  const [date, setDate] = useState("2026-07-20");
+  const [date, setDate] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
 
   const filteredGames = useMemo(
     () =>
       games.filter((game) => {
         const gameDate = game.startTime.slice(0, 10);
-        return (sport === "전체" || game.sport === sport) && gameDate === date && (status === "all" || game.status === status);
+        return (sport === "전체" || game.sport === sport) && (!date || gameDate === date) && (status === "all" || game.status === status);
       }),
     [date, games, sport, status],
   );
