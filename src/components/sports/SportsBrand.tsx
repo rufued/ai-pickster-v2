@@ -61,11 +61,14 @@ export function TeamLogo({ team, size = "md" }: { team: string; size?: "sm" | "m
   );
 }
 
-export function TeamName({ team, size = "md", className }: { team: string; size?: "sm" | "md" | "lg"; className?: string }) {
+export function TeamName({ team, size = "md", className, detail }: { team: string; size?: "sm" | "md" | "lg"; className?: string; detail?: React.ReactNode }) {
   return (
     <span className={clsx("flex min-w-0 max-w-full items-center gap-2", className)}>
       <TeamLogo team={team} size={size === "lg" ? "lg" : size === "sm" ? "sm" : "md"} />
-      <span className="min-w-0 whitespace-normal [overflow-wrap:anywhere]">{team}</span>
+      <span className="min-w-0 whitespace-normal [overflow-wrap:anywhere]">
+        <span>{team}</span>
+        {detail ? <span className="ms-1.5 inline-block whitespace-nowrap text-[10px] font-black tabular-nums text-slate-500">{detail}</span> : null}
+      </span>
     </span>
   );
 }
@@ -75,26 +78,49 @@ export function TeamMatchup({
   awayTeam,
   compact = false,
   selectedSide,
+  pickType,
+  oddsOptions = [],
   className,
 }: {
   homeTeam: string;
   awayTeam: string;
   compact?: boolean;
   selectedSide?: "home" | "draw" | "away" | "total" | "handicap";
+  pickType?: string;
+  oddsOptions?: Array<{ type: "home" | "away" | "draw" | "over" | "under"; odds: number; point?: number }>;
   className?: string;
 }) {
   const { t } = useI18n();
   const selectedClass = "rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-2 text-emerald-900 ring-1 ring-emerald-100";
+  const homeOdds = oddsOptions.find((option) => option.type === "home");
+  const awayOdds = oddsOptions.find((option) => option.type === "away");
+  const drawOdds = oddsOptions.find((option) => option.type === "draw");
+  const overOdds = oddsOptions.find((option) => option.type === "over");
+  const underOdds = oddsOptions.find((option) => option.type === "under");
   return (
     <span dir="ltr" className={clsx("block w-full min-w-0 max-w-full", className)}>
-      {selectedSide === "draw" ? <span className="mb-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-800">{t("markets.draw")}</span> : null}
+      {drawOdds ? <span className={clsx("mb-1.5 inline-flex text-[10px] font-black tabular-nums", selectedSide === "draw" ? "rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800" : "text-slate-400")}>{t("markets.draw")} {drawOdds.odds.toFixed(2)}</span> : null}
       <span className="flex w-full min-w-0 max-w-full flex-col items-stretch gap-1.5 leading-snug sm:flex-row sm:items-center sm:gap-2">
-        <TeamName team={homeTeam} size={compact ? "sm" : "md"} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "home" && selectedClass)} />
+        <TeamName team={homeTeam} size={compact ? "sm" : "md"} detail={formatTeamOdds(homeOdds)} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "home" && selectedClass)} />
         <span className="shrink-0 self-center text-[10px] font-black text-slate-400 sm:text-xs">VS</span>
-        <TeamName team={awayTeam} size={compact ? "sm" : "md"} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "away" && selectedClass)} />
+        <TeamName team={awayTeam} size={compact ? "sm" : "md"} detail={formatTeamOdds(awayOdds)} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "away" && selectedClass)} />
       </span>
+      {overOdds || underOdds ? <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-black tabular-nums text-slate-500">
+        {overOdds ? <span className={clsx(pickType === "over" && "rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800")}>O {formatPoint(overOdds.point)} {overOdds.odds.toFixed(2)}</span> : null}
+        {underOdds ? <span className={clsx(pickType === "under" && "rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800")}>U {formatPoint(underOdds.point)} {underOdds.odds.toFixed(2)}</span> : null}
+      </span> : null}
     </span>
   );
+}
+
+function formatTeamOdds(option?: { odds: number; point?: number }) {
+  if (!option) return undefined;
+  const point = option.point == null ? "" : `${option.point > 0 ? "+" : ""}${option.point} `;
+  return `${point}${option.odds.toFixed(2)}`;
+}
+
+function formatPoint(point?: number) {
+  return point == null ? "" : String(point);
 }
 
 export function LeagueLogo({ league, size = "md" }: { league: string; size?: "sm" | "md" }) {
