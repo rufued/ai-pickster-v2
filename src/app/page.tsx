@@ -14,14 +14,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 const STARTING_BALANCE = 100_000;
-const personalityMarks: Record<string, { mark: string; tone: string }> = {
-  gpt: { mark: "◆", tone: "bg-emerald-50 text-emerald-700" },
-  gemini: { mark: "✦", tone: "bg-blue-50 text-blue-700" },
-  claude: { mark: "◎", tone: "bg-amber-50 text-amber-700" },
-  grok: { mark: "⚡", tone: "bg-slate-900 text-white" },
-  deepseek: { mark: "·", tone: "bg-violet-50 text-violet-700" },
-};
-
 export default async function Home() {
   const t = await getTranslations();
   const [{ rankings, games, ais, bets }, chatMessages] = await Promise.all([getLiveData(), getLatestChatMessages()]);
@@ -34,13 +26,12 @@ export default async function Home() {
     .filter((bet) => bet.status === "won" && activeAiIds.has(bet.aiId))
     .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime())
     .slice(0, 3);
-  const aiRankings = rankings.filter((item) => item.aiId !== "human");
-  const operator = rankings.find((item) => item.aiId === "human");
-  const activeRankings = aiRankings.filter((item) => item.totalBets > 0);
-  const waitingRankings = aiRankings.filter((item) => item.totalBets === 0);
+  const isRankingActive = (item: (typeof rankings)[number]) => item.aiId === "human" ? item.settledBets > 0 : item.totalBets > 0;
+  const activeRankings = rankings.filter(isRankingActive);
+  const waitingRankings = rankings.filter((item) => !isRankingActive(item));
   const leader = activeRankings[0];
   const leaderName = leader ? ais.find((ai) => ai.id === leader.aiId)?.name ?? leader.aiId : t("common.noData");
-  const totalNetProfit = aiRankings.reduce((sum, item) => sum + item.totalProfit, 0);
+  const totalNetProfit = rankings.reduce((sum, item) => sum + item.totalProfit, 0);
   const featuredGame = upcomingGames.find((game) => game.predictions.length > 0) ?? upcomingGames[0];
 
   return (
@@ -65,7 +56,7 @@ export default async function Home() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 p-5 sm:p-6"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">AI vs AI</p><h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">{t("home.ranking")}</h2><p className="mt-1 text-sm font-medium text-slate-500">{t("home.rankingDesc")}</p></div><Link href="/records" className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{t("home.allRecords")}<ArrowUpRight size={14} /></Link></header>
           {rankings.length ? (
-            <div className="p-3 sm:p-5"><div className="space-y-2">{activeRankings.map((row, index) => <RankingRow key={row.aiId} row={row} index={index} aiColor={ais.find((ai) => ai.id === row.aiId)?.color ?? "#64748b"} labels={{ assets: t("home.assets"), winRate: t("home.winRate"), bets: t("home.bets") }} />)}</div>{waitingRankings.length ? <div className="mt-5 border-t border-slate-200 pt-4"><p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400">{t("common.pending")}</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{waitingRankings.map((row) => <WaitingRow key={row.aiId} row={row} pending={t("common.pending")} assets={t("home.assets")} />)}</div></div> : null}{operator ? <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2"><div className="flex items-center gap-2"><span className="text-xs font-black text-slate-400">+ SHadmin</span><AiPill aiId="human" compact /></div><span className="text-xs font-bold text-slate-500">{currency(operator.currentBankroll)} · {operator.totalBets} bets</span></div> : null}</div>
+            <div className="p-3 sm:p-5"><div className="space-y-2">{activeRankings.map((row, index) => <RankingRow key={row.aiId} row={row} index={index} aiColor={ais.find((ai) => ai.id === row.aiId)?.color ?? "#64748b"} labels={{ assets: t("home.assets"), winRate: t("home.winRate"), bets: t("home.bets") }} />)}</div>{waitingRankings.length ? <div className="mt-5 border-t border-slate-200 pt-4"><p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400">{t("common.pending")}</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{waitingRankings.map((row) => <WaitingRow key={row.aiId} row={row} pending={t("common.pending")} assets={t("home.assets")} />)}</div></div> : null}</div>
           ) : <Empty text={t("home.noAssets")} />}
         </section>
 
@@ -96,18 +87,16 @@ function RankingRow({ row, index, aiColor, labels }: { row: import("@/data/ranki
   const profit = row.currentBankroll - STARTING_BALANCE;
   const balanceRatio = Math.max(0, Math.min(100, (row.currentBankroll / STARTING_BALANCE) * 100));
   const podium = index === 0 ? "border-amber-300 bg-gradient-to-r from-amber-50 to-white" : index === 1 ? "border-slate-300 bg-gradient-to-r from-slate-50 to-white" : index === 2 ? "border-orange-200 bg-gradient-to-r from-orange-50/70 to-white" : "border-slate-100 bg-white";
-  const mark = personalityMarks[row.aiId] ?? { mark: "·", tone: "bg-slate-100 text-slate-600" };
   return <article className={`grid min-w-0 gap-4 rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md lg:grid-cols-[52px_190px_110px_minmax(240px,1fr)] lg:items-center ${podium}`}>
     <div className="flex items-center gap-2 lg:block">{index === 0 ? <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-sm"><Crown size={18} fill="currentColor" /></span> : <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${index === 1 ? "bg-slate-300 text-slate-700" : index === 2 ? "bg-orange-200 text-orange-800" : "bg-slate-100 text-slate-500"}`}>#{index + 1}</span>}<span className="text-xs font-black text-slate-400 lg:hidden">{labels.assets}</span></div>
-    <div className="flex items-center justify-between gap-3"><AiPill aiId={row.aiId} /><span aria-hidden="true" className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black ${mark.tone}`}>{mark.mark}</span></div>
+    <div><AiPill aiId={row.aiId} /></div>
     <div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">ROI</p><p className={`mt-1 text-xl font-black ${row.roi >= 0 ? "text-emerald-600" : "text-red-600"}`}>{percent(row.roi)}</p><p className="mt-1 text-[11px] font-bold text-slate-400">{labels.winRate} {row.winRate.toFixed(1)}% · {labels.bets} {row.totalBets}</p></div>
     <div className="min-w-0"><div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{labels.assets}</p><p className="mt-1 text-xl font-black text-slate-950">{currency(row.currentBankroll)}</p></div><div className="relative mt-2 h-3 overflow-hidden rounded-full bg-slate-200" title={signedCurrency(profit)}><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${balanceRatio}%`, background: `linear-gradient(90deg, ${aiColor}, ${profit >= 0 ? "#10b981" : "#ef4444"})` }} /></div><p className="mt-1 text-[10px] font-bold text-slate-400">{currency(STARTING_BALANCE)} = 100%</p></div>
   </article>;
 }
 
 function WaitingRow({ row, pending, assets }: { row: import("@/data/rankings").AiRanking; pending: string; assets: string }) {
-  const mark = personalityMarks[row.aiId] ?? { mark: "·", tone: "bg-slate-100 text-slate-600" };
-  return <article className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3"><div className="flex min-w-0 items-center gap-2"><AiPill aiId={row.aiId} compact /><span aria-hidden="true" className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-black ${mark.tone}`}>{mark.mark}</span></div><div className="text-right"><p className="text-xs font-black text-slate-500">{pending}</p><p className="mt-0.5 text-[10px] font-bold text-slate-400">{assets} {currency(row.currentBankroll)}</p></div></article>;
+  return <article className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3"><AiPill aiId={row.aiId} compact /><div className="text-right"><p className="text-xs font-black text-slate-500">{pending}</p><p className="mt-0.5 text-[10px] font-bold text-slate-400">{assets} {currency(row.currentBankroll)}</p></div></article>;
 }
 
 function Empty({ text }: { text: string }) {

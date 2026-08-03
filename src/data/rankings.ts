@@ -14,6 +14,7 @@ export type AiRanking = {
   roi: number;
   winRate: number;
   totalBets: number;
+  settledBets: number;
   streak: number;
   bestProfit: number;
   worstLoss: number;

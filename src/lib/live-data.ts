@@ -172,6 +172,7 @@ export async function getLiveData(): Promise<LiveData> {
       roi: number(asset.roi),
       winRate: settledBets ? (wins / settledBets) * 100 : 0,
       totalBets: modelPicks.length + modelParlays.length,
+      settledBets,
       streak: getCurrentStreak([...settled, ...settledParlays].sort((a, b) => new Date(text(b.settled_at)).getTime() - new Date(text(a.settled_at)).getTime())),
       bestProfit: pnlValues.length ? Math.max(...pnlValues) : 0,
       worstLoss: pnlValues.length ? Math.min(...pnlValues) : 0,
