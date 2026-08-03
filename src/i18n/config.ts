@@ -1,12 +1,20 @@
 import en from "../../messages/en.json";
 import ko from "../../messages/ko.json";
+import zh from "../../messages/zh.json";
+import ja from "../../messages/ja.json";
+import de from "../../messages/de.json";
+import fr from "../../messages/fr.json";
+import pt from "../../messages/pt.json";
+import es from "../../messages/es.json";
+import vi from "../../messages/vi.json";
+import ar from "../../messages/ar.json";
 
-export const locales = ["ko", "en"] as const;
+export const locales = ["ko", "en", "zh", "ja", "de", "fr", "pt", "es", "vi", "ar"] as const;
 export type Locale = (typeof locales)[number];
 export type Messages = typeof ko;
 
 export const defaultLocale: Locale = "en";
-export const messages: Record<Locale, Messages> = { ko, en };
+export const messages: Record<Locale, Messages> = { ko, en, zh, ja, de, fr, pt, es, vi, ar };
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && locales.includes(value as Locale);

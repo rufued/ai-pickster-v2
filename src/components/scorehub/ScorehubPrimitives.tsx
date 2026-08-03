@@ -47,7 +47,7 @@ export function Metric({ label, value, tone = "neutral" }: { label: string; valu
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4">
       <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
-      <p className={clsx("mt-2 text-xl font-black", tone === "positive" ? "text-emerald-600" : tone === "negative" ? "text-red-600" : "text-slate-950")}>{value}</p>
+      <p dir="auto" className={clsx("mt-2 text-xl font-black [unicode-bidi:isolate]", tone === "positive" ? "text-emerald-600" : tone === "negative" ? "text-red-600" : "text-slate-950")}>{value}</p>
     </article>
   );
 }

@@ -18,6 +18,17 @@ html {
   overflow-x: hidden;
 }
 
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] time,
+html[dir="rtl"] [data-numeric] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 body {
   margin: 0;
   width: 100%;

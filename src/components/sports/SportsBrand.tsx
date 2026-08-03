@@ -86,7 +86,7 @@ export function TeamMatchup({
   const { t } = useI18n();
   const selectedClass = "rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-2 text-emerald-900 ring-1 ring-emerald-100";
   return (
-    <span className={clsx("block w-full min-w-0 max-w-full", className)}>
+    <span dir="ltr" className={clsx("block w-full min-w-0 max-w-full", className)}>
       {selectedSide === "draw" ? <span className="mb-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-800">{t("markets.draw")}</span> : null}
       <span className="flex w-full min-w-0 max-w-full flex-col items-stretch gap-1.5 leading-snug sm:flex-row sm:items-center sm:gap-2">
         <TeamName team={homeTeam} size={compact ? "sm" : "md"} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "home" && selectedClass)} />

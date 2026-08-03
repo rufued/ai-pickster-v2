@@ -25,7 +25,7 @@ export function LocalDateTime({ value, mode = "desktop" }: LocalDateTimeProps) {
         ? { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }
         : { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false };
 
-    setLabel(new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", options).format(date));
+    setLabel(new Intl.DateTimeFormat(locale, options).format(date));
   }, [locale, mode, value]);
 
   return <time dateTime={value} suppressHydrationWarning>{label}</time>;

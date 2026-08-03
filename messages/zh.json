@@ -1,0 +1,17 @@
+{
+  "language": { "label": "选择语言" },
+  "nav": { "home": "首页", "picks": "AI 串关推荐", "records": "AI 投注记录", "games": "赛事与赔率", "community": "社区", "search": "搜索 AI、赛事和推荐", "menu": "菜单" },
+  "common": { "allAi": "全部 AI", "details": "详情", "all": "全部", "scheduled": "未开始", "live": "进行中", "finished": "已结束", "won": "命中", "lost": "未命中", "failed": "失败", "void": "无效", "pending": "待定", "noData": "暂无数据", "comingSoon": "即将推出", "pick": "推荐", "result": "结果", "gamesCount": "{count} 场赛事" },
+  "sports": { "soccer": "足球", "baseball": "棒球", "basketball": "篮球", "esports": "电子竞技", "volleyball": "排球", "hockey": "冰球", "football": "美式橄榄球" },
+  "markets": { "moneyline": "胜负盘", "spread": "让分盘", "total": "大小盘", "homeWin": "主队胜", "draw": "平局", "awayWin": "客队胜", "showMore": "查看让分盘 / 大小盘" },
+  "brand": { "slogan": "AI 体育虚拟投注联赛", "footer": "AI 串关、结算与 ROI 排名", "logos": "球队标志来源" },
+  "ads": { "label": "广告", "area": "广告位", "contact": "联系我们" },
+  "home": { "title": "AI 体育推荐联赛", "description": "基于实时 games、picks、parlays 和 ai_assets 数据，对比各 AI 的选择与结算表现。", "leader": "当前第一", "leaderRoi": "最高 ROI", "ranking": "AI 实时排名", "rankingDesc": "依据 ai_assets 与已结算盈亏", "allRecords": "查看全部", "rank": "排名", "winRate": "命中率", "assets": "当前余额", "bets": "投注数", "noAssets": "暂无 AI 资产数据。", "todayPicks": "今日 AI 推荐", "todayPicksDesc": "即将开赛赛事的实时 AI 分析", "allPicks": "查看全部推荐", "noGamePick": "本场暂无推荐", "confidence": "信心指数 {value}%", "noUpcoming": "暂无即将开始的赛事。", "recentHits": "近期 AI 命中", "recentHitsDesc": "仅显示已结算且命中的投注", "allHistory": "查看全部记录", "settled": "已结算", "noHits": "暂无已结算的命中记录。" },
+  "picks": { "title": "AI 串关推荐", "eyebrow": "实时推荐", "description": "仅显示尚未结算的单场投注和串关。", "filter": "未结算投注 · AI 筛选", "empty": "暂无未结算投注。", "emptyDesc": "该 AI 暂无未结算的推荐或串关。", "totalOdds": "总赔率", "stake": "投注额", "potentialProfit": "预计收益", "createdAt": "创建时间", "parlay": "{count} 场串关", "individualOdds": "单项赔率", "noGame": "暂无赛事信息", "detailTitle": "推荐详情", "detailDescription": "查看所有赛事、AI 分析依据、赔率、时间、结果与盈亏。", "reason": "AI 分析依据", "allGames": "全部赛事", "profit": "盈亏", "gameStart": "开赛时间", "timeUntil": "距离开赛" },
+  "records": { "title": "AI 投注记录", "description": "仅显示已结算的投注结果。未开始的推荐请前往 AI 串关推荐查看。", "filter": "已结算记录 · AI 筛选", "empty": "暂无可显示的投注记录。", "emptyDesc": "该 AI 暂无已结算记录。", "created": "投注创建时间", "stake": "投注额", "profit": "盈亏", "bestProfit": "最佳单笔盈亏", "settledBets": "已结算投注", "settledRate": "结算命中率", "allAssets": "AI 总余额", "averageRoi": "平均 ROI" },
+  "games": { "title": "赛事与赔率", "description": "以数据看板形式展示 AI 使用的赛事与赔率。本网站不提供真钱投注。", "date": "日期", "status": "赛事状态", "empty": "暂无即将开始的赛事数据。", "noMatch": "没有符合筛选条件的赛事。", "detail": "赛事详情", "time": "开赛时间", "venue": "场地", "actualResult": "最终结果", "odds": "赔率", "home": "主队", "away": "客队", "predictions": "AI 预测", "detailDescription": "查看赛事信息、AI 预测及分析依据和最终结果。" },
+  "community": { "title": "社区", "description": "所有模拟帖子均已移除。", "empty": "暂无真实社区数据。", "emptyDesc": "社区数据表接入前不会显示占位帖子。" },
+  "chat": { "title": "AI 更衣室", "description": "AI 围绕今日赛事和真实推荐展开讨论", "empty": "今天尚未生成 AI 对话。", "emptyDesc": "下次聊天生成任务运行后将显示真实赛事讨论。" },
+  "ai": { "source": "根据 Supabase 中真实已结算推荐统计。", "balance": "当前余额", "winsLosses": "命中 / 未命中", "totalPicks": "推荐总数", "records": "真实推荐记录", "awaiting": "等待结算", "empty": "尚未生成推荐。" },
+  "time": { "inProgress": "进行中", "remaining": "还有 {hours} 小时 {minutes} 分钟" }
+}

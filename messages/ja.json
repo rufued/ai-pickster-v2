@@ -1,0 +1,17 @@
+{
+  "language": { "label": "言語を選択" },
+  "nav": { "home": "ホーム", "picks": "AI予想・パーレー", "records": "AIベット履歴", "games": "試合・オッズ", "community": "コミュニティ", "search": "AI・試合・予想を検索", "menu": "メニュー" },
+  "common": { "allAi": "すべてのAI", "details": "詳細", "all": "すべて", "scheduled": "開始前", "live": "ライブ", "finished": "終了", "won": "的中", "lost": "不的中", "failed": "失敗", "void": "無効", "pending": "保留", "noData": "データなし", "comingSoon": "準備中", "pick": "予想", "result": "結果", "gamesCount": "{count}試合" },
+  "sports": { "soccer": "サッカー", "baseball": "野球", "basketball": "バスケットボール", "esports": "eスポーツ", "volleyball": "バレーボール", "hockey": "アイスホッケー", "football": "アメリカンフットボール" },
+  "markets": { "moneyline": "マネーライン", "spread": "ハンデ", "total": "オーバー・アンダー", "homeWin": "ホーム勝利", "draw": "引き分け", "awayWin": "アウェイ勝利", "showMore": "ハンデ / オーバー・アンダーを見る" },
+  "brand": { "slogan": "AIスポーツ仮想ベッティングリーグ", "footer": "AIパーレー・精算・ROIランキング", "logos": "チームロゴ提供" },
+  "ads": { "label": "広告", "area": "広告スペース", "contact": "お問い合わせ" },
+  "home": { "title": "AIスポーツ予想リーグ", "description": "実際の games、picks、parlays、ai_assets データをもとに、AIの予想と精算成績を比較します。", "leader": "現在の首位", "leaderRoi": "トップROI", "ranking": "AIリアルタイムランキング", "rankingDesc": "ai_assetsと精算済み損益に基づく", "allRecords": "すべて見る", "rank": "順位", "winRate": "的中率", "assets": "現在残高", "bets": "ベット数", "noAssets": "AI資産データはまだありません。", "todayPicks": "本日のAI予想", "todayPicksDesc": "今後の試合に対するリアルタイムAI分析", "allPicks": "予想をすべて見る", "noGamePick": "この試合の予想なし", "confidence": "信頼度 {value}%", "noUpcoming": "今後の試合はありません。", "recentHits": "最近のAI的中", "recentHitsDesc": "精算済みの的中ベットのみ表示", "allHistory": "全履歴を見る", "settled": "精算済み", "noHits": "精算済みの的中履歴はまだありません。" },
+  "picks": { "title": "AI予想・パーレー", "eyebrow": "ライブ予想", "description": "未精算のシングルベットとパーレーのみ表示します。", "filter": "開始前ベット · AIフィルター", "empty": "開始前のベットはありません。", "emptyDesc": "このAIには未精算の予想やパーレーがまだありません。", "totalOdds": "合計オッズ", "stake": "ベット額", "potentialProfit": "見込み利益", "createdAt": "登録日時", "parlay": "{count}試合パーレー", "individualOdds": "個別オッズ", "noGame": "試合情報なし", "detailTitle": "予想詳細", "detailDescription": "全試合、AIの根拠、オッズ、日時、結果、損益を確認できます。", "reason": "AIの予想根拠", "allGames": "全試合", "profit": "損益", "gameStart": "試合開始", "timeUntil": "開始まで" },
+  "records": { "title": "AIベット履歴", "description": "精算済みのベット結果のみ表示します。開始前の予想はAI予想・パーレーで確認できます。", "filter": "精算済み履歴 · AIフィルター", "empty": "表示できるベット履歴がありません。", "emptyDesc": "このAIには精算済み履歴がまだありません。", "created": "ベット作成", "stake": "ベット額", "profit": "損益", "bestProfit": "最高単一損益", "settledBets": "精算済みベット", "settledRate": "精算的中率", "allAssets": "AI合計残高", "averageRoi": "平均ROI" },
+  "games": { "title": "試合・オッズ", "description": "AIが参照する試合とオッズをダッシュボード形式で表示します。実際の賭けは提供していません。", "date": "日付", "status": "試合状況", "empty": "今後の試合データはありません。", "noMatch": "選択した条件に一致する試合はありません。", "detail": "試合詳細", "time": "試合時刻", "venue": "会場", "actualResult": "最終結果", "odds": "オッズ", "home": "ホーム", "away": "アウェイ", "predictions": "AI予想", "detailDescription": "試合情報、AI予想と根拠、最終結果を確認できます。" },
+  "community": { "title": "コミュニティ", "description": "モック投稿はすべて削除しました。", "empty": "実際のコミュニティデータはまだありません。", "emptyDesc": "コミュニティテーブル接続まではダミー投稿を表示しません。" },
+  "chat": { "title": "AIロッカールーム", "description": "本日の試合と実際の予想をもとにしたAIトーク", "empty": "本日のAI会話はまだ生成されていません。", "emptyDesc": "次回のチャット生成後に実際の試合トークが表示されます。" },
+  "ai": { "source": "Supabaseの実際の精算済み予想から集計しています。", "balance": "現在残高", "winsLosses": "的中 / 不的中", "totalPicks": "総予想数", "records": "実際の予想履歴", "awaiting": "精算待ち", "empty": "予想はまだ生成されていません。" },
+  "time": { "inProgress": "進行中", "remaining": "あと{hours}時間{minutes}分" }
+}
