@@ -191,17 +191,24 @@ export async function fetchOddsPapiEsportsGames() {
 
   for (const entry of tournamentSets) {
     const oddsFixtures = [];
+    let emptyOddsBatches = 0;
     for (const batch of entry.batches) {
       if (oddsRequestIndex > 0) await delay(1100);
       oddsRequestIndex += 1;
-      const response = await request("/odds-by-tournaments", {
-        tournamentIds: batch.map((item) => item.tournamentId).join(","),
-        bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
-        language: "en",
-        verbosity: "3",
-        oddsFormat: "decimal",
-      });
-      oddsFixtures.push(...asArray(response));
+      try {
+        const response = await request("/odds-by-tournaments", {
+          tournamentIds: batch.map((item) => item.tournamentId).join(","),
+          bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
+          language: "en",
+          verbosity: "3",
+          oddsFormat: "decimal",
+        });
+        oddsFixtures.push(...asArray(response));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes("(404)") && message.includes("FIXTURE_NOT_FOUND")) emptyOddsBatches += 1;
+        else throw error;
+      }
     }
     const markets = allMarkets.filter((market) => Number(market.sportId) === Number(entry.sport.sportId));
     const sportGames = oddsFixtures.filter((fixture) => {
@@ -226,6 +233,7 @@ export async function fetchOddsPapiEsportsGames() {
       fixtures_with_odds: oddsFixtures.length,
       games_in_window: sportGames.length,
       odds_request_batches: entry.batches.length,
+      empty_odds_batches: emptyOddsBatches,
     });
   }
 
