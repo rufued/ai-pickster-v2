@@ -10,6 +10,7 @@ import { EsportsGameLogo, LeagueBadge, LeagueLogo, TeamLogo } from "@/components
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { isEsportsSport, isMajorEsportsLeague, MAJOR_ESPORTS_LEAGUES } from "@/lib/esports-leagues";
 
 const sports = ["all", "soccer", "baseball", "basketball", "esports"] as const;
 type SportFilter = (typeof sports)[number];
@@ -21,10 +22,7 @@ const configuredLeagues: Record<Exclude<SportFilter, "all" | "esports">, string[
 };
 const esportsGames = ["esports_lol", "esports_dota2", "esports_cs2", "esports_valorant"] as const;
 const configuredEsportsLeagues: Record<string, string[]> = {
-  esports_lol: ["LCK", "LPL", "LEC", "LCS", "LCK CL"],
-  esports_dota2: [],
-  esports_cs2: [],
-  esports_valorant: [],
+  ...MAJOR_ESPORTS_LEAGUES,
 };
 
 export function GameOddsBoard({ games, recentSportCounts, recentGameCounts, recentLeagueCounts, activityDays, unavailableSportGroups }: { games: Game[]; recentSportCounts: Record<string, number>; recentGameCounts: Record<string, number>; recentLeagueCounts: Record<string, number>; activityDays: number; unavailableSportGroups: string[] }) {
@@ -39,7 +37,8 @@ export function GameOddsBoard({ games, recentSportCounts, recentGameCounts, rece
     () =>
       games.filter((game) => {
         const gameDate = game.startTime.slice(0, 10);
-        return (sport === "all" || game.sportKey === sport) && (esportsGame === "all" || game.sportCode === esportsGame) && (league === "all" || game.league === league) && (!date || gameDate === date) && (status === "all" || game.status === status);
+        const supportedLeague = !isEsportsSport(game.sportCode) || isMajorEsportsLeague(game.sportCode, game.league);
+        return supportedLeague && (sport === "all" || game.sportKey === sport) && (esportsGame === "all" || game.sportCode === esportsGame) && (league === "all" || game.league === league) && (!date || gameDate === date) && (status === "all" || game.status === status);
       }),
     [date, esportsGame, games, league, sport, status],
   );
@@ -48,7 +47,7 @@ export function GameOddsBoard({ games, recentSportCounts, recentGameCounts, rece
     if (sport === "all") return [];
     if (sport === "esports") {
       if (esportsGame === "all") return [];
-      const collected = games.filter((game) => game.sportCode === esportsGame).map((game) => game.league);
+      const collected = games.filter((game) => game.sportCode === esportsGame && isMajorEsportsLeague(game.sportCode, game.league)).map((game) => game.league);
       return [...new Set([...(configuredEsportsLeagues[esportsGame] ?? []), ...collected])];
     }
     const collected = games.filter((game) => game.sportKey === sport).map((game) => game.league);

@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
 import { getLiveData } from "@/lib/live-data";
 import { getTranslations } from "@/i18n/server";
 import { SPORTS } from "@/lib/odds-api";
+import { isEsportsSport, isMajorEsportsLeague } from "@/lib/esports-leagues";
 
 const SEASON_ACTIVITY_DAYS = 14;
 
@@ -49,7 +50,8 @@ export default async function GamesPage() {
   const upcomingGames = games
     .filter((game) => {
       const startTime = new Date(game.startTime).getTime();
-      return game.status === "scheduled" && Number.isFinite(startTime) && startTime >= now;
+      const supportedLeague = !isEsportsSport(game.sportCode) || isMajorEsportsLeague(game.sportCode, game.league);
+      return supportedLeague && game.status === "scheduled" && Number.isFinite(startTime) && startTime >= now;
     })
     .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime());
   return (
