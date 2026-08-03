@@ -19,7 +19,7 @@ export default async function GamesPage() {
   const recentSportCounts = games.reduce<Record<string, number>>((counts, game) => {
     const startTime = new Date(game.startTime).getTime();
     if (Number.isFinite(startTime) && startTime >= activityCutoff) {
-      counts[game.sport] = (counts[game.sport] ?? 0) + 1;
+      counts[game.sportKey] = (counts[game.sportKey] ?? 0) + 1;
     }
     return counts;
   }, {});

@@ -56,6 +56,18 @@ function pickStatus(pick: Row, game?: Row): BetStatus {
   return "scheduled";
 }
 
+function sportKey(value: unknown): Game["sportKey"] {
+  const sport = text(value);
+  if (sport.startsWith("soccer_")) return "soccer";
+  if (sport.startsWith("baseball_")) return "baseball";
+  if (sport.startsWith("basketball_")) return "basketball";
+  if (sport.startsWith("esports_")) return "esports";
+  if (sport.startsWith("volleyball_")) return "volleyball";
+  if (sport.startsWith("icehockey_")) return "hockey";
+  if (sport.startsWith("americanfootball_")) return "american-football";
+  return "other";
+}
+
 function selectedSide(value: unknown) {
   if (value === "home_win") return "home" as const;
   if (value === "away_win") return "away" as const;
@@ -175,6 +187,7 @@ export async function getLiveData(): Promise<LiveData> {
     return {
       id,
       sport: sportGroup(game.sport),
+      sportKey: sportKey(game.sport),
       league: text(game.sport_label, text(game.sport)),
       homeTeam: text(game.home_team),
       awayTeam: text(game.away_team),

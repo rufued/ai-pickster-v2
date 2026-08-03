@@ -11,12 +11,13 @@ import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
-const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "E스포츠"];
+const sports = ["all", "soccer", "baseball", "basketball", "esports"] as const;
+type SportFilter = (typeof sports)[number];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
 
 export function GameOddsBoard({ games, recentSportCounts, activityDays, unavailableSportGroups }: { games: Game[]; recentSportCounts: Record<string, number>; activityDays: number; unavailableSportGroups: string[] }) {
   const { t } = useI18n();
-  const [sport, setSport] = useState<(typeof sports)[number]>("전체");
+  const [sport, setSport] = useState<SportFilter>("all");
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
 
@@ -24,7 +25,7 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
     () =>
       games.filter((game) => {
         const gameDate = game.startTime.slice(0, 10);
-        return (sport === "전체" || game.sport === sport) && (!date || gameDate === date) && (status === "all" || game.status === status);
+        return (sport === "all" || game.sportKey === sport) && (!date || gameDate === date) && (status === "all" || game.status === status);
       }),
     [date, games, sport, status],
   );
@@ -42,7 +43,7 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
         <div className="flex gap-2 overflow-x-auto pb-1">
           {sports.map((item) => (
             (() => {
-              const sourceUnavailable = unavailableSportGroups.includes(sportGroup(item));
+              const sourceUnavailable = unavailableSportGroups.includes(item);
               const inactive = (recentSportCounts[item] ?? 0) === 0;
               return (
             <button
@@ -55,7 +56,7 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
               )}
             >
               <span>{sportLabel(item, t)}</span>
-              {item !== "?꾩껜" && (sourceUnavailable || inactive) ? <span className={clsx("ms-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-black", sport === item ? "bg-white/20 text-white" : sourceUnavailable ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-500")}>{sourceUnavailable ? t("games.sourceUnavailable") : t("games.offSeason")}</span> : null}
+              {item !== "all" && (sourceUnavailable || inactive) ? <span className={clsx("ms-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-black", sport === item ? "bg-white/20 text-white" : sourceUnavailable ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-500")}>{sourceUnavailable ? t("games.sourceUnavailable") : t("games.offSeason")}</span> : null}
             </button>
               );
             })()
@@ -197,20 +198,17 @@ function statusLabel(status: "all" | GameStatus, t: (key: string) => string) {
 }
 
 function sportLabel(sport: string, t: (key: string) => string) {
+  if (sport === "all") return t("common.all");
+  if (sport === "soccer") return t("sports.soccer");
+  if (sport === "baseball") return t("sports.baseball");
+  if (sport === "basketball") return t("sports.basketball");
+  if (sport === "esports") return t("sports.esports");
   if (sport === "전체") return t("common.all");
   if (sport === "축구") return t("sports.soccer");
   if (sport === "야구") return t("sports.baseball");
   if (sport === "농구") return t("sports.basketball");
   if (sport.toLowerCase().includes("스포츠")) return t("sports.esports");
   return sport;
-}
-
-function sportGroup(sport: string) {
-  if (sport === "異뺢뎄") return "soccer";
-  if (sport === "?쇨뎄") return "baseball";
-  if (sport === "?띻뎄") return "basketball";
-  if (sport.toLowerCase().includes("?ㅽ룷痢?")) return "esports";
-  return "all";
 }
 
 function pickSide(pick: string, game: Game): "home" | "draw" | "away" | "other" {

@@ -7,6 +7,7 @@ export type GamePrediction = { aiId: AiId; pick: string; confidence: number; rea
 export type Game = {
   id: string;
   sport: SportName;
+  sportKey: "soccer" | "baseball" | "basketball" | "esports" | "volleyball" | "hockey" | "american-football" | "other";
   league: string;
   homeTeam: string;
   awayTeam: string;
