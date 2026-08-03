@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { AI_MODELS, getPickFromModel } from "@/lib/ai-picks";
 import { generateParlays } from "@/lib/parlay";
+import { logCronRun } from "@/lib/cron-log";
 import { confidenceStake, getAiBalances, DEFAULT_AI_BALANCE } from "@/lib/stake";
 
 const MAX_GAMES_PER_RUN = 5; // 한 번 실행할 때 처리할 경기 수 (API 비용/시간 제한용)
@@ -280,6 +281,7 @@ export async function GET(request) {
       candidateReconciliation = { checked: 0, linked: 0, promoted_to_single: 0, promoted_from_current_run: 0, status: "error", error: err instanceof Error ? err.message : String(err) };
     }
 
+    await logCronRun("picks", "success", startedAt, { games_processed: games.length, single_bets_created: singleBetsCreated, parlay_bets_created: Number(parlays?.created ?? 0) });
     return Response.json({
       success: true,
       games_processed: games.length,
@@ -309,6 +311,7 @@ export async function GET(request) {
       finished_at: new Date().toISOString(),
     });
   } catch (err) {
+    await logCronRun("picks", "error", startedAt, { error: err.message });
     return Response.json(
       {
         success: false,

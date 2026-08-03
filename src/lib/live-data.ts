@@ -144,7 +144,7 @@ export async function getLiveData(): Promise<LiveData> {
     const config = configFor(model);
     return {
       id: model as AiProfile["id"],
-      name: config?.name ?? model,
+      name: text(asset.display_name, config?.name ?? model),
       provider: config?.provider ?? "AI",
       initials: (config?.name ?? model).slice(0, 2).toUpperCase(),
       color: config?.colorHex ?? "#64748B",

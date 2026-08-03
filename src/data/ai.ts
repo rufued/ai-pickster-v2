@@ -1,4 +1,4 @@
-export type AiId = "gpt" | "gemini" | "claude" | "deepseek" | "grok";
+export type AiId = "gpt" | "gemini" | "claude" | "deepseek" | "grok" | "human";
 
 export type AiProfile = {
   id: AiId;

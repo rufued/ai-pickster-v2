@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { ADMIN_COOKIE, validAdminToken } from "@/lib/admin-auth";
 
 const COUNTRY_LOCALES: Partial<Record<string, Locale>> = {
   KR: "ko",
@@ -28,7 +29,12 @@ function detectedLocale(request: NextRequest): Locale {
   return COUNTRY_LOCALES[country?.toUpperCase() ?? ""] ?? defaultLocale;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/admin") && request.nextUrl.pathname !== "/admin/login") {
+    if (!await validAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+  }
   const locale = detectedLocale(request);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-app-locale", locale);

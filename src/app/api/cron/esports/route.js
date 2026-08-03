@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { fetchOddsPapiEsportsGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isMajorEsportsLeague } from "@/lib/esports-leagues";
+import { logCronRun } from "@/lib/cron-log";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,7 @@ export async function GET(request) {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
+    await logCronRun("esports", "success", startedAt, { fetched: result.games.length, by_sport: bySport, api_requests: result.diagnostics.api_requests });
     return NextResponse.json({
       success: true,
       fetched: result.games.length,
@@ -89,6 +91,7 @@ export async function GET(request) {
       finished_at: new Date().toISOString(),
     });
   } catch (error) {
+    await logCronRun("esports", "error", startedAt, { error: error instanceof Error ? error.message : "Unknown error" });
     console.error("OddsPapi esports cron failed", error);
     return NextResponse.json(
       {

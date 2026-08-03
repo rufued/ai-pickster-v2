@@ -34,11 +34,13 @@ export default async function Home() {
     .filter((bet) => bet.status === "won" && activeAiIds.has(bet.aiId))
     .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime())
     .slice(0, 3);
-  const activeRankings = rankings.filter((item) => item.totalBets > 0);
-  const waitingRankings = rankings.filter((item) => item.totalBets === 0);
+  const aiRankings = rankings.filter((item) => item.aiId !== "human");
+  const operator = rankings.find((item) => item.aiId === "human");
+  const activeRankings = aiRankings.filter((item) => item.totalBets > 0);
+  const waitingRankings = aiRankings.filter((item) => item.totalBets === 0);
   const leader = activeRankings[0];
   const leaderName = leader ? ais.find((ai) => ai.id === leader.aiId)?.name ?? leader.aiId : t("common.noData");
-  const totalNetProfit = rankings.reduce((sum, item) => sum + item.totalProfit, 0);
+  const totalNetProfit = aiRankings.reduce((sum, item) => sum + item.totalProfit, 0);
   const featuredGame = upcomingGames.find((game) => game.predictions.length > 0) ?? upcomingGames[0];
 
   return (
@@ -63,7 +65,7 @@ export default async function Home() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 p-5 sm:p-6"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">AI vs AI</p><h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">{t("home.ranking")}</h2><p className="mt-1 text-sm font-medium text-slate-500">{t("home.rankingDesc")}</p></div><Link href="/records" className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{t("home.allRecords")}<ArrowUpRight size={14} /></Link></header>
           {rankings.length ? (
-            <div className="p-3 sm:p-5"><div className="space-y-2">{activeRankings.map((row, index) => <RankingRow key={row.aiId} row={row} index={index} aiColor={ais.find((ai) => ai.id === row.aiId)?.color ?? "#64748b"} labels={{ assets: t("home.assets"), winRate: t("home.winRate"), bets: t("home.bets") }} />)}</div>{waitingRankings.length ? <div className="mt-5 border-t border-slate-200 pt-4"><p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400">{t("common.pending")}</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{waitingRankings.map((row) => <WaitingRow key={row.aiId} row={row} pending={t("common.pending")} assets={t("home.assets")} />)}</div></div> : null}</div>
+            <div className="p-3 sm:p-5"><div className="space-y-2">{activeRankings.map((row, index) => <RankingRow key={row.aiId} row={row} index={index} aiColor={ais.find((ai) => ai.id === row.aiId)?.color ?? "#64748b"} labels={{ assets: t("home.assets"), winRate: t("home.winRate"), bets: t("home.bets") }} />)}</div>{waitingRankings.length ? <div className="mt-5 border-t border-slate-200 pt-4"><p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400">{t("common.pending")}</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{waitingRankings.map((row) => <WaitingRow key={row.aiId} row={row} pending={t("common.pending")} assets={t("home.assets")} />)}</div></div> : null}{operator ? <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2"><div className="flex items-center gap-2"><span className="text-xs font-black text-slate-400">+ 운영자도 참여 중</span><AiPill aiId="human" compact /></div><span className="text-xs font-bold text-slate-500">{currency(operator.currentBankroll)} · {operator.totalBets} bets</span></div> : null}</div>
           ) : <Empty text={t("home.noAssets")} />}
         </section>
 

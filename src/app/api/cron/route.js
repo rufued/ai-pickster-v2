@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { fetchAllGames, LOOKAHEAD_HOURS } from "@/lib/odds-api";
 import { getOddsPapiAccountUsage } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
+import { logCronRun } from "@/lib/cron-log";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,7 @@ export async function GET(request) {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
+    await logCronRun("games", "success", startedAt, { fetched: games.length, by_sport: bySport, sources });
     return NextResponse.json({
       success: true,
       fetched: games.length,
@@ -82,6 +84,7 @@ export async function GET(request) {
       finished_at: new Date().toISOString(),
     });
   } catch (error) {
+    await logCronRun("games", "error", startedAt, { error: error instanceof Error ? error.message : "Unknown error" });
     console.error("Cron sync failed", error);
 
     return NextResponse.json(
