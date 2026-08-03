@@ -6,6 +6,11 @@ import { generateParlays } from "@/lib/parlay";
 const MAX_GAMES_PER_RUN = 5; // 한 번 실행할 때 처리할 경기 수 (API 비용/시간 제한용)
 const MAX_SINGLE_BETS_PER_AI_PER_DAY = 3;
 
+function isMissingColumn(error, column) {
+  const message = error?.message?.toLowerCase() ?? "";
+  return message.includes(column.toLowerCase()) && (message.includes("schema cache") || message.includes("does not exist") || error?.code === "PGRST204");
+}
+
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -41,7 +46,7 @@ async function getDailySingleCounts(supabase) {
   const dayStart = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
   let { data, error } = await supabase.from("picks").select("ai_model,is_single_bet").gte("created_at", dayStart).eq("is_single_bet", true);
   let supportsSingleFlag = true;
-  if (error?.message?.includes("schema cache")) {
+  if (isMissingColumn(error, "is_single_bet")) {
     supportsSingleFlag = false;
     ({ data, error } = await supabase.from("picks").select("ai_model").gte("created_at", dayStart));
   }
@@ -67,7 +72,7 @@ async function savePick(supabase, game, modelKey, pick, isSingleBet, supportsSin
   let { error } = await supabase.from("picks").insert(values);
 
   // Keep legacy moneyline generation available until the migration is applied.
-  if (error?.message?.includes("schema cache") && pick.market_type === "moneyline") {
+  if ((isMissingColumn(error, "market_type") || isMissingColumn(error, "line_value")) && pick.market_type === "moneyline") {
     const { market_type, line_value, ...legacyValues } = values;
     void market_type; void line_value;
     ({ error } = await supabase.from("picks").insert(legacyValues));
