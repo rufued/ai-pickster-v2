@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AiIdentity } from "@/components/ai/AiIdentity";
 import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { getBattleAnalyses } from "@/lib/battleAnalyses";
-import { formatDateTime } from "@/lib/format";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import type { AnalysisMatch } from "@/lib/types";
 
 type BattleCardProps = {
@@ -26,8 +26,8 @@ export function BattleCard({ match, featured = false }: BattleCardProps) {
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
             <LeagueBadge league={match.league} />
             <span>{match.sport}</span>
-            <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
-            <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
+            <span className="hidden sm:inline"><LocalDateTime value={match.startTime} /></span>
+            <span className="sm:hidden"><LocalDateTime value={match.startTime} mode="mobile" /></span>
           </div>
           <h3 className="mt-3 break-words text-2xl font-extrabold text-slate-900">
             <TeamMatchup homeTeam={homeTeam} awayTeam={awayTeam} />

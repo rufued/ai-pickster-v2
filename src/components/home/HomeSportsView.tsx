@@ -12,7 +12,8 @@ import { CombinationCard } from "@/components/combinations/CombinationCard";
 import { DecisionProcessCard } from "@/components/decision/DecisionProcessCard";
 import { FeaturedMatches } from "@/components/home/FeaturedMatches";
 import { LeagueBadge, TeamMatchup, TeamName } from "@/components/sports/SportsBrand";
-import { formatDateTime, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getSportFromParam, normalizeSportCategoryId, sportCategories } from "@/lib/sports";
 import type { AICompetitor, AIDecisionProcess, AnalysisMatch, Combination, FeaturedMatch, Match } from "@/lib/types";
 
@@ -132,8 +133,8 @@ function ApiUpcomingMatchList({ title, matches }: { title: string; matches: Matc
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
               <span>{match.sport}</span>
               <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
-              <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
-              <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
+              <span className="hidden sm:inline"><LocalDateTime value={match.startTime} /></span>
+              <span className="sm:hidden"><LocalDateTime value={match.startTime} mode="mobile" /></span>
             </div>
 
             <div className="mt-4 grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
@@ -227,8 +228,8 @@ function UpcomingMatchList({ title, matches }: { title: string; matches: Analysi
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
                   <span>{match.sport}</span>
                   <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
-                  <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
-                  <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
+                  <span className="hidden sm:inline"><LocalDateTime value={match.startTime} /></span>
+                  <span className="sm:hidden"><LocalDateTime value={match.startTime} mode="mobile" /></span>
                 </div>
                 <h3 className="mt-3 break-words text-xl font-black text-white">
                   <TeamMatchup homeTeam={match.homeTeam ?? match.match.split(" vs ")[0]} awayTeam={match.awayTeam ?? match.match.split(" vs ")[1] ?? ""} />

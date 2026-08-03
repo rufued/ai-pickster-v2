@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="border-t border-slate-200 bg-white py-8">
       <div className="container-shell flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-semibold text-slate-700">{SCOREHUB.name}</p>
-        <p>{SCOREHUB.slogan} · AI 조합, 정산, ROI 랭킹 중심</p>
+        <p>{SCOREHUB.slogan} · AI 조합, 정산, ROI 랭킹 중심 · 팀 로고 제공: <a href="https://www.thesportsdb.com" target="_blank" rel="noreferrer" className="font-bold underline">TheSportsDB</a></p>
       </div>
     </footer>
   );

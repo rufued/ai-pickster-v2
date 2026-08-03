@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
-import { AiPill, DashboardShell, Metric, shortDateTime } from "@/components/scorehub/ScorehubPrimitives";
+import { AiPill, DashboardShell, Metric } from "@/components/scorehub/ScorehubPrimitives";
+import { TeamMatchup } from "@/components/sports/SportsBrand";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getLiveData } from "@/lib/live-data";
 
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -10,8 +12,9 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <DashboardShell title={`${game.homeTeam} vs ${game.awayTeam}`} eyebrow={`${game.sport} · ${game.league}`} description="경기 정보, AI별 예측과 근거, 실제 결과를 확인합니다.">
+      <div className="panel p-5 text-lg font-black text-slate-950"><TeamMatchup homeTeam={game.homeTeam} awayTeam={game.awayTeam} /></div>
       <section className="grid gap-3 md:grid-cols-4">
-        <Metric label="경기시간" value={shortDateTime(game.startTime)} />
+        <Metric label="경기시간" value={<LocalDateTime value={game.startTime} />} />
         <Metric label="경기장" value={game.venue} />
         <Metric label="상태" value={game.status} />
         <Metric label="실제 결과" value={game.result ?? "대기"} />

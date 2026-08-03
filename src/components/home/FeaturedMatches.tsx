@@ -2,7 +2,7 @@
 
 import { Dumbbell, Gamepad2 } from "lucide-react";
 import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
-import { formatDateTime } from "@/lib/format";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import type { FeaturedMatch } from "@/lib/types";
 
 type FeaturedMatchesProps = {
@@ -35,8 +35,8 @@ export function FeaturedMatches({ matches, contained = true }: FeaturedMatchesPr
               </h3>
               <div className="mt-4 flex min-w-0 items-center gap-2 text-sm text-slate-400">
                 <Gamepad2 size={16} className="text-accent-green" />
-                <span className="hidden sm:inline">{formatDateTime(match.startTime)} 시작</span>
-                <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")} 시작</span>
+                <span className="hidden sm:inline"><LocalDateTime value={match.startTime} /> 시작</span>
+                <span className="sm:hidden"><LocalDateTime value={match.startTime} mode="mobile" /> 시작</span>
               </div>
             </article>
           );

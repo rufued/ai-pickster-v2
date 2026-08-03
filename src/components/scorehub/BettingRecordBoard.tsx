@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import type { AiBet, BetLeg } from "@/data/bets";
 import type { AiProfile } from "@/data/ai";
 import { ComingSoonBadge } from "@/components/ai/AiIdentity";
-import { AiPill, StatusBadge, currency, shortDateTime, signedCurrency } from "./ScorehubPrimitives";
+import { TeamName as SportsTeamName } from "@/components/sports/SportsBrand";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
+import { AiPill, StatusBadge, currency, signedCurrency } from "./ScorehubPrimitives";
 
 export function BettingRecordBoard({ bets, ais }: { bets: AiBet[]; ais: AiProfile[] }) {
   const [selectedAi, setSelectedAi] = useState("all");
@@ -40,7 +42,7 @@ function RecordCard({ bet }: { bet: AiBet }) {
           <AiPill aiId={bet.aiId} />
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700">{bet.kind === "combo" ? "조합" : "단일"}</span>
         </div>
-        <Meta label="베팅시간" value={shortDateTime(bet.registeredAt)} />
+        <Meta label="베팅시간" value={<LocalDateTime value={bet.registeredAt} mode="mobile" />} />
         <Meta label="총배당" value={bet.totalOdds.toFixed(2)} strong />
         <StatusBadge status={bet.status} />
       </div>
@@ -81,10 +83,10 @@ function LegRow({ leg }: { leg: BetLeg }) {
 }
 
 function TeamName({ name, active }: { name: string; active: boolean }) {
-  return <span className={clsx("min-w-0 truncate rounded-md px-3 py-2 font-black", active ? "bg-blue-50 text-blue-800" : "bg-white text-slate-950")}>{name}</span>;
+  return <SportsTeamName team={name} size="sm" className={clsx("rounded-md px-3 py-2 font-black", active ? "bg-blue-50 text-blue-800" : "bg-white text-slate-950")} />;
 }
 
-function Meta({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function Meta({ label, value, strong }: { label: string; value: React.ReactNode; strong?: boolean }) {
   return <div><p className="text-[11px] font-black uppercase text-slate-500">{label}</p><p className={clsx("mt-0.5", strong ? "text-lg font-black text-blue-700" : "text-sm font-bold text-slate-700")}>{value}</p></div>;
 }
 

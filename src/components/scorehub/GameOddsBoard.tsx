@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Game, GameStatus, SportName } from "@/data/games";
 import { getAiName } from "@/services/scorehub";
-import { shortDateTime } from "./ScorehubPrimitives";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
+import { TeamLogo } from "@/components/sports/SportsBrand";
 
 const sports: Array<"전체" | SportName> = ["전체", "축구", "야구", "농구", "배구", "하키", "e스포츠"];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
@@ -101,7 +102,7 @@ function GameCard({ game }: { game: Game }) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-500">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{game.league}</span>
-          <span>{shortDateTime(game.startTime)}</span>
+          <LocalDateTime value={game.startTime} mode="mobile" />
           <span>{game.sport}</span>
         </div>
         <span className={clsx("rounded-full px-2.5 py-1 text-xs font-black", game.status === "live" ? "bg-amber-50 text-amber-700" : game.status === "final" ? "bg-slate-100 text-slate-700" : "bg-blue-50 text-blue-700")}>
@@ -147,7 +148,7 @@ function TeamOddsCard({ team, odds, picks, side }: { team: string; odds?: number
     <div className={clsx("rounded-lg border p-4", hasPick ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white")}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className={clsx("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black", side === "home" ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-800")}>{initials(team)}</span>
+          <TeamLogo team={team} size="lg" />
           <div className="min-w-0">
             <p className="truncate text-lg font-black text-slate-950">{team}</p>
             <p className="text-xs font-bold uppercase text-slate-500">{side}</p>
@@ -172,10 +173,6 @@ function CompactOdd({ label, value, active }: { label: string; value?: number | 
 
 function statusLabel(status: "all" | GameStatus) {
   return status === "all" ? "전체" : status === "scheduled" ? "예정" : status === "live" ? "진행중" : "종료";
-}
-
-function initials(team: string) {
-  return team.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 }
 
 function pickSide(pick: string, game: Game): "home" | "draw" | "away" | "other" {

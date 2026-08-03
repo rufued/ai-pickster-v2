@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AiPill, DashboardShell, Metric, StatusBadge, currency, shortDateTime, signedCurrency, timeUntil } from "@/components/scorehub/ScorehubPrimitives";
+import { AiPill, DashboardShell, Metric, StatusBadge, currency, signedCurrency, timeUntil } from "@/components/scorehub/ScorehubPrimitives";
+import { TeamMatchup } from "@/components/sports/SportsBrand";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getLiveData } from "@/lib/live-data";
 
 export default async function PickDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,7 +36,7 @@ export default async function PickDetailPage({ params }: { params: Promise<{ id:
             <Link key={`${bet.id}-${leg.gameId}`} href={`/games/${leg.gameId}`} className="grid gap-2 p-4 hover:bg-slate-50 md:grid-cols-[1fr_140px_120px_100px] md:items-center">
               <div>
                 <p className="text-xs font-bold text-slate-500">{leg.sport} · {leg.league}</p>
-                <p className="mt-1 font-black text-slate-950">{leg.homeTeam} vs {leg.awayTeam}</p>
+              <p className="mt-1 font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /></p>
               </div>
               <p className="font-bold text-blue-700">{leg.selection}</p>
               <p className="font-black text-slate-900">{leg.odds.toFixed(2)}</p>
@@ -44,8 +46,8 @@ export default async function PickDetailPage({ params }: { params: Promise<{ id:
         </div>
       </section>
       <section className="grid gap-3 md:grid-cols-3">
-        <Metric label="등록시각" value={shortDateTime(bet.registeredAt)} />
-        <Metric label="경기시작시각" value={shortDateTime(bet.startsAt)} />
+        <Metric label="등록시각" value={<LocalDateTime value={bet.registeredAt} />} />
+        <Metric label="경기시작시각" value={<LocalDateTime value={bet.startsAt} />} />
         <Metric label="경기시작까지" value={timeUntil(bet.startsAt)} />
       </section>
     </DashboardShell>

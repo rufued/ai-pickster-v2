@@ -1,11 +1,13 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { TeamMatchup } from "@/components/sports/SportsBrand";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getAi, getAiColor, getAiName } from "@/services/scorehub";
 import type { AiBet } from "@/data/bets";
 
 export const currency = (value: number) =>
-  `${value < 0 ? "-" : ""}${Math.abs(value).toLocaleString("ko-KR", { maximumFractionDigits: 0 })} SHC`;
+  `${value < 0 ? "-" : ""}$${Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
 export const signedCurrency = (value: number) => `${value > 0 ? "+" : ""}${currency(value)}`;
 export const percent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
@@ -41,7 +43,7 @@ export function Section({ title, action, href, children }: { title: string; acti
   );
 }
 
-export function Metric({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "positive" | "negative" }) {
+export function Metric({ label, value, tone = "neutral" }: { label: string; value: ReactNode; tone?: "neutral" | "positive" | "negative" }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4">
       <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
@@ -85,14 +87,14 @@ export function BetCard({ bet }: { bet: AiBet }) {
       </div>
       <div className="mt-4">
         <p className="text-sm font-bold text-slate-500">{bet.kind === "combo" ? `${bet.legs.length}폴더 조합` : "단폴더"}</p>
-        <h3 className="mt-1 text-lg font-black text-slate-950">{firstLeg ? `${firstLeg.homeTeam} vs ${firstLeg.awayTeam}` : "-"}</h3>
+        <h3 className="mt-1 text-lg font-black text-slate-950">{firstLeg ? <TeamMatchup homeTeam={firstLeg.homeTeam} awayTeam={firstLeg.awayTeam} compact /> : "-"}</h3>
         <p className="mt-2 text-sm font-semibold text-blue-700">{firstLeg?.selection}</p>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <Mini label="총 배당" value={bet.totalOdds.toFixed(2)} />
         <Mini label="배팅금액" value={currency(bet.stake)} />
         <Mini label="예상수익" value={currency(bet.potentialProfit)} />
-        <Mini label="등록시간" value={shortDateTime(bet.registeredAt)} />
+        <Mini label="등록시간" value={<LocalDateTime value={bet.registeredAt} mode="mobile" />} />
       </div>
       <div className="mt-4 flex items-center justify-between gap-3">
         <p className="text-xs font-bold text-slate-500">시작 {timeUntil(bet.startsAt)}</p>
@@ -104,7 +106,7 @@ export function BetCard({ bet }: { bet: AiBet }) {
   );
 }
 
-function Mini({ label, value }: { label: string; value: string }) {
+function Mini({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-md bg-slate-50 px-3 py-2">
       <p className="text-[11px] font-bold text-slate-500">{label}</p>

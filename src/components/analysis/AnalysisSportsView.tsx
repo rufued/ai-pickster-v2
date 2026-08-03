@@ -8,7 +8,7 @@ import { AiIdentity } from "@/components/ai/AiIdentity";
 import { ConsensusBadge } from "@/components/analysis/ConsensusBadge";
 import { LeagueBadge, TeamMatchup } from "@/components/sports/SportsBrand";
 import { SportsSidebar } from "@/components/sports/SportsSidebar";
-import { formatDateTime } from "@/lib/format";
+import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getSportFromParam, normalizeSportCategoryId } from "@/lib/sports";
 import type { AnalysisMatch } from "@/lib/types";
 
@@ -43,8 +43,8 @@ export function AnalysisSportsView({ matches, initialSport = "all" }: AnalysisSp
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
                   <span>{match.sport}</span>
                   <LeagueBadge league={match.league} className="border-white/10 bg-white/5 text-slate-300" />
-                  <span className="hidden sm:inline">{formatDateTime(match.startTime)}</span>
-                  <span className="sm:hidden">{formatDateTime(match.startTime, "mobile")}</span>
+                  <span className="hidden sm:inline"><LocalDateTime value={match.startTime} /></span>
+                  <span className="sm:hidden"><LocalDateTime value={match.startTime} mode="mobile" /></span>
                 </div>
                 <h2 className="mt-3 text-xl font-black text-white">
                   <TeamMatchup homeTeam={match.homeTeam ?? match.match.split(" vs ")[0]} awayTeam={match.awayTeam ?? match.match.split(" vs ")[1] ?? ""} />

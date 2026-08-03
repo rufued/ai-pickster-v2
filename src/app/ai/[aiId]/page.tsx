@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
+import { TeamMatchup } from "@/components/sports/SportsBrand";
 import { getLiveData } from "@/lib/live-data";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function AiProfilePage({ params }: { params: Promise<{ aiId
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-lg font-black text-slate-950">실제 픽 기록</h2></div>
-          {aiBets.length ? <div className="divide-y divide-slate-100">{aiBets.map((bet) => <article key={bet.id} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"><div><p className="text-sm font-black text-slate-900">{bet.legs[0]?.homeTeam} vs {bet.legs[0]?.awayTeam}</p><p className="mt-1 text-xs font-bold text-blue-700">{bet.legs[0]?.selection}</p></div><span className="text-xs font-bold text-slate-500">{bet.status === "scheduled" ? "정산 대기중" : bet.status === "won" ? "적중" : "미적중"}</span><span className={bet.profit >= 0 ? "font-black text-emerald-600" : "font-black text-red-600"}>{signedCurrency(bet.profit)}</span></article>)}</div> : <EmptyState text="아직 생성된 픽이 없습니다." />}
+          {aiBets.length ? <div className="divide-y divide-slate-100">{aiBets.map((bet) => <article key={bet.id} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"><div><p className="text-sm font-black text-slate-900"><TeamMatchup homeTeam={bet.legs[0]?.homeTeam ?? ""} awayTeam={bet.legs[0]?.awayTeam ?? ""} compact /></p><p className="mt-1 text-xs font-bold text-blue-700">{bet.legs[0]?.selection}</p></div><span className="text-xs font-bold text-slate-500">{bet.status === "scheduled" ? "정산 대기중" : bet.status === "won" ? "적중" : "미적중"}</span><span className={bet.profit >= 0 ? "font-black text-emerald-600" : "font-black text-red-600"}>{signedCurrency(bet.profit)}</span></article>)}</div> : <EmptyState text="아직 생성된 픽이 없습니다." />}
         </section>
       </main>
     </div>
