@@ -156,6 +156,7 @@ export async function GET(request) {
           const stake = confidenceStake(pick.confidence, {
             balance: aiBalances.get(model.key) ?? DEFAULT_AI_BALANCE,
             seed: `${game.id}:${model.key}:${pick.market_type}:${pick.pick_type}`,
+            aiModel: model.key,
           });
           await savePick(supabase, game, model.key, pick, stake, isSingleBet, supportsSingleFlag);
           if (isSingleBet) {
@@ -199,7 +200,14 @@ export async function GET(request) {
         single_to_parlay_ratio: Number(parlays?.created ?? 0) > 0 ? `${singleBetsCreated}:${parlays.created}` : `${singleBetsCreated}:0`,
       },
       stake_summary: {
-        policy: { target_min: 1000, hard_min: 500, max: 10000, max_balance_fraction: 0.1, variation: "±12%" },
+        policy: {
+          balance_fraction: "1-8% before AI style adjustment",
+          hard_min: 200,
+          max: 10000,
+          max_balance_fraction: 0.1,
+          rounding: "$100 below $1,000, otherwise $250",
+          variation: "±10%",
+        },
         singles: singleStakesCreated,
         parlays: (parlays?.parlays ?? []).map((parlay) => ({ ai_model: parlay.ai_model, average_confidence: parlay.average_confidence, stake: parlay.stake })),
       },

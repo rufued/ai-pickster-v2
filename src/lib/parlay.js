@@ -47,7 +47,7 @@ function totalOdds(picks) {
 function stakeFor(picks, balance, seed) {
   const averageConfidence = picks.reduce((sum, pick) => sum + Number(pick.confidence), 0) / picks.length;
   return {
-    stake: confidenceStake(averageConfidence, { balance, seed }),
+    stake: confidenceStake(averageConfidence, { balance, seed, aiModel: picks[0]?.ai_model }),
     averageConfidence: Number(averageConfidence.toFixed(1)),
   };
 }
