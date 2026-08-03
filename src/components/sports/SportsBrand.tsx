@@ -12,12 +12,16 @@ type LogoTone = {
 };
 
 const logoCache = new Map<string, string | null>();
+const leagueLogoCache = new Map<string, string | null>();
 
 const leagueLogos: Record<string, LogoTone> = {
   MLB: { label: "MLB", bg: "#0A3161", fg: "#FFFFFF", ring: "#A7BDE3" },
   KBO: { label: "KBO", bg: "#002F6C", fg: "#FFFFFF", ring: "#9CB8E5" },
   NBA: { label: "NBA", bg: "#1D428A", fg: "#FFFFFF", ring: "#9AB8F7" },
   EPL: { label: "PL", bg: "#3D195B", fg: "#FFFFFF", ring: "#C8AAE6" },
+  "Premier League": { label: "PL", bg: "#3D195B", fg: "#FFFFFF", ring: "#C8AAE6" },
+  "UEFA Champions League": { label: "UCL", bg: "#071A52", fg: "#FFFFFF", ring: "#8EA6E8" },
+  "La Liga": { label: "LL", bg: "#FF4B44", fg: "#FFFFFF", ring: "#FFAAA6" },
   "K리그1": { label: "K1", bg: "#E31B23", fg: "#FFFFFF", ring: "#F2A0A4" },
   LCK: { label: "LCK", bg: "#111827", fg: "#D1D5DB", ring: "#9CA3AF" },
 };
@@ -123,9 +127,33 @@ function formatPoint(point?: number) {
   return point == null ? "" : String(point);
 }
 
+const officialLeagueLogos = new Set(["EPL", "Premier League", "UEFA Champions League", "La Liga", "NBA", "MLB"]);
+
 export function LeagueLogo({ league, size = "md" }: { league: string; size?: "sm" | "md" }) {
   const logo = leagueLogos[league] ?? fallbackLogo(league);
+  const [logoUrl, setLogoUrl] = useState<string | null | undefined>(() => leagueLogoCache.get(league));
   const sizeClass = size === "sm" ? "h-5 min-w-5 px-1 text-[8px]" : "h-6 min-w-6 px-1.5 text-[9px]";
+
+  useEffect(() => {
+    if (!officialLeagueLogos.has(league)) return;
+    if (leagueLogoCache.has(league)) {
+      setLogoUrl(leagueLogoCache.get(league));
+      return;
+    }
+    let active = true;
+    fetch(`/api/league-logo?name=${encodeURIComponent(league)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const url = typeof data.logo === "string" ? data.logo : null;
+        leagueLogoCache.set(league, url);
+        if (active) setLogoUrl(url);
+      })
+      .catch(() => {
+        leagueLogoCache.set(league, null);
+        if (active) setLogoUrl(null);
+      });
+    return () => { active = false; };
+  }, [league]);
 
   return (
     <span
@@ -134,7 +162,7 @@ export function LeagueLogo({ league, size = "md" }: { league: string; size?: "sm
       aria-label={`${league} logo`}
       title={league}
     >
-      {logo.label}
+      {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-contain" onError={() => { leagueLogoCache.set(league, null); setLogoUrl(null); }} /> : logo.label} {/* eslint-disable-line @next/next/no-img-element */}
     </span>
   );
 }

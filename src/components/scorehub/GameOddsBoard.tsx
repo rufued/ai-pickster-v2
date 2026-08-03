@@ -6,7 +6,7 @@ import { Fragment, useMemo, useState } from "react";
 import type { Game, GameStatus } from "@/data/games";
 import { getAiName } from "@/services/scorehub";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
-import { TeamLogo } from "@/components/sports/SportsBrand";
+import { LeagueBadge, LeagueLogo, TeamLogo } from "@/components/sports/SportsBrand";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -14,10 +14,17 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 const sports = ["all", "soccer", "baseball", "basketball", "esports"] as const;
 type SportFilter = (typeof sports)[number];
 const statuses: Array<"all" | GameStatus> = ["all", "scheduled", "live", "final"];
+const configuredLeagues: Record<Exclude<SportFilter, "all">, string[]> = {
+  soccer: ["Premier League", "UEFA Champions League", "La Liga"],
+  baseball: ["MLB"],
+  basketball: ["NBA"],
+  esports: ["LCK", "LPL", "LEC", "LCS", "LCK CL"],
+};
 
-export function GameOddsBoard({ games, recentSportCounts, activityDays, unavailableSportGroups }: { games: Game[]; recentSportCounts: Record<string, number>; activityDays: number; unavailableSportGroups: string[] }) {
+export function GameOddsBoard({ games, recentSportCounts, recentLeagueCounts, activityDays, unavailableSportGroups }: { games: Game[]; recentSportCounts: Record<string, number>; recentLeagueCounts: Record<string, number>; activityDays: number; unavailableSportGroups: string[] }) {
   const { t } = useI18n();
   const [sport, setSport] = useState<SportFilter>("all");
+  const [league, setLeague] = useState("all");
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
 
@@ -25,10 +32,16 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
     () =>
       games.filter((game) => {
         const gameDate = game.startTime.slice(0, 10);
-        return (sport === "all" || game.sportKey === sport) && (!date || gameDate === date) && (status === "all" || game.status === status);
+        return (sport === "all" || game.sportKey === sport) && (league === "all" || game.league === league) && (!date || gameDate === date) && (status === "all" || game.status === status);
       }),
-    [date, games, sport, status],
+    [date, games, league, sport, status],
   );
+
+  const leagueOptions = useMemo(() => {
+    if (sport === "all") return [];
+    const collected = games.filter((game) => game.sportKey === sport).map((game) => game.league);
+    return [...new Set([...configuredLeagues[sport], ...collected])];
+  }, [games, sport]);
 
   const grouped = useMemo(() => {
     return filteredGames.reduce<Record<string, Game[]>>((acc, game) => {
@@ -49,7 +62,7 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
             <button
               key={item}
               type="button"
-              onClick={() => setSport(item)}
+              onClick={() => { setSport(item); setLeague("all"); }}
               className={clsx(
                 "shrink-0 rounded-md border px-3 py-2 text-sm font-black transition",
                 sport === item ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50",
@@ -62,6 +75,34 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
             })()
           ))}
         </div>
+        {sport !== "all" ? (
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <div className="flex max-w-full gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              <button
+                type="button"
+                onClick={() => setLeague("all")}
+                className={clsx("shrink-0 rounded-full border px-3 py-1.5 text-xs font-black transition", league === "all" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50")}
+              >
+                {t("common.all")}
+              </button>
+              {leagueOptions.map((item) => {
+                const inactive = (recentLeagueCounts[`${sport}:${item}`] ?? 0) === 0;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setLeague(item)}
+                    className={clsx("inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-black transition", league === item ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50")}
+                  >
+                    <LeagueLogo league={item} size="sm" />
+                    <span>{leagueShortLabel(item)}</span>
+                    {inactive ? <span className={clsx("rounded-full px-1.5 py-0.5 text-[9px]", league === item ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>{t("games.offSeason")}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         <p className="mt-2 text-[11px] font-bold text-slate-500">{t("games.seasonBasis", { days: activityDays })}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-[180px_1fr]">
           <label className="grid gap-1 text-xs font-black uppercase text-slate-500">
@@ -90,7 +131,7 @@ export function GameOddsBoard({ games, recentSportCounts, activityDays, unavaila
         <Fragment key={league}>
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-black text-slate-950">{league}</h2>
+            <h2 className="text-lg font-black text-slate-950"><LeagueBadge league={league} /></h2>
             <span className="text-xs font-black text-slate-500">{t("common.gamesCount", { count: leagueGames.length })}</span>
           </div>
           <div className="grid gap-3">
@@ -122,7 +163,7 @@ function GameCard({ game }: { game: Game }) {
     <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-500">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{game.league}</span>
+          <LeagueBadge league={game.league} className="bg-slate-50" />
           <LocalDateTime value={game.startTime} mode="mobile" />
           <span>{sportLabel(game.sport, t)}</span>
         </div>
@@ -209,6 +250,12 @@ function sportLabel(sport: string, t: (key: string) => string) {
   if (sport === "농구") return t("sports.basketball");
   if (sport.toLowerCase().includes("스포츠")) return t("sports.esports");
   return sport;
+}
+
+function leagueShortLabel(league: string) {
+  if (league === "Premier League") return "EPL";
+  if (league === "UEFA Champions League") return "UCL";
+  return league;
 }
 
 function pickSide(pick: string, game: Game): "home" | "draw" | "away" | "other" {
