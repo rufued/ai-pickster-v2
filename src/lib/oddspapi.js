@@ -52,6 +52,14 @@ function tournamentSummary(item) {
   };
 }
 
+function chunks(items, size) {
+  const result = [];
+  for (let index = 0; index < items.length; index += size) {
+    result.push(items.slice(index, index + size));
+  }
+  return result;
+}
+
 function marketMetadata(markets) {
   return new Map(markets.map((market) => [String(market.marketId), market]));
 }
@@ -157,20 +165,22 @@ export async function fetchOddsPapiLolGames() {
     },
   };
 
-  const [marketsResponse, oddsResponse] = await Promise.all([
+  const tournamentBatches = chunks(selected, 5);
+  const [marketsResponse, ...oddsResponses] = await Promise.all([
     request("/markets", { language: "en" }),
-    request("/odds-by-tournaments", {
-      tournamentIds: selected.map((item) => item.tournamentId).join(","),
+    ...tournamentBatches.map((batch) => request("/odds-by-tournaments", {
+      tournamentIds: batch.map((item) => item.tournamentId).join(","),
       bookmakers: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
       language: "en",
       verbosity: "3",
       oddsFormat: "decimal",
-    }),
+    })),
   ]);
+  const oddsFixtures = oddsResponses.flatMap(asArray);
   const markets = asArray(marketsResponse).filter((market) => Number(market.sportId) === Number(sport.sportId));
   const now = Date.now();
   const until = now + ODDSPAPI_LOOKAHEAD_HOURS * 60 * 60 * 1000;
-  const games = asArray(oddsResponse).filter((fixture) => {
+  const games = oddsFixtures.filter((fixture) => {
     const start = new Date(fixture.startTime).getTime();
     return Number(fixture.statusId) === 0 && fixture.hasOdds !== false && start >= now && start <= until;
   }).map((fixture) => ({
@@ -189,8 +199,10 @@ export async function fetchOddsPapiLolGames() {
       sport: { sportId: sport.sportId, slug: sport.slug, sportName: sport.sportName },
       supported_tournaments: tournaments.map(tournamentSummary),
       active_tournaments: selected.map(tournamentSummary),
-      fixtures_with_odds: asArray(oddsResponse).length,
+      fixtures_with_odds: oddsFixtures.length,
       games_in_window: games.length,
+      odds_request_batches: tournamentBatches.length,
+      api_requests: 3 + tournamentBatches.length,
       bookmaker: process.env.ODDSPAPI_BOOKMAKER || DEFAULT_BOOKMAKER,
     },
   };
