@@ -35,7 +35,7 @@ export default async function PickDetailPage({ params }: { params: Promise<{ id:
           {bet.legs.map((leg) => (
             <Link key={`${bet.id}-${leg.gameId}`} href={`/games/${leg.gameId}`} className="grid gap-2 p-4 hover:bg-slate-50 md:grid-cols-[1fr_140px_120px_100px] md:items-center">
               <div>
-                <p className="text-xs font-bold text-slate-500">{leg.sport} · {leg.league}</p>
+                <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-500"><span>{leg.sport} · {leg.league}</span><span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-700">{leg.market}</span></p>
               <p className="mt-1 font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></p>
               </div>
               <p className="font-bold text-blue-700">{leg.selection}</p>

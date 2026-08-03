@@ -26,9 +26,17 @@ export async function GET(request) {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
-    const { error } = await supabaseAdmin
+    let { error } = await supabaseAdmin
       .from("games")
       .upsert(games, { onConflict: "id" });
+
+    if (error?.message?.includes("schema cache")) {
+      const legacyGames = games.map(({ home_spread_point, away_spread_point, home_spread_odds, away_spread_odds, total_point, over_odds, under_odds, ...game }) => {
+        void home_spread_point; void away_spread_point; void home_spread_odds; void away_spread_odds; void total_point; void over_odds; void under_odds;
+        return game;
+      });
+      ({ error } = await supabaseAdmin.from("games").upsert(legacyGames, { onConflict: "id" }));
+    }
 
     if (error) {
       throw error;

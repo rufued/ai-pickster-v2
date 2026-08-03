@@ -37,22 +37,25 @@ async function hasExistingPicks(supabase, gameId) {
 }
 
 async function savePick(supabase, game, modelKey, pick) {
-  const oddsUsed =
-    pick.pick_type === "home_win"
-      ? game.home_odds
-      : pick.pick_type === "away_win"
-        ? game.away_odds
-        : game.draw_odds;
-
-  const { error } = await supabase.from("picks").insert({
+  const values = {
     game_id: game.id,
     ai_model: modelKey,
+    market_type: pick.market_type,
     pick_type: pick.pick_type,
+    line_value: pick.line_value,
     pick_label: pick.pick_label,
     confidence: pick.confidence,
     analysis: pick.analysis,
-    odds_used: oddsUsed ?? null,
-  });
+    odds_used: pick.odds_used,
+  };
+  let { error } = await supabase.from("picks").insert(values);
+
+  // Keep legacy moneyline generation available until the migration is applied.
+  if (error?.message?.includes("schema cache") && pick.market_type === "moneyline") {
+    const { market_type, line_value, ...legacyValues } = values;
+    void market_type; void line_value;
+    ({ error } = await supabase.from("picks").insert(legacyValues));
+  }
 
   if (error) throw new Error(`Failed to save pick: ${error.message}`);
 }

@@ -49,6 +49,28 @@ function getResult(homeScore, awayScore) {
   return "draw";
 }
 
+export function settlePickOutcome(pick, game) {
+  const market = pick.market_type ?? (pick.pick_type?.includes("spread") ? "spread" : ["over", "under"].includes(pick.pick_type) ? "total" : "moneyline");
+  if (market === "moneyline") return pick.pick_type === game.result;
+
+  const homeScore = Number(game.home_score);
+  const awayScore = Number(game.away_score);
+  const line = Number(pick.line_value);
+  if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || !Number.isFinite(line)) {
+    throw new Error(`Pick ${pick.id} is missing a final score or line_value`);
+  }
+
+  let margin;
+  if (pick.pick_type === "home_spread") margin = homeScore + line - awayScore;
+  else if (pick.pick_type === "away_spread") margin = awayScore + line - homeScore;
+  else {
+    const difference = homeScore + awayScore - line;
+    margin = pick.pick_type === "over" ? difference : -difference;
+  }
+  if (margin === 0) return null;
+  return margin > 0;
+}
+
 async function fetchCompletedScores(sport, apiKey) {
   const params = new URLSearchParams({ apiKey, daysFrom: "3" });
   const response = await fetch(
@@ -115,7 +137,7 @@ export async function settlePicks() {
   const supabase = getAdminClient();
   const { data: finishedGames, error: gamesError } = await supabase
     .from("games")
-    .select("id,result")
+    .select("id,result,home_score,away_score")
     .eq("status", "finished")
     .not("result", "is", null);
 
@@ -127,7 +149,7 @@ export async function settlePicks() {
     return { finished_games: 0, picks_settled: 0, wins: 0, losses: 0 };
   }
 
-  const resultByGame = new Map(finishedGames.map((game) => [game.id, game.result]));
+  const gameById = new Map(finishedGames.map((game) => [game.id, game]));
   const { data: picks, error: picksError } = await supabase
     .from("picks")
     .select("*")
@@ -141,18 +163,19 @@ export async function settlePicks() {
   const settledAt = new Date().toISOString();
   let wins = 0;
   let losses = 0;
+  let pushes = 0;
   let picksSettled = 0;
 
   for (const pick of picks ?? []) {
-    const isCorrect = pick.pick_type === resultByGame.get(pick.game_id);
+    const isCorrect = settlePickOutcome(pick, gameById.get(pick.game_id));
     const stake = Number(pick.stake);
     const odds = Number(pick.odds_used);
-    const pnl = isCorrect ? stake * (odds - 1) : -stake;
+    const pnl = isCorrect === null ? 0 : isCorrect ? stake * (odds - 1) : -stake;
 
     if (
       pick.stake === null ||
       !Number.isFinite(stake) ||
-      (isCorrect && (pick.odds_used === null || !Number.isFinite(odds)))
+      (isCorrect === true && (pick.odds_used === null || !Number.isFinite(odds)))
     ) {
       throw new Error(`Pick ${pick.id} has an invalid stake or odds_used`);
     }
@@ -173,7 +196,8 @@ export async function settlePicks() {
     if (data?.length) {
       picksSettled += 1;
       if (isCorrect) wins += 1;
-      else losses += 1;
+      else if (isCorrect === false) losses += 1;
+      else pushes += 1;
     }
   }
 
@@ -182,6 +206,7 @@ export async function settlePicks() {
     picks_settled: picksSettled,
     wins,
     losses,
+    pushes,
   };
 }
 
@@ -207,7 +232,7 @@ export async function settleParlays() {
   if (legsError) throw new Error(`Failed to fetch parlay legs: ${legsError.message}`);
   const gameIds = [...new Set((legs ?? []).map((leg) => leg.game_id))];
   const { data: picks, error: picksError } = gameIds.length
-    ? await supabase.from("picks").select("game_id,ai_model,is_correct,settled_at").in("game_id", gameIds)
+    ? await supabase.from("picks").select("game_id,ai_model,is_correct,settled_at,odds_used").in("game_id", gameIds)
     : { data: [], error: null };
 
   if (picksError) throw new Error(`Failed to fetch parlay picks: ${picksError.message}`);
@@ -221,19 +246,22 @@ export async function settleParlays() {
     const parlayLegs = (legs ?? []).filter((leg) => leg.parlay_id === parlay.id);
     const legPicks = parlayLegs.map((leg) => pickByKey.get(`${leg.ai_model}:${leg.game_id}`));
     const hasLost = legPicks.some((pick) => pick?.settled_at && pick.is_correct === false);
-    const allWon = legPicks.length >= 2 && legPicks.every((pick) => pick?.settled_at && pick.is_correct === true);
-    if (!hasLost && !allWon) continue;
+    const allResolved = legPicks.length >= 2 && legPicks.every((pick) => pick?.settled_at);
+    if (!hasLost && !allResolved) continue;
 
-    const won = allWon;
+    const won = !hasLost && allResolved;
     const stake = Number(parlay.stake);
     const totalOdds = Number(parlay.total_odds);
     if (!Number.isFinite(stake) || !Number.isFinite(totalOdds)) {
       throw new Error(`Parlay ${parlay.id} has an invalid stake or total_odds`);
     }
-    const pnl = won ? stake * (totalOdds - 1) : -stake;
+    const effectiveOdds = won
+      ? legPicks.reduce((product, pick) => product * (pick.is_correct === null ? 1 : Number(pick.odds_used)), 1)
+      : totalOdds;
+    const pnl = won ? stake * (effectiveOdds - 1) : -stake;
     const { data, error } = await supabase
       .from("parlays")
-      .update({ status: won ? "won" : "lost", pnl, settled_at: settledAt })
+      .update({ status: won ? "won" : "lost", pnl, settled_at: settledAt, total_odds: effectiveOdds })
       .eq("id", parlay.id)
       .eq("status", "pending")
       .select("id");

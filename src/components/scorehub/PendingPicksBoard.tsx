@@ -99,7 +99,7 @@ function LegMatchup({ leg }: { leg?: BetLeg }) {
   if (!leg) return <div className="text-sm font-bold text-slate-400">경기 정보 없음</div>;
   return (
     <div className="min-w-0">
-      <p className="text-[11px] font-bold text-slate-400">{leg.league}</p>
+      <p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><span>{leg.league}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{leg.market}</span></p>
       <p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></p>
       <p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p>
     </div>

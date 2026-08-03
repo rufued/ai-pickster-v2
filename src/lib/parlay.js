@@ -47,7 +47,7 @@ function stakeFor(picks) {
 
 function signatureFor(picks) {
   return createHash("sha256")
-    .update(picks.map((pick) => pick.game_id).sort().join(":"))
+    .update(picks.map((pick) => `${pick.game_id}:${pick.market_type ?? "moneyline"}:${pick.pick_type ?? ""}:${pick.line_value ?? ""}`).sort().join("|"))
     .digest("hex")
     .slice(0, 24);
 }
@@ -113,7 +113,7 @@ function fallbackCandidate(byModel) {
 export async function generateParlays(supabase, { since = new Date(new Date().setUTCHours(0, 0, 0, 0)) } = {}) {
   const { data: picks, error: picksError } = await supabase
     .from("picks")
-    .select("game_id,ai_model,confidence,odds_used,created_at")
+    .select("game_id,ai_model,confidence,odds_used,market_type,pick_type,line_value,created_at")
     .gte("created_at", since.toISOString())
     .is("settled_at", null);
 

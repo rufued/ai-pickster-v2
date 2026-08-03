@@ -19,21 +19,34 @@ export const SPORTS = [
 const delay = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-function getOdds(event) {
-  const market = event.bookmakers
-    ?.flatMap((bookmaker) => bookmaker.markets ?? [])
-    .find((candidate) => candidate.key === "h2h");
+function getMarket(event, key) {
+  return event.bookmakers?.flatMap((bookmaker) => bookmaker.markets ?? []).find((market) => market.key === key);
+}
 
-  const outcomes = market?.outcomes ?? [];
+function getOdds(event) {
+  const h2hOutcomes = getMarket(event, "h2h")?.outcomes ?? [];
+  const spreadOutcomes = getMarket(event, "spreads")?.outcomes ?? [];
+  const totalOutcomes = getMarket(event, "totals")?.outcomes ?? [];
   const priceFor = (name) =>
-    outcomes.find((outcome) => outcome.name === name)?.price ?? null;
+    h2hOutcomes.find((outcome) => outcome.name === name)?.price ?? null;
+  const homeSpread = spreadOutcomes.find((outcome) => outcome.name === event.home_team);
+  const awaySpread = spreadOutcomes.find((outcome) => outcome.name === event.away_team);
+  const over = totalOutcomes.find((outcome) => outcome.name.toLowerCase() === "over");
+  const under = totalOutcomes.find((outcome) => outcome.name.toLowerCase() === "under");
 
   return {
     home_odds: priceFor(event.home_team),
     away_odds: priceFor(event.away_team),
     draw_odds:
-      outcomes.find((outcome) => outcome.name.toLowerCase() === "draw")
+      h2hOutcomes.find((outcome) => outcome.name.toLowerCase() === "draw")
         ?.price ?? null,
+    home_spread_point: homeSpread?.point ?? null,
+    away_spread_point: awaySpread?.point ?? null,
+    home_spread_odds: homeSpread?.price ?? null,
+    away_spread_odds: awaySpread?.price ?? null,
+    total_point: over?.point ?? under?.point ?? null,
+    over_odds: over?.price ?? null,
+    under_odds: under?.price ?? null,
   };
 }
 
@@ -41,17 +54,28 @@ async function fetchSportGames(sport, apiKey, from, to) {
   const params = new URLSearchParams({
     apiKey,
     regions: "us",
-    markets: "h2h",
+    markets: "h2h,spreads,totals",
     oddsFormat: "decimal",
     dateFormat: "iso",
     commenceTimeFrom: from.toISOString().replace(".000", ""),
     commenceTimeTo: to.toISOString().replace(".000", ""),
   });
 
-  const response = await fetch(
+  let response = await fetch(
     `${ODDS_API_BASE_URL}/sports/${sport.key}/odds?${params.toString()}`,
     { cache: "no-store" },
   );
+
+  // A few esports/seasonal feeds expose h2h only. Try all requested markets first,
+  // then preserve game collection with h2h when that sport rejects extras.
+  if (response.status === 400 || response.status === 422) {
+    const details = await response.clone().text();
+    if (details.toLowerCase().includes("market")) {
+      console.warn(`Odds API extra markets are unavailable for ${sport.key}; retrying h2h only`);
+      params.set("markets", "h2h");
+      response = await fetch(`${ODDS_API_BASE_URL}/sports/${sport.key}/odds?${params.toString()}`, { cache: "no-store" });
+    }
+  }
 
   // Some configured esports leagues are not exposed for every API plan/season.
   // Keep the switch enabled so they start collecting automatically when available.

@@ -51,7 +51,7 @@ function sportGroup(value: unknown): SportName {
 }
 
 function pickStatus(pick: Row, game?: Row): BetStatus {
-  if (pick.settled_at) return pick.is_correct === true ? "won" : "lost";
+  if (pick.settled_at) return pick.is_correct === true ? "won" : pick.is_correct === false ? "lost" : "void";
   if (game?.status === "live") return "live";
   return "scheduled";
 }
@@ -60,7 +60,16 @@ function selectedSide(value: unknown) {
   if (value === "home_win") return "home" as const;
   if (value === "away_win") return "away" as const;
   if (value === "draw") return "draw" as const;
+  if (value === "home_spread") return "home" as const;
+  if (value === "away_spread") return "away" as const;
+  if (value === "over" || value === "under") return "total" as const;
   return undefined;
+}
+
+function marketLabel(value: unknown) {
+  if (value === "spread") return "핸디캡";
+  if (value === "total") return "언더오버";
+  return "승무패";
 }
 
 function configFor(model: string) {
@@ -160,6 +169,8 @@ export async function getLiveData(): Promise<LiveData> {
         home: game.home_odds == null ? undefined : number(game.home_odds),
         away: game.away_odds == null ? undefined : number(game.away_odds),
         draw: game.draw_odds == null ? undefined : number(game.draw_odds),
+        handicap: game.home_spread_point == null || game.home_spread_odds == null ? undefined : `${number(game.home_spread_point) > 0 ? "+" : ""}${number(game.home_spread_point)} (${number(game.home_spread_odds).toFixed(2)})`,
+        overUnder: game.total_point == null || game.over_odds == null || game.under_odds == null ? undefined : `${number(game.total_point)} · O ${number(game.over_odds).toFixed(2)} / U ${number(game.under_odds).toFixed(2)}`,
       },
       selectedBy: gamePicks.map((pick) => text(pick.ai_model) as AiProfile["id"]),
       venue: "",
@@ -203,10 +214,10 @@ export async function getLiveData(): Promise<LiveData> {
         awayTeam: text(game?.away_team),
         selection: text(pick.pick_label),
         selectedSide: selectedSide(pick.pick_type),
-        market: "Moneyline",
+        market: marketLabel(pick.market_type),
         odds,
         finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
-        result: status === "won" ? "won" : status === "lost" ? "lost" : "pending",
+        result: status === "won" ? "won" : status === "lost" ? "lost" : status === "void" ? "void" : "pending",
       }],
     };
   });
@@ -228,10 +239,10 @@ export async function getLiveData(): Promise<LiveData> {
           awayTeam: text(game?.away_team),
           selection: text(pick?.pick_label),
           selectedSide: selectedSide(pick?.pick_type),
-          market: "Moneyline",
+          market: marketLabel(pick?.market_type),
           odds: number(pick?.odds_used),
           finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
-          result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : "lost" as const) : "pending" as const,
+          result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : pick.is_correct === false ? "lost" as const : "void" as const) : "pending" as const,
         };
       });
     const status: BetStatus = parlay.status === "won" ? "won" : parlay.status === "lost" ? "lost" : "scheduled";
