@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Check, Sparkles, Trophy, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Check, Crown, Radio, Sparkles, Trophy, TrendingUp } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ai/AiIdentity";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
 import { TeamMatchup } from "@/components/sports/SportsBrand";
@@ -13,6 +13,14 @@ import { getTranslations } from "@/i18n/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+const STARTING_BALANCE = 100_000;
+const personalityMarks: Record<string, { mark: string; tone: string }> = {
+  gpt: { mark: "◆", tone: "bg-emerald-50 text-emerald-700" },
+  gemini: { mark: "✦", tone: "bg-blue-50 text-blue-700" },
+  claude: { mark: "◎", tone: "bg-amber-50 text-amber-700" },
+  grok: { mark: "⚡", tone: "bg-slate-900 text-white" },
+  deepseek: { mark: "·", tone: "bg-violet-50 text-violet-700" },
+};
 
 export default async function Home() {
   const t = await getTranslations();
@@ -27,30 +35,35 @@ export default async function Home() {
     .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime())
     .slice(0, 3);
   const leader = rankings[0];
+  const leaderName = leader ? ais.find((ai) => ai.id === leader.aiId)?.name ?? leader.aiId : t("common.noData");
+  const totalNetProfit = rankings.reduce((sum, item) => sum + item.totalProfit, 0);
   const featuredGame = upcomingGames.find((game) => game.predictions.length > 0) ?? upcomingGames[0];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="container-shell space-y-6 py-6 sm:py-8">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="relative overflow-hidden rounded-2xl bg-slate-950 p-6 text-white shadow-xl sm:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700"><Sparkles size={14} /> LIVE SUPABASE DATA</p>
-              <h1 className="mt-4 text-3xl font-black text-slate-950 sm:text-5xl">{t("home.title")}</h1>
-              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600">{t("home.description")}</p>
+            <div className="relative">
+              <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-black text-emerald-300"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" /></span><Radio size={13} /> LIVE SUPABASE DATA</p>
+              <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-white sm:text-5xl">{t("home.title")}</h1>
+              <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-slate-300">{t("home.description")}</p>
+              <p className="mt-3 text-sm font-black text-blue-300">{t("home.leader")} {leaderName} <span className="mx-2 text-slate-600">·</span> {t("records.profit")} {signedCurrency(totalNetProfit)}</p>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:min-w-[360px]">
-              <HeroMetric label={t("home.leader")} value={leader ? ais.find((ai) => ai.id === leader.aiId)?.name ?? leader.aiId : t("common.noData")} icon={<Trophy size={17} />} />
-              <HeroMetric label={t("home.leaderRoi")} value={leader ? percent(leader.roi) : "0.0%"} icon={<TrendingUp size={17} />} />
+              <HeroMetric label={t("home.leader")} value={leaderName} icon={<Trophy size={17} />} dark />
+              <HeroMetric label={t("home.leaderRoi")} value={leader ? percent(leader.roi) : "0.0%"} icon={<TrendingUp size={17} />} dark />
             </div>
           </div>
         </section>
 
-        <DashboardSection title={t("home.ranking")} description={t("home.rankingDesc")} href="/records" action={t("home.allRecords")}>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 p-5 sm:p-6"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">AI vs AI</p><h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">{t("home.ranking")}</h2><p className="mt-1 text-sm font-medium text-slate-500">{t("home.rankingDesc")}</p></div><Link href="/records" className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{t("home.allRecords")}<ArrowUpRight size={14} /></Link></header>
           {rankings.length ? (
-            <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left"><thead><tr className="border-y border-slate-100 bg-slate-50 text-xs font-black text-slate-500"><th className="px-5 py-3">{t("home.rank")}</th><th className="px-3 py-3">AI</th><th className="px-3 py-3">ROI</th><th className="px-3 py-3">{t("home.winRate")}</th><th className="px-3 py-3">{t("home.assets")}</th><th className="px-5 py-3 text-right">{t("home.bets")}</th></tr></thead><tbody className="divide-y divide-slate-100">{rankings.map((row, index) => <tr key={row.aiId}><td className="px-5 py-4 font-black text-slate-500">#{index + 1}</td><td className="px-3 py-4"><AiPill aiId={row.aiId} /></td><td className={row.roi >= 0 ? "px-3 py-4 font-black text-emerald-600" : "px-3 py-4 font-black text-red-600"}>{percent(row.roi)}</td><td className="px-3 py-4 font-bold">{row.winRate.toFixed(1)}%</td><td className="px-3 py-4 font-black">{currency(row.currentBankroll)}</td><td className="px-5 py-4 text-right font-black">{row.totalBets}</td></tr>)}</tbody></table></div>
+            <div className="space-y-2 p-3 sm:p-5">{rankings.map((row, index) => <RankingRow key={row.aiId} row={row} index={index} aiColor={ais.find((ai) => ai.id === row.aiId)?.color ?? "#64748b"} noData={t("common.noData")} labels={{ assets: t("home.assets"), winRate: t("home.winRate"), bets: t("home.bets") }} />)}</div>
           ) : <Empty text={t("home.noAssets")} />}
-        </DashboardSection>
+        </section>
 
         <AdPlaceholder placement="home_between" className="min-h-24" />
 
@@ -71,8 +84,23 @@ function DashboardSection({ title, description, href, action, children }: { titl
   return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="flex items-end justify-between gap-3 p-5"><div><h2 className="text-xl font-black text-slate-950">{title}</h2><p className="mt-1 text-sm font-medium text-slate-500">{description}</p></div><Link href={href} className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{action}<ArrowUpRight size={14} /></Link></header>{children}</section>;
 }
 
-function HeroMetric({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
-  return <div className="rounded-xl border border-slate-200 p-4"><p className="flex items-center gap-2 text-xs font-bold text-slate-500">{icon}{label}</p><p className="mt-2 text-lg font-black text-slate-950">{value}</p></div>;
+function HeroMetric({ label, value, icon, dark = false }: { label: string; value: string; icon: React.ReactNode; dark?: boolean }) {
+  return <div className={dark ? "rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur" : "rounded-xl border border-slate-200 p-4"}><p className={dark ? "flex items-center gap-2 text-xs font-bold text-slate-400" : "flex items-center gap-2 text-xs font-bold text-slate-500"}>{icon}{label}</p><p className={dark ? "mt-2 text-lg font-black text-white" : "mt-2 text-lg font-black text-slate-950"}>{value}</p></div>;
+}
+
+function RankingRow({ row, index, aiColor, noData, labels }: { row: import("@/data/rankings").AiRanking; index: number; aiColor: string; noData: string; labels: { assets: string; winRate: string; bets: string } }) {
+  const profit = row.currentBankroll - STARTING_BALANCE;
+  const balanceRatio = Math.max(0, Math.min(100, (row.currentBankroll / STARTING_BALANCE) * 100));
+  const podium = index === 0 ? "border-amber-300 bg-gradient-to-r from-amber-50 to-white" : index === 1 ? "border-slate-300 bg-gradient-to-r from-slate-50 to-white" : index === 2 ? "border-orange-200 bg-gradient-to-r from-orange-50/70 to-white" : "border-slate-100 bg-white";
+  const mark = personalityMarks[row.aiId] ?? { mark: "·", tone: "bg-slate-100 text-slate-600" };
+  return <article className={`grid min-w-0 gap-4 rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md lg:grid-cols-[52px_180px_100px_110px_minmax(220px,1fr)_90px] lg:items-center ${podium}`}>
+    <div className="flex items-center gap-2 lg:block">{index === 0 ? <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-sm"><Crown size={18} fill="currentColor" /></span> : <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${index === 1 ? "bg-slate-300 text-slate-700" : index === 2 ? "bg-orange-200 text-orange-800" : "bg-slate-100 text-slate-500"}`}>#{index + 1}</span>}<span className="text-xs font-black text-slate-400 lg:hidden">{labels.assets}</span></div>
+    <div className="flex items-center justify-between gap-3"><AiPill aiId={row.aiId} /><span aria-hidden="true" className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black ${mark.tone}`}>{mark.mark}</span></div>
+    <div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">ROI</p><p className={`mt-1 font-black ${row.roi >= 0 ? "text-emerald-600" : "text-red-600"}`}>{percent(row.roi)}</p></div>
+    <div className="grid grid-cols-2 gap-3 lg:block"><div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{labels.winRate}</p><p className="mt-1 text-sm font-black text-slate-800">{row.winRate.toFixed(1)}%</p></div><div className="lg:mt-2"><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{labels.bets}</p><p className="mt-1 text-sm font-black text-slate-800">{row.totalBets}</p></div></div>
+    <div className="min-w-0"><div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{labels.assets}</p><p className="mt-1 text-base font-black text-slate-950">{currency(row.currentBankroll)}</p></div><p className={`text-xs font-black ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>{signedCurrency(profit)}</p></div><div className="relative mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${balanceRatio}%`, background: `linear-gradient(90deg, ${aiColor}, ${profit >= 0 ? "#10b981" : "#ef4444"})` }} /></div><p className="mt-1 text-[10px] font-bold text-slate-400">{currency(STARTING_BALANCE)} = 100%</p></div>
+    <div className="rounded-lg bg-white/70 px-2 py-2 text-center text-[10px] font-bold leading-4 text-slate-400">{row.roiHistory.length > 1 ? <Sparkles size={14} className="mx-auto text-blue-500" /> : noData}</div>
+  </article>;
 }
 
 function Empty({ text }: { text: string }) {
