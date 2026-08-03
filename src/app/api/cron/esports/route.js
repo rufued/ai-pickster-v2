@@ -4,23 +4,9 @@ import { fetchOddsPapiEsportsGames, ODDSPAPI_LOOKAHEAD_HOURS } from "@/lib/oddsp
 import { supabaseAdmin } from "@/lib/supabase";
 import { isMajorEsportsLeague } from "@/lib/esports-leagues";
 import { logCronRun } from "@/lib/cron-log";
+import { syncGamesWithOddsMovements } from "@/lib/game-sync";
 
 export const dynamic = "force-dynamic";
-
-async function upsertGames(games) {
-  if (!games.length) return 0;
-  let { error } = await supabaseAdmin.from("games").upsert(games, { onConflict: "id" });
-  if (error?.message?.includes("schema cache")) {
-    const legacyGames = games.map(({ home_spread_point, away_spread_point, home_spread_odds, away_spread_odds, total_point, over_odds, under_odds, ...game }) => {
-      void home_spread_point; void away_spread_point; void home_spread_odds; void away_spread_odds;
-      void total_point; void over_odds; void under_odds;
-      return game;
-    });
-    ({ error } = await supabaseAdmin.from("games").upsert(legacyGames, { onConflict: "id" }));
-  }
-  if (error) throw error;
-  return games.length;
-}
 
 async function cleanupMinorUpcomingGames() {
   const now = new Date().toISOString();
@@ -74,16 +60,16 @@ export async function GET(request) {
   try {
     if (!supabaseAdmin) throw new Error("Supabase admin client is unavailable");
     const result = await fetchOddsPapiEsportsGames();
-    const upserted = await upsertGames(result.games);
+    const synced = await syncGamesWithOddsMovements(result.games);
     const bySport = result.games.reduce((counts, game) => {
       counts[game.sport] = (counts[game.sport] ?? 0) + 1;
       return counts;
     }, {});
-    await logCronRun("esports", "success", startedAt, { fetched: result.games.length, by_sport: bySport, api_requests: result.diagnostics.api_requests });
+    await logCronRun("esports", "success", startedAt, { fetched: result.games.length, by_sport: bySport, api_requests: result.diagnostics.api_requests, ...synced });
     return NextResponse.json({
       success: true,
       fetched: result.games.length,
-      upserted,
+      ...synced,
       by_sport: bySport,
       lookahead_hours: ODDSPAPI_LOOKAHEAD_HOURS,
       diagnostics: result.diagnostics,

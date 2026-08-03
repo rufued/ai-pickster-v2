@@ -4,22 +4,9 @@ import { fetchAllGames, getOddsApiUsage, LOOKAHEAD_HOURS } from "@/lib/odds-api"
 import { getOddsPapiAccountUsage } from "@/lib/oddspapi";
 import { supabaseAdmin } from "@/lib/supabase";
 import { logCronRun } from "@/lib/cron-log";
+import { syncGamesWithOddsMovements } from "@/lib/game-sync";
 
 export const dynamic = "force-dynamic";
-
-async function upsertGames(games) {
-  if (!games.length) return 0;
-  let { error } = await supabaseAdmin.from("games").upsert(games, { onConflict: "id" });
-  if (error?.message?.includes("schema cache")) {
-    const legacyGames = games.map(({ home_spread_point, away_spread_point, home_spread_odds, away_spread_odds, total_point, over_odds, under_odds, ...game }) => {
-      void home_spread_point; void away_spread_point; void home_spread_odds; void away_spread_odds; void total_point; void over_odds; void under_odds;
-      return game;
-    });
-    ({ error } = await supabaseAdmin.from("games").upsert(legacyGames, { onConflict: "id" }));
-  }
-  if (error) throw error;
-  return games.length;
-}
 
 export async function GET(request) {
   const startedAt = new Date();
@@ -56,9 +43,9 @@ export async function GET(request) {
     const games = [];
     if (theOddsResult.status === "fulfilled") {
       try {
-        const upserted = await upsertGames(theOddsResult.value);
+        const synced = await syncGamesWithOddsMovements(theOddsResult.value);
         games.push(...theOddsResult.value);
-        sources.the_odds_api = { status: "ok", fetched: theOddsResult.value.length, upserted, lookahead_hours: LOOKAHEAD_HOURS };
+        sources.the_odds_api = { status: "ok", fetched: theOddsResult.value.length, ...synced, lookahead_hours: LOOKAHEAD_HOURS };
       } catch (error) {
         sources.the_odds_api = { status: "error", error: error instanceof Error ? error.message : String(error) };
       }

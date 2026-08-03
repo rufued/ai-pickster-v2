@@ -108,17 +108,33 @@ export type LiveData = {
   rankings: AiRanking[];
   games: Game[];
   bets: AiBet[];
+  oddsMovements: OddsMovement[];
+};
+
+export type OddsMovement = {
+  id: string;
+  gameId: string;
+  league: string;
+  homeTeam: string;
+  awayTeam: string;
+  marketType: "moneyline" | "spread" | "total";
+  selection: "home" | "away" | "draw" | "over" | "under";
+  lineValue?: number;
+  oldOdds: number;
+  newOdds: number;
+  changedAt: string;
 };
 
 export async function getLiveData(): Promise<LiveData> {
   noStore();
   const supabase = getSupabase();
-  const [assetsResult, gamesResult, picksResult, parlaysResult, parlayLegsResult] = await Promise.all([
+  const [assetsResult, gamesResult, picksResult, parlaysResult, parlayLegsResult, movementsResult] = await Promise.all([
     supabase.from("ai_assets").select("*").order("balance", { ascending: false }),
     supabase.from("games").select("*").order("commence_time", { ascending: true }),
     supabase.from("picks").select("*").order("created_at", { ascending: false }),
     supabase.from("parlays").select("*").order("created_at", { ascending: false }),
     supabase.from("parlay_legs").select("*").order("leg_order", { ascending: true }),
+    supabase.from("odds_movements").select("*").order("changed_at", { ascending: false }).limit(40),
   ]);
 
   if (assetsResult.error) throw new Error(`Failed to fetch ai_assets: ${assetsResult.error.message}`);
@@ -126,13 +142,41 @@ export async function getLiveData(): Promise<LiveData> {
   if (picksResult.error) throw new Error(`Failed to fetch picks: ${picksResult.error.message}`);
   if (parlaysResult.error && !isMissingParlayTable(parlaysResult.error)) throw new Error(`Failed to fetch parlays: ${parlaysResult.error.message}`);
   if (parlayLegsResult.error && !isMissingParlayTable(parlayLegsResult.error)) throw new Error(`Failed to fetch parlay legs: ${parlayLegsResult.error.message}`);
+  const movementsTableMissing = movementsResult.error && (movementsResult.error.code === "42P01" || /odds_movements|schema cache|does not exist/i.test(movementsResult.error.message));
+  if (movementsResult.error && !movementsTableMissing) throw new Error(`Failed to fetch odds movements: ${movementsResult.error.message}`);
 
   const assets = (assetsResult.data ?? []) as Row[];
   const gameRows = (gamesResult.data ?? []) as Row[];
   const pickRows = (picksResult.data ?? []) as Row[];
   const parlayRows = (parlaysResult.data ?? []) as Row[];
   const parlayLegRows = (parlayLegsResult.data ?? []) as Row[];
+  const movementRows = (movementsResult.data ?? []) as Row[];
   const gameById = new Map(gameRows.map((game) => [text(game.id), game]));
+  const movementGameIds = new Set<string>();
+  const oddsMovements: OddsMovement[] = [];
+  for (const movement of movementRows) {
+    const gameId = text(movement.game_id);
+    const game = gameById.get(gameId);
+    if (!game || movementGameIds.has(gameId) || game.status !== "upcoming" || new Date(text(game.commence_time)).getTime() < Date.now()) continue;
+    const marketType = text(movement.market_type);
+    const selection = text(movement.selection);
+    if (!["moneyline", "spread", "total"].includes(marketType) || !["home", "away", "draw", "over", "under"].includes(selection)) continue;
+    movementGameIds.add(gameId);
+    oddsMovements.push({
+      id: idText(movement.id, `${gameId}:${text(movement.changed_at)}`),
+      gameId,
+      league: text(game.sport_label),
+      homeTeam: text(game.home_team),
+      awayTeam: text(game.away_team),
+      marketType: marketType as OddsMovement["marketType"],
+      selection: selection as OddsMovement["selection"],
+      ...(movement.line_value == null ? {} : { lineValue: number(movement.line_value) }),
+      oldOdds: number(movement.old_odds),
+      newOdds: number(movement.new_odds),
+      changedAt: text(movement.changed_at),
+    });
+    if (oddsMovements.length === 8) break;
+  }
   const picksByGame = new Map<string, Row[]>();
   for (const pick of pickRows) {
     const gameId = text(pick.game_id);
@@ -304,7 +348,7 @@ export async function getLiveData(): Promise<LiveData> {
 
   const bets = [...singleBets, ...parlayBets].sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
 
-  return { ais, rankings, games, bets };
+  return { ais, rankings, games, bets, oddsMovements };
 }
 
 export function getPendingPicks(bets: AiBet[]) {

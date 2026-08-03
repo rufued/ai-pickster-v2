@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, Check, Crown, Radio, Trophy, TrendingUp } from "lucide-react";
-import { ComingSoonBadge } from "@/components/ai/AiIdentity";
+import { Activity, ArrowDownRight, ArrowUpRight, Crown, Radio, Trophy, TrendingUp } from "lucide-react";
 import { AiPill, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
-import { TeamMatchup } from "@/components/sports/SportsBrand";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { getLiveData } from "@/lib/live-data";
+import type { OddsMovement } from "@/lib/live-data";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { AiChatRoom } from "@/components/chat/AiChatRoom";
 import { getLatestChatMessages } from "@/lib/chat-data";
@@ -16,23 +15,13 @@ export const fetchCache = "force-no-store";
 const STARTING_BALANCE = 100_000;
 export default async function Home() {
   const t = await getTranslations();
-  const [{ rankings, games, ais, bets }, chatMessages] = await Promise.all([getLiveData(), getLatestChatMessages()]);
-  const now = Date.now();
-  const upcomingGames = games
-    .filter((game) => game.status === "scheduled" && new Date(game.startTime).getTime() >= now)
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  const activeAiIds = new Set(ais.filter((ai) => ai.total_picks > 0).map((ai) => ai.id));
-  const recentHits = bets
-    .filter((bet) => bet.status === "won" && activeAiIds.has(bet.aiId))
-    .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime())
-    .slice(0, 3);
+  const [{ rankings, games, ais, oddsMovements }, chatMessages] = await Promise.all([getLiveData(), getLatestChatMessages()]);
   const isRankingActive = (item: (typeof rankings)[number]) => item.aiId === "human" ? item.settledBets > 0 : item.totalBets > 0;
   const activeRankings = rankings.filter(isRankingActive);
   const waitingRankings = rankings.filter((item) => !isRankingActive(item));
   const leader = activeRankings[0];
   const leaderName = leader ? ais.find((ai) => ai.id === leader.aiId)?.name ?? leader.aiId : t("common.noData");
   const totalNetProfit = rankings.reduce((sum, item) => sum + item.totalProfit, 0);
-  const featuredGame = upcomingGames.find((game) => game.predictions.length > 0) ?? upcomingGames[0];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -62,21 +51,22 @@ export default async function Home() {
 
         <AdPlaceholder placement="home_between" className="min-h-24" />
 
-        <DashboardSection title={t("home.todayPicks")} description={t("home.todayPicksDesc")} href="/picks" action={t("home.allPicks")}>
-          {featuredGame ? <div className="p-5"><div className="rounded-xl bg-slate-950 p-5 text-white"><p className="text-xs font-bold text-blue-300">{featuredGame.league} · <LocalDateTime value={featuredGame.startTime} /></p><h3 className="mt-2 text-xl font-black"><TeamMatchup homeTeam={featuredGame.homeTeam} awayTeam={featuredGame.awayTeam} /></h3></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{ais.map((ai) => { const prediction = featuredGame.predictions.find((item) => item.aiId === ai.id); return <article key={ai.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between gap-2"><AiPill aiId={ai.id} compact />{ai.total_picks === 0 ? <ComingSoonBadge /> : null}</div><p className={prediction ? "mt-4 text-sm font-black text-blue-700" : "mt-4 text-sm font-bold text-slate-400"}>{prediction?.pick ?? (ai.total_picks === 0 ? t("common.comingSoon") : t("home.noGamePick"))}</p>{prediction ? <p className="mt-2 text-xs font-bold text-slate-500">{t("home.confidence", { value: prediction.confidence })}</p> : null}</article>; })}</div></div> : <Empty text={t("home.noUpcoming")} />}
-        </DashboardSection>
-
-        <DashboardSection title={t("home.recentHits")} description={t("home.recentHitsDesc")} href="/records" action={t("home.allHistory")}>
-          {recentHits.length ? <div className="grid gap-3 p-5 lg:grid-cols-3">{recentHits.map((bet) => { const leg = bet.legs[0]; return <article key={bet.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between"><AiPill aiId={bet.aiId} compact /><span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700"><Check size={12} /> {t("common.won")}</span></div><p className="mt-4 text-xs font-bold text-slate-500">{leg?.league} · {leg?.finalScore ?? t("home.settled")}</p><h3 className="mt-1 truncate text-sm font-black">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /> : "-"}</h3><p className="mt-4 text-right text-lg font-black text-emerald-600">{signedCurrency(bet.profit)}</p></article>; })}</div> : <Empty text={t("home.noHits")} />}
-        </DashboardSection>
+        <OddsMovementWidget movements={oddsMovements} t={t} />
         <AiChatRoom messages={chatMessages} games={games.map((game) => ({ id: game.id, homeTeam: game.homeTeam, awayTeam: game.awayTeam }))} />
       </main>
     </div>
   );
 }
 
-function DashboardSection({ title, description, href, action, children }: { title: string; description: string; href: string; action: string; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="flex items-end justify-between gap-3 p-5"><div><h2 className="text-xl font-black text-slate-950">{title}</h2><p className="mt-1 text-sm font-medium text-slate-500">{description}</p></div><Link href={href} className="inline-flex items-center gap-1 text-xs font-black text-blue-700">{action}<ArrowUpRight size={14} /></Link></header>{children}</section>;
+function OddsMovementWidget({ movements, t }: { movements: OddsMovement[]; t: (key: string, values?: Record<string, string | number>) => string }) {
+  return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5"><div><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-blue-600"><Activity size={14} /> Live odds</p><h2 className="mt-1 text-xl font-black text-slate-950">{t("movements.title")}</h2><p className="mt-1 text-sm font-medium text-slate-500">{t("movements.description")}</p></div><span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> LIVE</span></header>{movements.length ? <div className="divide-y divide-slate-100">{movements.map((movement) => { const isDown = movement.newOdds < movement.oldOdds; return <Link key={movement.id} href={`/games/${encodeURIComponent(movement.gameId)}`} className="grid gap-3 p-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-5"><div className="min-w-0"><p className="text-[11px] font-black uppercase tracking-wide text-slate-400">{movement.league}</p><p className="mt-1 text-sm font-black text-slate-950">{movementLabel(movement, t)}</p><p className="mt-1 truncate text-xs font-medium text-slate-500">{movement.homeTeam} vs {movement.awayTeam}</p></div><div dir="ltr" className="flex items-center gap-2 text-base font-black"><span className="text-slate-400">{movement.oldOdds.toFixed(2)}</span><ArrowUpRight size={15} className="text-slate-300" /><span className={isDown ? "text-blue-600" : "text-red-600"}>{movement.newOdds.toFixed(2)}</span></div><div className={`flex items-center gap-1 text-xs font-black ${isDown ? "text-blue-600" : "text-red-600"}`}>{isDown ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}{isDown ? t("movements.down") : t("movements.up")}<span className="ml-2 font-medium text-slate-400"><LocalDateTime value={movement.changedAt} mode="mobile" /></span></div></Link>; })}</div> : <Empty text={t("movements.empty")} />}</section>;
+}
+
+function movementLabel(movement: OddsMovement, t: (key: string) => string) {
+  if (movement.marketType === "moneyline") return movement.selection === "home" ? movement.homeTeam : movement.selection === "away" ? movement.awayTeam : t("markets.draw");
+  const line = movement.lineValue == null ? "" : ` ${movement.lineValue > 0 ? "+" : ""}${movement.lineValue}`;
+  if (movement.marketType === "spread") return `${movement.selection === "home" ? movement.homeTeam : movement.awayTeam}${line}`;
+  return `${movement.selection === "over" ? t("movements.over") : t("movements.under")}${line}`;
 }
 
 function HeroMetric({ label, value, icon, dark = false }: { label: string; value: string; icon: React.ReactNode; dark?: boolean }) {
