@@ -33,6 +33,11 @@ export function LanguageSwitcher() {
         <option value="es">🇪🇸 Español</option>
         <option value="vi">🇻🇳 Tiếng Việt</option>
         <option value="ar">🇸🇦 العربية</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="tr">🇹🇷 Türkçe</option>
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="hi">🇮🇳 हिन्दी</option>
+        <option value="id">🇮🇩 Bahasa Indonesia</option>
       </select>
     </label>
   );

@@ -14,6 +14,11 @@ const COUNTRY_LOCALES: Partial<Record<string, Locale>> = {
   VN: "vi",
   SA: "ar", AE: "ar", EG: "ar", DZ: "ar", BH: "ar", IQ: "ar", JO: "ar", KW: "ar",
   LB: "ar", LY: "ar", MA: "ar", OM: "ar", QA: "ar", SD: "ar", SY: "ar", TN: "ar", YE: "ar",
+  RU: "ru", BY: "ru", KZ: "ru", KG: "ru", AM: "ru", AZ: "ru", MD: "ru", TJ: "ru", TM: "ru", UZ: "ru",
+  TR: "tr",
+  IT: "it", SM: "it", VA: "it",
+  IN: "hi",
+  ID: "id",
 };
 
 function detectedLocale(request: NextRequest): Locale {
