@@ -3,6 +3,10 @@ import { BettingRecordBoard } from "@/components/scorehub/BettingRecordBoard";
 import { DashboardShell, Metric, currency, percent, signedCurrency } from "@/components/scorehub/ScorehubPrimitives";
 import { getLiveData } from "@/lib/live-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export default async function RecordsPage() {
   const { ais, bets, rankings } = await getLiveData();
   const settled = bets.filter((bet) => bet.status === "won" || bet.status === "lost");

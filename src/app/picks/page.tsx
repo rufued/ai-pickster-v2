@@ -3,6 +3,8 @@ import { BetCard, DashboardShell } from "@/components/scorehub/ScorehubPrimitive
 import { getLiveData } from "@/lib/live-data";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export default async function PicksPage() {
   const { bets } = await getLiveData();

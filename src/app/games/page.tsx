@@ -3,6 +3,10 @@ import { GameOddsBoard } from "@/components/scorehub/GameOddsBoard";
 import { DashboardShell } from "@/components/scorehub/ScorehubPrimitives";
 import { getLiveData } from "@/lib/live-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export default async function GamesPage() {
   const { games } = await getLiveData();
   const now = Date.now();
