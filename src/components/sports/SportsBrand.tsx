@@ -69,12 +69,28 @@ export function TeamName({ team, size = "md", className }: { team: string; size?
   );
 }
 
-export function TeamMatchup({ homeTeam, awayTeam, compact = false, className }: { homeTeam: string; awayTeam: string; compact?: boolean; className?: string }) {
+export function TeamMatchup({
+  homeTeam,
+  awayTeam,
+  compact = false,
+  selectedSide,
+  className,
+}: {
+  homeTeam: string;
+  awayTeam: string;
+  compact?: boolean;
+  selectedSide?: "home" | "draw" | "away" | "total" | "handicap";
+  className?: string;
+}) {
+  const selectedClass = "rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-2 text-emerald-900 ring-1 ring-emerald-100";
   return (
-    <span className={clsx("flex w-full min-w-0 max-w-full flex-col items-stretch gap-1.5 leading-snug sm:flex-row sm:items-center sm:gap-2", className)}>
-      <TeamName team={homeTeam} size={compact ? "sm" : "md"} className="w-full min-w-0 sm:flex-1" />
-      <span className="shrink-0 self-center text-[10px] font-black text-slate-400 sm:text-xs">VS</span>
-      <TeamName team={awayTeam} size={compact ? "sm" : "md"} className="w-full min-w-0 sm:flex-1" />
+    <span className={clsx("block w-full min-w-0 max-w-full", className)}>
+      {selectedSide === "draw" ? <span className="mb-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-800">무승부 예측</span> : null}
+      <span className="flex w-full min-w-0 max-w-full flex-col items-stretch gap-1.5 leading-snug sm:flex-row sm:items-center sm:gap-2">
+        <TeamName team={homeTeam} size={compact ? "sm" : "md"} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "home" && selectedClass)} />
+        <span className="shrink-0 self-center text-[10px] font-black text-slate-400 sm:text-xs">VS</span>
+        <TeamName team={awayTeam} size={compact ? "sm" : "md"} className={clsx("w-full min-w-0 sm:flex-1", selectedSide === "away" && selectedClass)} />
+      </span>
     </span>
   );
 }

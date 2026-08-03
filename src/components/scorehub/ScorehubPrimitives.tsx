@@ -77,7 +77,6 @@ export function StatusBadge({ status }: { status: AiBet["status"] }) {
 }
 
 export function BetCard({ bet }: { bet: AiBet }) {
-  const firstLeg = bet.legs[0];
   return (
     <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm" style={{ borderLeftColor: getAiColor(bet.aiId), borderLeftWidth: 4 }}>
       <div className="flex items-start justify-between gap-3">
@@ -86,8 +85,14 @@ export function BetCard({ bet }: { bet: AiBet }) {
       </div>
       <div className="mt-4">
         <p className="text-sm font-bold text-slate-500">{bet.kind === "combo" ? `${bet.legs.length}폴더 조합` : "단폴더"}</p>
-        <h3 className="mt-1 min-w-0 text-base font-black text-slate-950 sm:text-lg">{firstLeg ? <TeamMatchup homeTeam={firstLeg.homeTeam} awayTeam={firstLeg.awayTeam} compact /> : "-"}</h3>
-        <p className="mt-2 text-sm font-semibold text-blue-700">{firstLeg?.selection}</p>
+        <div className="mt-2 space-y-2">
+          {bet.legs.map((leg) => (
+            <div key={`${bet.id}-${leg.gameId}`} className="min-w-0 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
+              <h3 className="min-w-0 text-sm font-black text-slate-950 sm:text-base"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></h3>
+              <p className="mt-2 whitespace-normal text-xs font-semibold text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <Mini label="총 배당" value={bet.totalOdds.toFixed(2)} />

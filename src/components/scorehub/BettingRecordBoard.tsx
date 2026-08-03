@@ -66,7 +66,7 @@ function SingleBetRow({ bet }: { bet: AiBet }) {
     <article className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="grid gap-3 lg:grid-cols-[150px_minmax(0,1fr)_minmax(140px,auto)_80px_110px_110px] lg:items-center">
         <div><AiPill aiId={bet.aiId} compact /><p className="mt-1 text-[11px] font-bold text-slate-400"><LocalDateTime value={bet.registeredAt} mode="mobile" /></p></div>
-        <div className="min-w-0"><p className="text-sm font-black text-slate-950">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /> : "-"}</p><p className="mt-1 whitespace-normal text-xs font-bold text-blue-700 [overflow-wrap:anywhere]">{leg?.selection ?? "-"}</p></div>
+        <div className="min-w-0"><p className="text-sm font-black text-slate-950">{leg ? <TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /> : "-"}</p><p className="mt-1 whitespace-normal text-xs font-bold text-blue-700 [overflow-wrap:anywhere]">{leg?.selection ?? "-"}</p></div>
         <div className="text-xs font-bold text-slate-500">{leg?.league}<p className="mt-1 text-sm font-black text-slate-900">배당 {bet.totalOdds.toFixed(2)}</p></div>
         <ResultIcon result={leg?.result ?? "pending"} withLabel />
         <Money label="베팅금" value={currency(bet.stake)} />
@@ -104,7 +104,7 @@ function ParlayLeg({ leg, index }: { leg: BetLeg; index: number }) {
   return (
     <div className="grid gap-3 p-4 sm:grid-cols-[28px_minmax(0,1fr)_100px_80px] sm:items-center">
       <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-500">{index + 1}</span>
-      <div className="min-w-0"><p className="text-[11px] font-bold text-slate-400">{leg.league}</p><p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} compact /></p><p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p></div>
+      <div className="min-w-0"><p className="text-[11px] font-bold text-slate-400">{leg.league}</p><p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} compact /></p><p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">픽: {leg.selection}</p></div>
       <div><p className="text-[11px] font-bold text-slate-400">개별 배당</p><p className="mt-1 font-black text-slate-950">{leg.odds.toFixed(2)}</p></div>
       <ResultIcon result={leg.result} withLabel />
     </div>
