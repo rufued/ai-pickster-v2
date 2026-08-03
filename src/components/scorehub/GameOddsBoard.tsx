@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import type { Game, GameStatus, SportName } from "@/data/games";
+import type { Game, GameStatus } from "@/data/games";
 import { getAiName } from "@/services/scorehub";
 import { LocalDateTime } from "@/components/ui/LocalDateTime";
 import { TeamLogo } from "@/components/sports/SportsBrand";
