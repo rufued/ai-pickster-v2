@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { PenLine } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -48,6 +49,13 @@ export function AdminHeader() {
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/community/write"
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white transition hover:bg-blue-500"
+          >
+            <PenLine size={14} />
+            커뮤니티에 글쓰기
+          </Link>
           <Link href="/" className="rounded-md border border-slate-700 px-3 py-2 text-xs font-black text-slate-200 transition hover:bg-slate-800">
             사이트로 돌아가기
           </Link>
