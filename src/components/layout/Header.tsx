@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SCOREHUB } from "@/lib/brand";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { TelegramLink } from "@/components/social/TelegramLink";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 export function Header() {
@@ -49,6 +50,8 @@ export function Header() {
 
         <LanguageSwitcher />
 
+        <TelegramLink />
+
         <button
           type="button"
           aria-label={t("nav.menu")}
@@ -78,6 +81,9 @@ export function Header() {
               </Link>
             );
           })}
+          <div className="mt-2 flex items-center gap-2 border-t border-slate-100 pt-3">
+            <TelegramLink />
+          </div>
         </nav>
       ) : null}
     </header>

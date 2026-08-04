@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SCOREHUB } from "@/lib/brand";
+import { TelegramLink } from "@/components/social/TelegramLink";
 import { getTranslations } from "@/i18n/server";
 
 export async function Footer() {
@@ -12,6 +13,7 @@ export async function Footer() {
         <p className="flex items-center gap-3">
           <Link href="/terms" className="font-bold text-slate-600 underline hover:text-slate-900">{t("brand.terms")}</Link>
           <Link href="/privacy" className="font-bold text-slate-600 underline hover:text-slate-900">{t("brand.privacy")}</Link>
+          <TelegramLink className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700" />
         </p>
       </div>
     </footer>
