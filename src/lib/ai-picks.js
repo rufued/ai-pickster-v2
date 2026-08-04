@@ -110,6 +110,34 @@ async function getGptPick(game) {
   return extractJson(text);
 }
 
+async function getDeepSeekPick(game) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not configured");
+
+  // DeepSeek exposes an OpenAI-compatible chat completions endpoint.
+  const response = await fetch("https://api.deepseek.com/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "deepseek-chat",
+      messages: [{ role: "user", content: PICK_PROMPT_TEMPLATE(game) }],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`DeepSeek request failed (${response.status}): ${details}`);
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content ?? "";
+  return extractJson(text);
+}
+
 async function getGeminiPick(game) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
@@ -137,10 +165,11 @@ async function getGeminiPick(game) {
   return extractJson(text);
 }
 
-// 지원하는 AI 모델 목록 — 나중에 Claude/Grok/DeepSeek 추가할 때 여기에만 추가하면 됨
+// 지원하는 AI 모델 목록 — 나중에 Claude/Grok 추가할 때 여기에만 추가하면 됨
 const AI_MODELS = [
   { key: "gpt", fn: getGptPick },
   { key: "gemini", fn: getGeminiPick },
+  { key: "deepseek", fn: getDeepSeekPick },
 ];
 
 async function getPickFromModel(modelKey, game) {

@@ -27,7 +27,7 @@ export default async function AiProfilePage({ params }: { params: Promise<{ aiId
               <h1 className="mt-3 text-3xl font-black text-slate-950">{ai.name}</h1>
               <p className="mt-2 text-sm font-medium text-slate-600">{t("ai.source")}</p>
             </div>
-            {ai.total_picks === 0 ? <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{t("common.comingSoon")}</span> : null}
+            {ranking.totalBets === 0 ? <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{t("common.comingSoon")}</span> : null}
           </div>
         </section>
 
