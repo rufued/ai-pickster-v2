@@ -163,8 +163,8 @@ export async function getLiveData(): Promise<LiveData> {
 
   const assets = (assetsResult.data ?? []) as Row[];
   const gameRows = (gamesResult.data ?? []) as Row[];
-  const pickRows = (picksResult.data ?? []) as Row[];
-  const parlayRows = (parlaysResult.data ?? []) as Row[];
+  const pickRows = ((picksResult.data ?? []) as Row[]).filter((pick) => pick.status !== "cancelled");
+  const parlayRows = ((parlaysResult.data ?? []) as Row[]).filter((parlay) => parlay.status !== "cancelled");
   const parlayLegRows = (parlayLegsResult.data ?? []) as Row[];
   const movementRows = (movementsResult.data ?? []) as Row[];
   const gameById = new Map(gameRows.map((game) => [text(game.id), game]));

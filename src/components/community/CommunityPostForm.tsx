@@ -6,18 +6,20 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 
 type Initial = { category: string; title: string; content: string; nickname: string };
 
-export function CommunityPostForm({ postId, initial }: { postId?: string; initial?: Initial }) {
+export function CommunityPostForm({ postId, initial, isAdmin = false }: { postId?: string; initial?: Initial; isAdmin?: boolean }) {
   const { t } = useI18n(); const router = useRouter();
   const [category, setCategory] = useState(initial?.category ?? "free");
   const [title, setTitle] = useState(initial?.title ?? ""); const [content, setContent] = useState(initial?.content ?? "");
   const [nickname, setNickname] = useState(initial?.nickname ?? ""); const [password, setPassword] = useState("");
+  const [pin, setPin] = useState(false);
   const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
+    const body = isAdmin && !postId ? { category, title, content, pin } : { category, title, content, nickname, password };
     const response = await fetch(postId ? `/api/community/posts/${postId}` : "/api/community/posts", {
       method: postId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, title, content, nickname, password }),
+      body: JSON.stringify(body),
     });
     const result = await response.json().catch(() => ({})); setBusy(false);
     if (!response.ok) { setError(result.error ?? t("community.error")); return; }
@@ -36,11 +38,21 @@ export function CommunityPostForm({ postId, initial }: { postId?: string; initia
         <label className="space-y-2"><span className="text-sm font-black text-slate-700">{t("community.postTitle")}</span><input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required className={input} /></label>
       </div>
       <label className="block space-y-2"><span className="text-sm font-black text-slate-700">{t("community.content")}</span><textarea value={content} onChange={(event) => setContent(event.target.value)} maxLength={10000} required rows={12} className={`${input} resize-y leading-7`} /></label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-2"><span className="text-sm font-black text-slate-700">{t("community.nickname")}</span><input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={30} required className={input} /></label>
-        <label className="space-y-2"><span className="text-sm font-black text-slate-700">{t("community.password")}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={4} maxLength={72} required className={input} placeholder={postId ? t("community.passwordToEdit") : t("community.passwordHint")} /></label>
-      </div>
-      <p className="text-xs font-medium leading-5 text-slate-500">{t("community.passwordNotice")}</p>
+      {isAdmin && !postId ? (
+        <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-black text-blue-800">SHadmin(운영자) 계정으로 작성됩니다. 닉네임·비밀번호 입력이 필요 없습니다.</p>
+          <label className="flex items-center gap-2 text-sm font-bold text-blue-800">
+            <input type="checkbox" checked={pin} onChange={(event) => setPin(event.target.checked)} className="h-4 w-4 rounded border-blue-300" />
+            공지처럼 상단에 고정
+          </label>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-2"><span className="text-sm font-black text-slate-700">{t("community.nickname")}</span><input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={30} required className={input} /></label>
+          <label className="space-y-2"><span className="text-sm font-black text-slate-700">{t("community.password")}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={4} maxLength={72} required className={input} placeholder={postId ? t("community.passwordToEdit") : t("community.passwordHint")} /></label>
+        </div>
+      )}
+      {isAdmin && !postId ? null : <p className="text-xs font-medium leading-5 text-slate-500">{t("community.passwordNotice")}</p>}
       {error ? <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p> : null}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => router.back()} className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-black text-slate-700">{t("community.cancel")}</button><button disabled={busy} className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-black text-white hover:bg-blue-700 disabled:opacity-50">{busy ? t("community.saving") : postId ? t("community.update") : t("community.publish")}</button></div>
     </form>

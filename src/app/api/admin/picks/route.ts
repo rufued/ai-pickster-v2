@@ -24,6 +24,9 @@ export async function POST(request: Request) {
   const ids = [...new Set(legs.map((leg) => String(leg.game_id)))];
   const { data: games, error } = await admin.from("games").select("*").in("id", ids).eq("status", "upcoming").gte("commence_time", new Date().toISOString());
   if (error || games?.length !== ids.length) return NextResponse.json({ error: "유효한 예정 경기가 아닙니다." }, { status: 400 });
+  const { data: conflicts, error: conflictError } = await admin.from("picks").select("game_id").eq("ai_model", "human").eq("status", "active").is("settled_at", null).in("game_id", ids);
+  if (conflictError && !/column .* does not exist/i.test(conflictError.message ?? "")) return NextResponse.json({ error: conflictError.message }, { status: 500 });
+  if (conflicts?.length) return NextResponse.json({ error: "이미 진행 중인 픽이 있는 경기입니다. 먼저 취소한 뒤 다시 등록해주세요." }, { status: 400 });
   const gameMap = new Map(games.map((game) => [String(game.id), game]));
   const picks = legs.map((leg) => { const game = gameMap.get(String(leg.game_id)); const selected = game && option(game, String(leg.pick_type)); return selected ? { game_id: game.id, ai_model: "human", pick_type: String(leg.pick_type), confidence, analysis: analysis || "SHadmin이 별도 설명을 남기지 않았습니다.", stake, ...selected, is_single_bet: legs.length === 1 } : null; });
   if (picks.some((pick) => !pick)) return NextResponse.json({ error: "선택한 마켓의 배당이 없습니다." }, { status: 400 });

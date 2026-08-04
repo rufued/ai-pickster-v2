@@ -30,7 +30,8 @@ function detectedLocale(request: NextRequest): Locale {
 }
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/admin") && request.nextUrl.pathname !== "/admin/login") {
+  const isAdminArea = request.nextUrl.pathname.startsWith("/admin") && request.nextUrl.pathname !== "/admin/login";
+  if (isAdminArea) {
     if (!await validAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
@@ -38,6 +39,7 @@ export async function middleware(request: NextRequest) {
   const locale = detectedLocale(request);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-app-locale", locale);
+  requestHeaders.set("x-admin-area", isAdminArea ? "1" : "0");
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (!request.cookies.has("locale")) response.cookies.set("locale", locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return response;

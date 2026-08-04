@@ -202,11 +202,20 @@ export async function settlePicks() {
   }
 
   const gameById = new Map(finishedGames.map((game) => [game.id, game]));
-  const { data: picks, error: picksError } = await supabase
+  let { data: picks, error: picksError } = await supabase
     .from("picks")
     .select("*")
     .in("game_id", finishedGames.map((game) => game.id))
-    .is("settled_at", null);
+    .is("settled_at", null)
+    .neq("status", "cancelled");
+
+  if (picksError?.code === "42703" || /column .* does not exist/i.test(picksError?.message ?? "")) {
+    ({ data: picks, error: picksError } = await supabase
+      .from("picks")
+      .select("*")
+      .in("game_id", finishedGames.map((game) => game.id))
+      .is("settled_at", null));
+  }
 
   if (picksError) {
     throw new Error(`Failed to fetch unsettled picks: ${picksError.message}`);
