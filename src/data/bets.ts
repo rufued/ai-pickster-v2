@@ -12,7 +12,7 @@ export type BetLeg = {
   gameId: string; sport: SportName; league: string; homeTeam: string; awayTeam: string;
   selection: string; selectedSide?: "home" | "draw" | "away" | "total" | "handicap";
   market: string; pickType?: string; odds: number; oddsOptions: BetOddsOption[];
-  analysis?: string; pickId?: string;
+  analysis?: string; pickId?: string; startTime?: string;
   finalScore?: string; result: "pending" | "won" | "lost" | "void";
 };
 export type AiBet = {

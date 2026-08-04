@@ -21,7 +21,7 @@ function formatLine(value) {
 
 const PICK_PROMPT_TEMPLATE = (game) => `
 You are a sports betting analyst AI competing against other AIs.
-Analyze this upcoming match and make your pick.
+Analyze this upcoming match on its actual merits and make the pick you believe is the strongest bet — not necessarily the team the market favors.
 
 Sport/game: ${game.sport}
 League/tournament: ${game.sport_label}
@@ -32,14 +32,20 @@ Kickoff: ${game.commence_time}
 Available markets (choose exactly one listed option):
 ${marketOptions(game)}
 
+How to decide:
+- Weigh concrete factors: starting pitcher/roster condition, head-to-head history, recent form, injuries, home/away split, schedule/rest, and any other signal relevant to this sport.
+- Then compare your own assessment of each side's real chance of winning against what the listed odds imply. Odds reflect the market's (bookmaker's) view, not the truth — if your analysis shows the market has underpriced the underdog relative to their actual chances, that underdog is the better-value pick even though the favorite is statistically "safer." Do not default to the favorite just because it looks like the safer or more popular choice.
+- That said, do not pick the underdog for its own sake either. Only take the value side when your analysis genuinely supports it; if the favorite truly is the stronger side, pick the favorite.
+- Set "confidence" to your honest belief in how likely this specific pick is to win, based only on your analysis. It must not be inflated for favorites or deflated for underdogs by default — a well-supported underdog pick can carry high confidence, and a favorite pick with only weak justification should carry lower confidence.
+
 Respond ONLY with valid JSON in this exact format, no markdown, no extra text:
 {
   "market_type": "moneyline" | "spread" | "total",
   "pick_type": "home_win" | "away_win" | "draw" | "home_spread" | "away_spread" | "over" | "under",
   "line_value": <spread or total line number, null for moneyline>,
   "pick_label": "<short readable label like 'Dodgers ML', 'Lakers -1.5', 'Over 8.5'>",
-  "confidence": <integer 1-100>,
-  "analysis": "<2-3 sentence reasoning, under 400 characters>"
+  "confidence": <integer 1-100, your honest win probability for this pick, independent of favorite/underdog status>,
+  "analysis": "<2-3 sentence reasoning that cites the concrete factors behind your pick, under 400 characters>"
 }
 `;
 

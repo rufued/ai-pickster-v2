@@ -104,7 +104,7 @@ function LegMatchup({ leg }: { leg?: BetLeg }) {
   if (!leg) return <div className="text-sm font-bold text-slate-400">{t("picks.noGame")}</div>;
   return (
     <div className="min-w-0">
-      <p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><LeagueBadge league={leg.league} className="py-0.5 text-[11px]" /><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{marketLabel(leg.market, t)}</span></p>
+      <p className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-400"><LeagueBadge league={leg.league} className="py-0.5 text-[11px]" /><span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{marketLabel(leg.market, t)}</span>{leg.startTime ? <span className="inline-flex items-center gap-1"><Clock3 size={11} />{t("picks.gameStart")} <LocalDateTime value={leg.startTime} mode="mobile" /></span> : null}</p>
       <p className="mt-1 text-sm font-black text-slate-950"><TeamMatchup homeTeam={leg.homeTeam} awayTeam={leg.awayTeam} selectedSide={leg.selectedSide} pickType={leg.pickType} oddsOptions={leg.oddsOptions} compact /></p>
       <p className="mt-1 whitespace-normal text-xs font-black text-blue-700 [overflow-wrap:anywhere]">{t("common.pick")}: {leg.selection}</p>
     </div>

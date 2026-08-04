@@ -310,6 +310,7 @@ export async function getLiveData(): Promise<LiveData> {
         oddsOptions: oddsOptions(game, pick),
         analysis: pickAnalysis(pick.analysis, text(pick.ai_model)),
         pickId,
+        startTime: game ? text(game.commence_time) : undefined,
         finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
         result: status === "won" ? "won" : status === "lost" ? "lost" : status === "void" ? "void" : "pending",
       }],
@@ -339,6 +340,7 @@ export async function getLiveData(): Promise<LiveData> {
           oddsOptions: oddsOptions(game, pick ?? {}),
           analysis: pickAnalysis(pick?.analysis, text(parlay.ai_model)),
           pickId: pick ? idText(pick.id) : undefined,
+          startTime: game ? text(game.commence_time) : undefined,
           finalScore: game?.home_score == null || game?.away_score == null ? undefined : `${game.home_score}-${game.away_score}`,
           result: pick?.settled_at ? (pick.is_correct === true ? "won" as const : pick.is_correct === false ? "lost" as const : "void" as const) : "pending" as const,
         };
