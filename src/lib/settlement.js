@@ -224,7 +224,7 @@ export async function settlePicks() {
     const isSingleBet = pick.is_single_bet !== false;
     const stake = Number(pick.stake);
     const odds = Number(pick.odds_used);
-    const pnl = !isSingleBet || isCorrect === null ? 0 : isCorrect ? stake * (odds - 1) : -stake;
+    const pnl = !isSingleBet || isCorrect === null ? 0 : Math.round(isCorrect ? stake * (odds - 1) : -stake);
 
     if (
       pick.stake === null ||
@@ -314,7 +314,7 @@ export async function settleParlays() {
     const effectiveOdds = won
       ? legPicks.reduce((product, pick) => product * (pick.is_correct === null ? 1 : Number(pick.odds_used)), 1)
       : totalOdds;
-    const pnl = won ? stake * (effectiveOdds - 1) : -stake;
+    const pnl = Math.round(won ? stake * (effectiveOdds - 1) : -stake);
     const { data, error } = await supabase
       .from("parlays")
       .update({ status: won ? "won" : "lost", pnl, settled_at: settledAt, total_odds: effectiveOdds })
