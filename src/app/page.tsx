@@ -7,7 +7,8 @@ import type { OddsMovement } from "@/lib/live-data";
 import { AdPlaceholder } from "@/components/ads/AdSlot";
 import { AiChatRoom } from "@/components/chat/AiChatRoom";
 import { getLatestChatMessages } from "@/lib/chat-data";
-import { getTranslations } from "@/i18n/server";
+import { getLocale, getTranslations } from "@/i18n/server";
+import { translateManyCached } from "@/lib/translate";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -15,7 +16,13 @@ export const fetchCache = "force-no-store";
 const STARTING_BALANCE = 100_000;
 export default async function Home() {
   const t = await getTranslations();
-  const [{ rankings, games, ais, oddsMovements }, chatMessages] = await Promise.all([getLiveData(), getLatestChatMessages()]);
+  const locale = await getLocale();
+  const [{ rankings, games, ais, oddsMovements }, rawChatMessages] = await Promise.all([getLiveData(), getLatestChatMessages()]);
+  const translatedMessages = await translateManyCached(
+    rawChatMessages.map((message) => ({ contentType: "chat_message" as const, contentId: message.id, sourceText: message.message })),
+    locale,
+  );
+  const chatMessages = rawChatMessages.map((message, index) => ({ ...message, message: translatedMessages[index] }));
   const isRankingActive = (item: (typeof rankings)[number]) => item.aiId === "human" ? item.settledBets > 0 : item.totalBets > 0;
   const activeRankings = rankings.filter(isRankingActive);
   const waitingRankings = rankings.filter((item) => !isRankingActive(item));

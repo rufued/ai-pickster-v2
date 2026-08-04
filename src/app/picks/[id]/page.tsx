@@ -9,6 +9,7 @@ import { getLiveData } from "@/lib/live-data";
 import { getLocale, getTranslations } from "@/i18n/server";
 import { localizeMarket, localizeSport } from "@/i18n/config";
 import { gameDetailHref } from "@/lib/route-id";
+import { translateCached } from "@/lib/translate";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,9 +19,19 @@ export default async function PickDetailPage({ params }: { params: Promise<{ id:
   const locale = await getLocale();
   const { id } = await params;
   const { bets } = await getLiveData();
-  const bet = bets.find((item) => item.id === id);
-  if (!bet) notFound();
-  const isParlay = bet.kind === "combo";
+  const rawBet = bets.find((item) => item.id === id);
+  if (!rawBet) notFound();
+  const isParlay = rawBet.kind === "combo";
+
+  const [translatedReason, translatedLegs] = await Promise.all([
+    translateCached({ contentType: "pick_analysis", contentId: rawBet.id, locale, sourceText: rawBet.reason }),
+    Promise.all(rawBet.legs.map(async (leg) => {
+      if (!leg.analysis || !leg.pickId) return leg;
+      const analysis = await translateCached({ contentType: "pick_analysis", contentId: leg.pickId, locale, sourceText: leg.analysis });
+      return { ...leg, analysis };
+    })),
+  ]);
+  const bet: AiBet = { ...rawBet, reason: translatedReason, legs: translatedLegs };
 
   return (
     <DashboardShell title={isParlay ? t("report.parlayTitle") : t("report.singleTitle")} eyebrow="Pick analysis report" description={t("report.description")}>
