@@ -50,11 +50,28 @@ Respond ONLY with valid JSON in this exact format, no markdown, no extra text:
 `;
 
 function extractJson(text) {
-  // AI가 코드블록(```json ... ```)으로 감싸서 줄 때가 있어서 벗겨냄
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  const match = cleaned.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON found in AI response");
-  return JSON.parse(match[0]);
+  // AI가 코드블록(```json ... ```)으로 감싸거나, JSON 앞뒤로 설명 문장을 덧붙여 줄 때가 있어서
+  // 첫 "{"부터 중괄호 짝이 맞는 지점까지만 잘라낸다 (단순 첫/마지막 "{"~"}" 매칭은 후행 텍스트에
+  // 다른 "{"/"}"가 섞이면 깨진 JSON을 만들어낼 수 있어서 balanced-brace 방식으로 바꿈).
+  const cleaned = text.replace(/```json|```/gi, "").trim();
+  const start = cleaned.indexOf("{");
+  if (start === -1) throw new Error(`No JSON object found in AI response: ${cleaned.slice(0, 200)}`);
+  let depth = 0;
+  for (let i = start; i < cleaned.length; i += 1) {
+    if (cleaned[i] === "{") depth += 1;
+    else if (cleaned[i] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        const candidate = cleaned.slice(start, i + 1);
+        try {
+          return JSON.parse(candidate);
+        } catch (parseError) {
+          throw new Error(`Failed to parse AI JSON response (${parseError.message}): ${candidate.slice(0, 300)}`);
+        }
+      }
+    }
+  }
+  throw new Error(`No balanced JSON object found in AI response: ${cleaned.slice(0, 200)}`);
 }
 
 function normalizePick(raw, game) {
@@ -67,11 +84,12 @@ function normalizePick(raw, game) {
     over: { market_type: "total", line_value: game.total_point, odds: game.over_odds, label: `Over ${game.total_point}` },
     under: { market_type: "total", line_value: game.total_point, odds: game.under_odds, label: `Under ${game.total_point}` },
   };
-  const pickType = String(raw?.pick_type ?? "");
+  const pickType = String(raw?.pick_type ?? "").trim().toLowerCase();
   const choice = choices[pickType];
-  if (!choice || choice.odds == null || Number(choice.odds) <= 1) throw new Error(`AI selected an unavailable market: ${pickType}`);
-  const confidence = Math.round(Number(raw.confidence));
-  if (!Number.isFinite(confidence) || confidence < 1 || confidence > 100) throw new Error("AI returned invalid confidence");
+  if (!choice || choice.odds == null || Number(choice.odds) <= 1) throw new Error(`AI selected an unavailable market: ${JSON.stringify(raw?.pick_type ?? null)}`);
+  // Some models wrap confidence as "85%" or "85/100" instead of a bare number; strip anything but digits/minus/dot.
+  const confidence = Math.round(Number(String(raw?.confidence ?? "").replace(/[^0-9.-]/g, "")));
+  if (!Number.isFinite(confidence) || confidence < 1 || confidence > 100) throw new Error(`AI returned invalid confidence: ${JSON.stringify(raw?.confidence ?? null)}`);
   return {
     market_type: choice.market_type,
     pick_type: pickType,
@@ -115,6 +133,8 @@ async function getDeepSeekPick(game) {
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not configured");
 
   // DeepSeek exposes an OpenAI-compatible chat completions endpoint.
+  // response_format forces pure JSON output (DeepSeek supports this the same way OpenAI does,
+  // as long as the word "JSON" appears in the prompt — it does, in PICK_PROMPT_TEMPLATE).
   const response = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: {
@@ -125,6 +145,7 @@ async function getDeepSeekPick(game) {
       model: "deepseek-chat",
       messages: [{ role: "user", content: PICK_PROMPT_TEMPLATE(game) }],
       temperature: 0.7,
+      response_format: { type: "json_object" },
     }),
   });
 
@@ -135,7 +156,10 @@ async function getDeepSeekPick(game) {
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content ?? "";
-  return extractJson(text);
+  console.log(`[ai-picks] DeepSeek raw response for game=${game.id}:`, text);
+  const parsed = extractJson(text);
+  console.log(`[ai-picks] DeepSeek parsed pick for game=${game.id}:`, JSON.stringify(parsed));
+  return parsed;
 }
 
 async function getGeminiPick(game) {

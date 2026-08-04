@@ -176,11 +176,14 @@ export async function GET(request) {
     const { counts: dailySingleCounts, supportsSingleFlag } = await getDailySingleCounts(supabase);
     const aiBalances = await getAiBalances(supabase);
 
+    console.log(`[generate-picks] processing ${games.length} game(s) for models: ${AI_MODELS.map((m) => m.key).join(", ")}`);
+
     for (const game of games) {
       let existingModels;
       try {
         existingModels = await getExistingPickModels(supabase, game.id);
       } catch (err) {
+        console.error(`[generate-picks] existing_pick_check failed for game=${game.id}:`, err);
         for (const model of AI_MODELS) {
           results.push({
             game_id: game.id,
@@ -195,6 +198,7 @@ export async function GET(request) {
 
       for (const model of AI_MODELS) {
         if (existingModels.has(model.key)) {
+          console.log(`[generate-picks] skip game=${game.id} model=${model.key}: pick already exists`);
           results.push({
             game_id: game.id,
             model: model.key,
@@ -205,9 +209,11 @@ export async function GET(request) {
         }
 
         try {
+          console.log(`[generate-picks] requesting pick from model=${model.key} game=${game.id} (${game.home_team} vs ${game.away_team})`);
           const pick = await getPickFromModel(model.key, game);
           const isSingleBet = (dailySingleCounts.get(model.key) ?? 0) < MAX_SINGLE_BETS_PER_AI_PER_DAY;
           if (!supportsSingleFlag && !isSingleBet) {
+            console.log(`[generate-picks] skip game=${game.id} model=${model.key}: single_bet_daily_cap_schema_migration_required`);
             results.push({ game_id: game.id, model: model.key, status: "skipped", reason: "single_bet_daily_cap_schema_migration_required" });
             continue;
           }
@@ -217,6 +223,7 @@ export async function GET(request) {
             aiModel: model.key,
           });
           const savedPick = await savePick(supabase, game, model.key, pick, stake, isSingleBet, supportsSingleFlag);
+          console.log(`[generate-picks] saved pick id=${savedPick.id} model=${model.key} game=${game.id} pick_type=${pick.pick_type} confidence=${pick.confidence} stake=${stake} single_bet=${isSingleBet}`);
           if (isSingleBet) {
             dailySingleCounts.set(model.key, (dailySingleCounts.get(model.key) ?? 0) + 1);
             singleBetsCreated += 1;
@@ -230,7 +237,10 @@ export async function GET(request) {
             newParlayOnlyCandidates.push({ id: savedPick.id, gameId: game.id, model: model.key, confidence: pick.confidence, stake, result });
           }
         } catch (err) {
-          // 한 AI가 실패해도 다른 AI/경기는 계속 진행
+          // 한 AI가 실패해도 다른 AI/경기는 계속 진행 — 단, 반드시 로그로 남긴다 (results 배열은
+          // JSON 응답에만 담기고 Vercel 로그에는 안 찍히므로, 여기서 console.error를 안 하면
+          // cron으로 조용히 실행됐을 때 실패 사유를 확인할 방법이 없다).
+          console.error(`[generate-picks] generate_or_save_pick failed for model=${model.key} game=${game.id}:`, err);
           results.push({
             game_id: game.id,
             model: model.key,
@@ -246,6 +256,7 @@ export async function GET(request) {
     try {
       parlays = await generateParlays(supabase, { favorCombinations: comboOnlyPicksCreated > 0, aiBalances });
     } catch (err) {
+      console.error("[generate-picks] generateParlays failed:", err);
       parlays = { status: "error", error: err.message };
     }
 
@@ -278,8 +289,15 @@ export async function GET(request) {
         promoted_from_current_run: promotedFromCurrentRun.length,
       };
     } catch (err) {
+      console.error("[generate-picks] candidate reconciliation failed:", err);
       candidateReconciliation = { checked: 0, linked: 0, promoted_to_single: 0, promoted_from_current_run: 0, status: "error", error: err instanceof Error ? err.message : String(err) };
     }
+
+    const errorResults = results.filter((result) => result.status === "error");
+    console.log(
+      `[generate-picks] done: games=${games.length} ok=${results.filter((r) => r.status === "ok").length} skipped=${results.filter((r) => r.status === "skipped").length} errors=${errorResults.length} single_bets=${singleBetsCreated} combo_only=${comboOnlyPicksCreated} parlays_created=${Number(parlays?.created ?? 0)}`,
+    );
+    if (errorResults.length) console.error("[generate-picks] per-model errors this run:", JSON.stringify(errorResults));
 
     await logCronRun("picks", "success", startedAt, { games_processed: games.length, single_bets_created: singleBetsCreated, parlay_bets_created: Number(parlays?.created ?? 0) });
     return Response.json({
@@ -311,6 +329,7 @@ export async function GET(request) {
       finished_at: new Date().toISOString(),
     });
   } catch (err) {
+    console.error("[generate-picks] top-level failure:", err);
     await logCronRun("picks", "error", startedAt, { error: err.message });
     return Response.json(
       {
