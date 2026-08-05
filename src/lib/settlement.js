@@ -175,6 +175,10 @@ export async function updateGameResults() {
     gamesUpdated += sourceUpdated;
     sources.oddspapi = { status: "ok", pending_checked: pendingGames?.length ?? 0, scores_found: completed.games.length, games_updated: sourceUpdated, api_requests: completed.requests };
   } catch (error) {
+    // Caught here so a single failing source doesn't abort the_odds_api's results too — but it
+    // must still be logged, otherwise esports settlement can fail silently for days (as it did
+    // when the OddsPapi request quota ran out) with nothing showing up in Vercel's logs.
+    console.error("[settlement] OddsPapi esports score sync failed:", error);
     sources.oddspapi = { status: "error", error: error instanceof Error ? error.message : String(error) };
   }
 
