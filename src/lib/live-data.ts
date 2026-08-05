@@ -141,8 +141,31 @@ export type OddsMovement = {
   changedAt: string;
 };
 
+/**
+ * Supabase's PostgREST occasionally rejects the service-role JWT with "JWT issued at future" on
+ * a cold serverless invocation — a transient clock-skew hiccup between the function's container
+ * clock and Supabase's validating server, not a token or client problem (the service-role key is
+ * a static, non-expiring JWT; a fresh createClient() call sends the exact same token string). It
+ * reliably succeeds a moment later, so retry once with a fresh client instead of surfacing a 500.
+ */
+async function withJwtSkewRetry<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/jwt issued at future|jwt expired|invalid jwt/i.test(message)) throw error;
+    console.warn("[live-data] retrying after transient Supabase JWT clock-skew error:", message);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    return operation();
+  }
+}
+
 export async function getLiveData(): Promise<LiveData> {
   noStore();
+  return withJwtSkewRetry(fetchLiveData);
+}
+
+async function fetchLiveData(): Promise<LiveData> {
   const supabase = getSupabase();
   const [assetsResult, gamesResult, picksResult, parlaysResult, parlayLegsResult, movementsResult] = await Promise.all([
     supabase.from("ai_assets").select("*").order("balance", { ascending: false }),
