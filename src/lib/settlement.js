@@ -105,9 +105,26 @@ export async function updateGameResults() {
 
   try {
     const apiKey = requireOddsApiKey();
+
+    // The Odds API's /scores endpoint costs a flat credit per sport per call regardless of
+    // whether anything is actually pending. Settlement is now polled every few minutes (an
+    // external scheduler hits /api/settle far more often than the old once-a-day cron), so
+    // unconditionally checking every enabled sport on every call would burn the monthly quota
+    // in hours. Only spend a request on a sport when a game in it is actually overdue.
+    const nowIso = new Date().toISOString();
+    const { data: pendingSportRows, error: pendingSportError } = await supabase
+      .from("games")
+      .select("sport")
+      .eq("status", "upcoming")
+      .lte("commence_time", nowIso)
+      .in("sport", SPORTS);
+    if (pendingSportError) throw new Error(`Failed to check pending sports: ${pendingSportError.message}`);
+    const pendingSportKeys = new Set((pendingSportRows ?? []).map((row) => row.sport));
+    const sportsToCheck = SPORTS.filter((sport) => pendingSportKeys.has(sport));
+
     let sourceScores = 0;
     let sourceUpdated = 0;
-    for (const sport of SPORTS) {
+    for (const sport of sportsToCheck) {
       const events = await fetchCompletedScores(sport, apiKey);
       sourceScores += events.length;
 
@@ -135,8 +152,9 @@ export async function updateGameResults() {
     }
     scoresFound += sourceScores;
     gamesUpdated += sourceUpdated;
-    sources.the_odds_api = { status: "ok", sports_checked: SPORTS.length, scores_found: sourceScores, games_updated: sourceUpdated };
+    sources.the_odds_api = { status: "ok", sports_checked: sportsToCheck.length, sports_skipped_idle: SPORTS.length - sportsToCheck.length, scores_found: sourceScores, games_updated: sourceUpdated };
   } catch (error) {
+    console.error("[settlement] The Odds API score sync failed:", error);
     sources.the_odds_api = { status: "error", error: error instanceof Error ? error.message : String(error) };
   }
 
