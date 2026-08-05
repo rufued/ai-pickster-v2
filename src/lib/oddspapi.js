@@ -56,10 +56,14 @@ async function request(path, parameters = {}) {
   return response.json();
 }
 
+const USAGE_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes — checking remaining quota shouldn't itself burn quota on every admin page load.
+let usageCache = null;
+
 export async function getOddsPapiAccountUsage() {
+  if (usageCache && usageCache.expiresAt > Date.now()) return usageCache.data;
   const account = await request("/account");
   const subscription = asArray(account?.subscriptions).find((item) => item.is_active) ?? asArray(account?.subscriptions)[0];
-  return {
+  const result = {
     request_limit: subscription?.request_limit ?? null,
     request_count: subscription?.request_count ?? null,
     valid_from: subscription?.valid_from ?? null,
@@ -67,6 +71,8 @@ export async function getOddsPapiAccountUsage() {
     auto_renew: subscription?.auto_renew ?? null,
     last_request: subscription?.last_request ?? null,
   };
+  usageCache = { data: result, expiresAt: Date.now() + USAGE_CACHE_TTL_MS };
+  return result;
 }
 
 function normalize(value) {
@@ -86,9 +92,15 @@ function matchSport(sports, config) {
   });
 }
 
+const SPORTS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — sport IDs are effectively static; no need to re-discover them on every call.
+let sportsCache = null;
+
 export async function getOddsPapiEsportsSports(requestFn = request) {
+  if (sportsCache && sportsCache.expiresAt > Date.now()) return sportsCache.data;
   const sports = asArray(await requestFn("/sports", { language: "en" }));
-  return ODDSPAPI_ESPORTS.map((config) => ({ config, sport: matchSport(sports, config) ?? null }));
+  const result = ODDSPAPI_ESPORTS.map((config) => ({ config, sport: matchSport(sports, config) ?? null }));
+  sportsCache = { data: result, expiresAt: Date.now() + SPORTS_CACHE_TTL_MS };
+  return result;
 }
 
 export async function getLolSport() {

@@ -162,7 +162,7 @@ export async function updateGameResults() {
     if (!process.env.ODDSPAPI_API_KEY) throw new Error("ODDSPAPI_API_KEY is not configured");
     const now = new Date();
     const since = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-    const { data: pendingGames, error: pendingError } = await supabase
+    const { data: pendingGamesRaw, error: pendingError } = await supabase
       .from("games")
       .select("id,sport")
       .like("sport", "esports_%")
@@ -172,7 +172,23 @@ export async function updateGameResults() {
       .lte("commence_time", now.toISOString());
     if (pendingError) throw new Error(`Failed to fetch pending OddsPapi games: ${pendingError.message}`);
 
-    const completed = await fetchOddsPapiCompletedGames(pendingGames ?? []);
+    // Most ingested esports fixtures never get picked (only a handful of games get AI picks per
+    // day). Checking OddsPapi for a game nobody has a bet on just burns the account's limited
+    // quota for nothing, so narrow down to games that actually have a pick or parlay leg first.
+    let pendingGames = pendingGamesRaw ?? [];
+    if (pendingGames.length) {
+      const pendingIds = pendingGames.map((game) => game.id);
+      const [{ data: pickedGames, error: pickedError }, { data: legGames, error: legError }] = await Promise.all([
+        supabase.from("picks").select("game_id").in("game_id", pendingIds),
+        supabase.from("parlay_legs").select("game_id").in("game_id", pendingIds),
+      ]);
+      if (pickedError) throw new Error(`Failed to check picked esports games: ${pickedError.message}`);
+      if (legError) throw new Error(`Failed to check parlay leg esports games: ${legError.message}`);
+      const wageredGameIds = new Set([...(pickedGames ?? []), ...(legGames ?? [])].map((row) => row.game_id));
+      pendingGames = pendingGames.filter((game) => wageredGameIds.has(game.id));
+    }
+
+    const completed = await fetchOddsPapiCompletedGames(pendingGames);
     let sourceUpdated = 0;
     for (const game of completed.games) {
       const { data, error } = await supabase
@@ -191,7 +207,7 @@ export async function updateGameResults() {
     }
     scoresFound += completed.games.length;
     gamesUpdated += sourceUpdated;
-    sources.oddspapi = { status: "ok", pending_checked: pendingGames?.length ?? 0, scores_found: completed.games.length, games_updated: sourceUpdated, api_requests: completed.requests };
+    sources.oddspapi = { status: "ok", pending_checked: pendingGames.length, pending_skipped_no_bets: (pendingGamesRaw?.length ?? 0) - pendingGames.length, scores_found: completed.games.length, games_updated: sourceUpdated, api_requests: completed.requests };
   } catch (error) {
     // Caught here so a single failing source doesn't abort the_odds_api's results too — but it
     // must still be logged, otherwise esports settlement can fail silently for days (as it did
