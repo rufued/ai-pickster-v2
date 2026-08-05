@@ -30,7 +30,8 @@ function detectedLocale(request: NextRequest): Locale {
 }
 
 export async function middleware(request: NextRequest) {
-  const isAdminArea = request.nextUrl.pathname.startsWith("/admin") && request.nextUrl.pathname !== "/admin/login";
+  const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
+  const isAdminArea = isAdminPath && request.nextUrl.pathname !== "/admin/login";
   if (isAdminArea) {
     if (!await validAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
@@ -40,6 +41,9 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-app-locale", locale);
   requestHeaders.set("x-admin-area", isAdminArea ? "1" : "0");
+  // Broader than x-admin-area (which excludes /admin/login so it keeps the public chrome) —
+  // analytics should skip the whole /admin/* section, including the login page.
+  requestHeaders.set("x-admin-path", isAdminPath ? "1" : "0");
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (!request.cookies.has("locale")) response.cookies.set("locale", locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return response;
